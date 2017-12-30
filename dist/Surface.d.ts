@@ -1,5 +1,5 @@
 import { Vector2 } from "./EngineUtility";
-import { ShaderProperties } from "./GLUtility";
+import { ShaderProperties, ShaderType } from "./GLUtility";
 import { MatrixStack, MatrixRect } from "./Matrix";
 export declare class DrawSurface {
     canvas: HTMLCanvasElement;
@@ -10,7 +10,7 @@ export declare class DrawSurface {
     private _program;
     density: number;
     getMatrix(): any;
-    constructor(canvas: HTMLCanvasElement, line: any);
+    constructor(canvas: HTMLCanvasElement, type: ShaderType);
     resize(size: Vector2): void;
     clear(): void;
     push(): void;

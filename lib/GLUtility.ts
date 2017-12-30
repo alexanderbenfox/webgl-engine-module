@@ -7,19 +7,25 @@ export class ShaderProperties{
 	public texture : GLint
 	public resolution : WebGLUniformLocation;
 	public matrix : WebGLUniformLocation;
+	public projection : WebGLUniformLocation;
 	public program : WebGLProgram;
 
-	constructor(position_ : GLint, texture_ : GLint, resolution_ : WebGLUniformLocation, matrix_ : WebGLUniformLocation, program_ : WebGLProgram){
+	constructor(position_ : GLint, texture_ : GLint, resolution_ : WebGLUniformLocation, matrix_ : WebGLUniformLocation, projection_ : WebGLUniformLocation,program_ : WebGLProgram){
 		this.position = position_;
 		this.texture = texture_;
 		this.resolution = resolution_;
 		this.matrix = matrix_;
+		this.projection = projection_;
 		this.program = program_;
 	}
 }
 
+export enum ShaderType{
+	texture_2d, no_texture_2d, no_texture3d
+}
+
 export module GLUtility{
-	export function initGL(gl : WebGLRenderingContext, size : Vector2, line : boolean) : ShaderProperties{
+	export function initGL(gl : WebGLRenderingContext, size : Vector2, type : ShaderType) : ShaderProperties{
 		gl.clearColor(0.0,0.0,0.0,1.0);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		gl.depthFunc(gl.LEQUAL);
@@ -29,14 +35,30 @@ export module GLUtility{
 		gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-		if(line)
-			return initShaderNoTexture(gl);
-		return initShaders(gl);
+		let fs_name = '';
+		let vs_name = ''
+
+		switch(type){
+			case ShaderType.no_texture3d :
+				fs_name = 'shader-fs';
+				vs_name = 'shader-vs-3d';
+				break;
+			case ShaderType.no_texture_2d :
+				fs_name = 'shader-fs';
+				vs_name = 'shader-vs-2d';
+				break;
+			case ShaderType.texture_2d :
+				fs_name = 'shader-fs-texture';
+				vs_name = 'shader-vs-texture-2d';
+				break;
+		}
+
+		return initShaders(gl, fs_name, vs_name);
 	}
 
-	export function initShaders(gl : WebGLRenderingContext) : ShaderProperties{
-		let fragmentShader = getShader(gl, 'shader-fs');
-		let vertexShader = getShader(gl, 'shader-vs');
+	export function initShaders(gl : WebGLRenderingContext, fs_name : string, vs_name : string) : ShaderProperties{
+		let fragmentShader = getShader(gl, fs_name);
+		let vertexShader = getShader(gl, vs_name);
 		
 		let shaderProgram : WebGLProgram;
 		shaderProgram = gl.createProgram();
@@ -52,40 +74,16 @@ export module GLUtility{
 		var vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
 		gl.enableVertexAttribArray(vertexPosition);
 
-		var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureCoordinate');
+		var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
 		gl.enableVertexAttribArray(textureCoordinate);
 
 		var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
 		var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
+		let projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
 
 		console.log("Shaders initialized.")
 
-		return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, shaderProgram);
-	}
-
-	export function initShaderNoTexture(gl) : ShaderProperties{
-		let fragmentShader = getShader(gl, 'shader-fs-not');
-		let vertexShader = getShader(gl, 'shader-vs-not');
-
-		let shaderProgram : WebGLProgram;
-		shaderProgram = gl.createProgram();
-
-		gl.attachShader(shaderProgram, vertexShader);
-		gl.attachShader(shaderProgram, fragmentShader);
-		gl.linkProgram(shaderProgram);
-
-		if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {alert('Unable to initialize shader program: ' + gl.getProgramInfoLog(shaderProgram));}
-		gl.useProgram(shaderProgram);
-
-		let vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-		gl.enableVertexAttribArray(vertexPosition);
-
-		let vertexColor = gl.getAttribLocation(shaderProgram, 'aVertexColor');
-		gl.enableVertexAttribArray(vertexColor);
-
-		let resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
-		let transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
-		return new ShaderProperties(vertexPosition, vertexColor, resolutionLocation, transformationMatrix, shaderProgram);
+		return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, projectionMatrix, shaderProgram);
 	}
 
 	export function getShader(gl : WebGLRenderingContext, id : string, type : any = false) : WebGLShader{

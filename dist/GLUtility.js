@@ -2,19 +2,26 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
 var ShaderProperties = /** @class */ (function () {
-    function ShaderProperties(position_, texture_, resolution_, matrix_, program_) {
+    function ShaderProperties(position_, texture_, resolution_, matrix_, projection_, program_) {
         this.position = position_;
         this.texture = texture_;
         this.resolution = resolution_;
         this.matrix = matrix_;
+        this.projection = projection_;
         this.program = program_;
     }
     return ShaderProperties;
 }());
 exports.ShaderProperties = ShaderProperties;
+var ShaderType;
+(function (ShaderType) {
+    ShaderType[ShaderType["texture_2d"] = 0] = "texture_2d";
+    ShaderType[ShaderType["no_texture_2d"] = 1] = "no_texture_2d";
+    ShaderType[ShaderType["no_texture3d"] = 2] = "no_texture3d";
+})(ShaderType = exports.ShaderType || (exports.ShaderType = {}));
 var GLUtility;
 (function (GLUtility) {
-    function initGL(gl, size, line) {
+    function initGL(gl, size, type) {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.depthFunc(gl.LEQUAL);
@@ -23,14 +30,28 @@ var GLUtility;
         gl.enable(gl.BLEND);
         gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        if (line)
-            return initShaderNoTexture(gl);
-        return initShaders(gl);
+        var fs_name = '';
+        var vs_name = '';
+        switch (type) {
+            case ShaderType.no_texture3d:
+                fs_name = 'shader-fs';
+                vs_name = 'shader-vs-3d';
+                break;
+            case ShaderType.no_texture_2d:
+                fs_name = 'shader-fs';
+                vs_name = 'shader-vs-2d';
+                break;
+            case ShaderType.texture_2d:
+                fs_name = 'shader-fs-texture';
+                vs_name = 'shader-vs-texture-2d';
+                break;
+        }
+        return initShaders(gl, fs_name, vs_name);
     }
     GLUtility.initGL = initGL;
-    function initShaders(gl) {
-        var fragmentShader = getShader(gl, 'shader-fs');
-        var vertexShader = getShader(gl, 'shader-vs');
+    function initShaders(gl, fs_name, vs_name) {
+        var fragmentShader = getShader(gl, fs_name);
+        var vertexShader = getShader(gl, vs_name);
         var shaderProgram;
         shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
@@ -42,35 +63,15 @@ var GLUtility;
         gl.useProgram(shaderProgram);
         var vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
         gl.enableVertexAttribArray(vertexPosition);
-        var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureCoordinate');
+        var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
         gl.enableVertexAttribArray(textureCoordinate);
         var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
         var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
+        var projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
         console.log("Shaders initialized.");
-        return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, shaderProgram);
+        return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, projectionMatrix, shaderProgram);
     }
     GLUtility.initShaders = initShaders;
-    function initShaderNoTexture(gl) {
-        var fragmentShader = getShader(gl, 'shader-fs-not');
-        var vertexShader = getShader(gl, 'shader-vs-not');
-        var shaderProgram;
-        shaderProgram = gl.createProgram();
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            alert('Unable to initialize shader program: ' + gl.getProgramInfoLog(shaderProgram));
-        }
-        gl.useProgram(shaderProgram);
-        var vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-        gl.enableVertexAttribArray(vertexPosition);
-        var vertexColor = gl.getAttribLocation(shaderProgram, 'aVertexColor');
-        gl.enableVertexAttribArray(vertexColor);
-        var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
-        var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
-        return new ShaderProperties(vertexPosition, vertexColor, resolutionLocation, transformationMatrix, shaderProgram);
-    }
-    GLUtility.initShaderNoTexture = initShaderNoTexture;
     function getShader(gl, id, type) {
         if (type === void 0) { type = false; }
         var shaderScript;

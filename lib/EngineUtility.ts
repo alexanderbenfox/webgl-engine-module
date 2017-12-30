@@ -36,8 +36,24 @@ export class Vector3 extends Vector2{
 		return new Vector3(0,0,0);
 	}
 
+	static zAxis() : Vector3{
+		return new Vector3(0,0,1);
+	}
+
+	static yAxis() : Vector3{
+		return new Vector3(0,1,0);
+	}
+
+	static xAxis() : Vector3{
+		return new Vector3(1,0,0);
+	}
+
 	checkZero() : boolean{
 		return super.checkZero() && this._z == 0;
+	}
+
+	toArray() : number[] {
+		return [this.x,this.y,this.z];
 	}
 }
 

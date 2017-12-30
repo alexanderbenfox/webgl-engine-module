@@ -2,8 +2,9 @@ import { DrawSurface } from "./Surface";
 export declare class Program {
     gl: WebGLRenderingContext;
     canvas: HTMLCanvasElement;
-    surface_sprites: DrawSurface;
-    surface_lines: DrawSurface;
+    surface_texobjects_2d: DrawSurface;
+    surface_shapes_2d: DrawSurface;
+    surface_shapes_3d: DrawSurface;
     lastUpdateTime: number;
     constructor();
     createGameObjects(): void;

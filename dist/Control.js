@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
-var GameObject_1 = require("./GameObject");
 var EditorControl = /** @class */ (function () {
     function EditorControl() {
     }
     EditorControl.clickObject = function (object) {
         EditorControl.draggingObject = object;
+        console.log(object);
     };
     EditorControl.update = function (mouseCoords) {
         var currentMouseCoordinates = mouseCoords;
@@ -39,7 +39,7 @@ var EditorControl = /** @class */ (function () {
     };
     EditorControl.checkForClick = function (clickableObjects, x, y) {
         for (var i = 0; i < clickableObjects.length; i++) {
-            if (clickableObjects[i] instanceof GameObject_1.Clickable && clickableObjects[i].getClick(x, y)) {
+            if (clickableObjects[i].isClicked(new EngineUtility_1.Vector2(x, y))) {
                 this.clickObject(clickableObjects[i]);
             }
         }
@@ -59,14 +59,21 @@ var GameManager = /** @class */ (function () {
         for (var i = 0; i < GameManager.gameObjects.length; i++) {
             GameManager.gameObjects[i].update(dt);
         }
+        for (var i = 0; i < GameManager.objects3D.length; i++) {
+            GameManager.objects3D[i].update(dt);
+        }
     };
     GameManager.drawObjects = function () {
         for (var i = 0; i < GameManager.gameObjects.length; i++) {
             GameManager.gameObjects[i].draw();
         }
+        for (var i = 0; i < GameManager.objects3D.length; i++) {
+            GameManager.objects3D[i].blit();
+        }
     };
     GameManager.gameObjects = [];
     GameManager.camera = null;
+    GameManager.objects3D = [];
     return GameManager;
 }());
 exports.GameManager = GameManager;

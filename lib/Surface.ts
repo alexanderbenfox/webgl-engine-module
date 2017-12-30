@@ -1,6 +1,6 @@
 declare function require(name:string);
 import {Vector2} from "./EngineUtility"
-import {GLUtility, ShaderProperties} from "./GLUtility"
+import {GLUtility, ShaderProperties, ShaderType} from "./GLUtility"
 import {MatrixStack, MatrixUtil, MatrixRect} from "./Matrix"
 
 export class DrawSurface{
@@ -17,13 +17,13 @@ export class DrawSurface{
 		return this.matrixStack.stack[this.matrixStack.stack.length - 1];
 	}
 
-	constructor(canvas : HTMLCanvasElement, line){
+	constructor(canvas : HTMLCanvasElement, type : ShaderType){
 		this.canvas = canvas;
 		this.matrixStack = new MatrixStack();
 		this.size = Vector2.zero();
 
 		this.gl = GLUtility.getGLContext(canvas, {alpha: false, premultipliedAlpha: false});
-		this.locations = GLUtility.initGL(this.gl, this.size, line);
+		this.locations = GLUtility.initGL(this.gl, this.size, type);
 		this._program = this.locations.program;
 		this.resize(this.size);
 	}

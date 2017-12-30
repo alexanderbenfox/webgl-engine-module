@@ -8,7 +8,7 @@
   <title>WebGL GameEditor</title>
 	<!-- Fragment Shader Program -->
 
-	<script id = "shader-fs" type="x-shader/x-fragment">
+	<script id = "shader-fs-texture" type="x-shader/x-fragment">
 		//varying lowp vec4 vColor;
 		precision mediump float;
 		varying vec2 vTextureCoordinate;
@@ -23,9 +23,9 @@
 
 	<!-- Vertex Shader Program -->
 
-	<script id = "shader-vs" type = "x-shader/x-vertex">
+	<script id = "shader-vs-texture-2d" type = "x-shader/x-vertex">
 		attribute vec2 aVertexPosition;
-		attribute vec2 aTextureCoordinate;
+		attribute vec2 aTextureColorCoordinate;
 		varying vec2 vTextureCoordinate;
 		
 		uniform mat3 uMatrix;
@@ -37,29 +37,44 @@
 			vec2 position = (uMatrix * vec3(aVertexPosition, 1)).xy;
 			vec2 clipSpace = (2.0 * (position / uResolution)) - 1.0;
 			gl_Position = vec4(clipSpace * vec2(1,-1), 0, 1);
-			vTextureCoordinate = aTextureCoordinate;
+			vTextureCoordinate = aTextureColorCoordinate;
 		}
 	</script>
 
 	<!-- NO TEXTURE -->
 
-	<script id = "shader-vs-not" type = "x-shader/x-vertex">
+	<script id = "shader-vs-3d" type = "x-shader/x-vertex">
+		attribute vec4 aVertexPosition;
+		attribute vec4 aTextureColorCoordinate;
+		
+		uniform mat4 uMatrix;
+		uniform mat4 uProjectionMatrix;
+
+		varying lowp vec4 vColor;
+
+		void main(void){
+			gl_Position = uProjectionMatrix * uMatrix * aVertexPosition;
+			vColor = aTextureColorCoordinate;
+		}
+	</script>
+
+	<script id = "shader-vs-2d" type = "x-shader/x-vertex">
 		attribute vec2 aVertexPosition;
-		attribute vec4 aVertexColor;
+		attribute vec4 aTextureColorCoordinate;
 		
 		uniform mat3 uMatrix;
 		uniform vec2 uResolution;
 
 		varying lowp vec4 vColor;
-
 		void main(void){
 			vec2 position = (uMatrix * vec3(aVertexPosition, 1)).xy;
 			vec2 clipSpace = (2.0 * (position / uResolution)) - 1.0;
 			gl_Position = vec4(clipSpace * vec2(1,-1), 0, 1);
-			vColor = aVertexColor;
+			vColor = aTextureColorCoordinate;
 		}
 	</script>
-	<script id = "shader-fs-not" type="x-shader/x-fragment">
+
+	<script id = "shader-fs" type="x-shader/x-fragment">
 
 		varying lowp vec4 vColor;
 		void main(void){	

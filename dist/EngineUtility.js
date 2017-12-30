@@ -55,8 +55,20 @@ var Vector3 = /** @class */ (function (_super) {
     Vector3.zero = function () {
         return new Vector3(0, 0, 0);
     };
+    Vector3.zAxis = function () {
+        return new Vector3(0, 0, 1);
+    };
+    Vector3.yAxis = function () {
+        return new Vector3(0, 1, 0);
+    };
+    Vector3.xAxis = function () {
+        return new Vector3(1, 0, 0);
+    };
     Vector3.prototype.checkZero = function () {
         return _super.prototype.checkZero.call(this) && this._z == 0;
+    };
+    Vector3.prototype.toArray = function () {
+        return [this.x, this.y, this.z];
     };
     return Vector3;
 }(Vector2));

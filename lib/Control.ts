@@ -1,7 +1,7 @@
 declare function require(name:string);
 import {Vector2} from "./EngineUtility"
 import {Draggable, Clickable, EditorObject, GameObject} from "./GameObject"
-import {Stroke, Shape} from "./DrawShapes"
+import {Stroke, Shape, Shape3D} from "./DrawShapes"
 
 export class EditorControl{
 	public static draggingObject : Draggable = null;
@@ -12,6 +12,7 @@ export class EditorControl{
 
 	static clickObject(object : Draggable) : void {
 		EditorControl.draggingObject = object;
+		console.log(object);
 	}
 
 	static update(mouseCoords : Vector2) : void {
@@ -52,7 +53,7 @@ export class EditorControl{
 
 	static checkForClick(clickableObjects : any[], x : number, y : number) : void{
 		for(let i = 0; i < clickableObjects.length; i++){
-			if(clickableObjects[i] instanceof Clickable && clickableObjects[i].getClick(x,y)){
+			if(clickableObjects[i].isClicked(new Vector2(x,y))){
 				this.clickObject(clickableObjects[i]);
 			}
 		}
@@ -62,16 +63,24 @@ export class EditorControl{
 export class GameManager{
 	public static gameObjects : GameObject[] = [];
 	public static camera : GameObject = null;
+	public static objects3D : Shape3D[] = [];
 
 	static updateObjects(dt : number){
 		for(let i = 0; i < GameManager.gameObjects.length; i++){
 			GameManager.gameObjects[i].update(dt);
+		}
+
+		for(let i = 0; i < GameManager.objects3D.length; i++){
+			GameManager.objects3D[i].update(dt);
 		}
 	}
 
 	static drawObjects(){
 		for(let i = 0; i < GameManager.gameObjects.length; i++){
 			GameManager.gameObjects[i].draw();
+		}
+		for(let i = 0; i < GameManager.objects3D.length; i++){
+			GameManager.objects3D[i].blit();
 		}
 	}
 }

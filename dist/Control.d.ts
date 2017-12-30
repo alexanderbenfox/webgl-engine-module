@@ -1,6 +1,6 @@
 import { Vector2 } from "./EngineUtility";
 import { Draggable, EditorObject, GameObject } from "./GameObject";
-import { Stroke, Shape } from "./DrawShapes";
+import { Stroke, Shape, Shape3D } from "./DrawShapes";
 export declare class EditorControl {
     static draggingObject: Draggable;
     static lastMouseCoords: Vector2;
@@ -16,6 +16,7 @@ export declare class EditorControl {
 export declare class GameManager {
     static gameObjects: GameObject[];
     static camera: GameObject;
+    static objects3D: Shape3D[];
     static updateObjects(dt: number): void;
     static drawObjects(): void;
 }

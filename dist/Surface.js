@@ -4,12 +4,12 @@ var EngineUtility_1 = require("./EngineUtility");
 var GLUtility_1 = require("./GLUtility");
 var Matrix_1 = require("./Matrix");
 var DrawSurface = /** @class */ (function () {
-    function DrawSurface(canvas, line) {
+    function DrawSurface(canvas, type) {
         this.canvas = canvas;
         this.matrixStack = new Matrix_1.MatrixStack();
         this.size = EngineUtility_1.Vector2.zero();
         this.gl = GLUtility_1.GLUtility.getGLContext(canvas, { alpha: false, premultipliedAlpha: false });
-        this.locations = GLUtility_1.GLUtility.initGL(this.gl, this.size, line);
+        this.locations = GLUtility_1.GLUtility.initGL(this.gl, this.size, type);
         this._program = this.locations.program;
         this.resize(this.size);
     }

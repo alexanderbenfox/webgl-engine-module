@@ -2,8 +2,9 @@ declare function require(name:string);
 import {Vector2} from "./EngineUtility"
 import {DrawSurface} from "./Surface"
 import {GameObject, EditorObject} from "./GameObject"
-import {Stroke, Shape, Square} from "./DrawShapes"
+import {Stroke, Shape, Square, Cube} from "./DrawShapes"
 import {EditorControl, GameManager} from "./Control"
+import {ShaderType} from "./GLUtility"
 
 class MouseData{
 	public static offset : Vector2;
@@ -19,8 +20,10 @@ class MouseData{
 export class Program{
 	gl : WebGLRenderingContext;
 	canvas : HTMLCanvasElement;
-	surface_sprites : DrawSurface;
-	surface_lines : DrawSurface;
+
+	surface_texobjects_2d : DrawSurface;
+	surface_shapes_2d : DrawSurface;
+	surface_shapes_3d : DrawSurface;
 
 	lastUpdateTime : number;
 
@@ -35,8 +38,9 @@ export class Program{
 		let offset = new Vector2(this.canvas.getBoundingClientRect().left, this.canvas.getBoundingClientRect().top);
 		MouseData.offset = offset;
 
-		this.surface_sprites = new DrawSurface(this.canvas, false);
-		this.surface_lines = new DrawSurface(this.canvas, true);
+		this.surface_texobjects_2d = new DrawSurface(this.canvas, ShaderType.texture_2d);
+		this.surface_shapes_2d = new DrawSurface(this.canvas, ShaderType.no_texture_2d);
+		this.surface_shapes_3d = new DrawSurface(this.canvas, ShaderType.no_texture3d);
 
 		this.createGameObjects();
 
@@ -54,33 +58,35 @@ export class Program{
 	}
 
 	createGameObjects() : void{
-		let obj_1 = new GameObject('box.png', 256, 256, this.surface_sprites, 0,0);
-		let obj_2 = new GameObject('box.png', 256, 256, this.surface_sprites, 256, 0);
+		let obj_1 = new GameObject('box.png', 256, 256, this.surface_texobjects_2d, 0,0);
+		let obj_2 = new GameObject('box.png', 256, 256, this.surface_texobjects_2d, 256, 0);
 		let camera = new GameObject(null, null, null, null, 0,0);
+		let cube = new Cube(this.surface_shapes_3d);
 		GameManager.camera = camera;
 		GameManager.gameObjects = [obj_1, obj_2, camera];
+		GameManager.objects3D = [cube];
 	}
 
 	createEditorObjects() : void {
-		let editorBox = new EditorObject('../img/tile.png', 32, 32, this.surface_sprites, 256, 256);
+		let editorBox = new EditorObject('../img/tile.png', 32, 32, this.surface_texobjects_2d, 256, 256);
 		EditorControl.editorObjects.push(editorBox);
 	}
 
 	setupGrid() : void{
 		let lines : Stroke[] = [];
-		let screen_width = this.surface_lines.size.x;
-		let screen_height = this.surface_lines.size.y;
+		let screen_width = this.surface_shapes_2d.size.x;
+		let screen_height = this.surface_shapes_2d.size.y;
 
-		let square = new Square(this.surface_lines, new Vector2(screen_width-3*32, 0), new Vector2(screen_width, screen_height), 0);
+		let square = new Square(this.surface_shapes_2d, new Vector2(screen_width-3*32, 0), new Vector2(screen_width, screen_height), 0);
 		EditorControl.editorShapes = [square];
 
 		for(var x = 0; x < screen_width; x+=32){
-			var line = new Stroke(this.surface_lines, new Vector2(x,0), new Vector2(x,screen_height), 2);
+			var line = new Stroke(this.surface_shapes_2d, new Vector2(x,0), new Vector2(x,screen_height), 2);
 			lines.push(line);
 		}
 
 		for(var y = 0; y < screen_height; y+=32){
-			var line = new Stroke(this.surface_lines, new Vector2(0, y), new Vector2(screen_width,y),2);
+			var line = new Stroke(this.surface_shapes_2d, new Vector2(0, y), new Vector2(screen_width,y),2);
 			lines.push(line);
 		}
 		EditorControl.grid = lines;
@@ -135,21 +141,26 @@ export class Program{
 	drawScene() : void{
 		setInterval(function(){
 			//define update loop
-			this.surface_sprites.clear();
-			this.surface_lines.clear();
-			this.surface_sprites.push();
-			this.surface_lines.push();
+			this.surface_texobjects_2d.clear();
+			this.surface_shapes_2d.clear();
+			this.surface_shapes_3d.clear();
 
-			this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
-			this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
-			this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
-			this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
+			this.surface_texobjects_2d.push();
+			this.surface_shapes_2d.push();
+			this.surface_shapes_3d.push();
+
+			//this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
+			//this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
+			//this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
+			//this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
 
 			this.updateLoop();
 			this.draw();
 
-			this.surface_sprites.pop();
-			this.surface_lines.pop();
+			this.surface_texobjects_2d.pop();
+			this.surface_shapes_2d.pop();
+			this.surface_shapes_3d.pop();
+
 		}.bind(this), 15);
 	}
 }

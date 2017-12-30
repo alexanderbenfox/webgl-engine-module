@@ -12,6 +12,10 @@ export declare class Vector3 extends Vector2 {
     constructor(x: number, y: number, z: number);
     readonly z: number;
     static zero(): Vector3;
+    static zAxis(): Vector3;
+    static yAxis(): Vector3;
+    static xAxis(): Vector3;
     checkZero(): boolean;
+    toArray(): number[];
 }
 export declare function inBounds2D(topLeft: Vector2, bottomRight: Vector2, boundSize: Vector2): boolean;
