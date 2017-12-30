@@ -1,0 +1,24 @@
+{
+  "name": "demo-webgl-engine-module",
+  "version": "1.0.02",
+  "description": "I am very new to this so I'm sorry if this doesn't work properly",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^2.6.2"
+  },
+  "dependencies": {
+    "@types/sylvester": "^0.1.5",
+    "commonjs": "0.0.1",
+    "requirejs": "^2.3.5",
+    "sylvester": "0.0.21"
+  }
+}

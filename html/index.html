@@ -1,0 +1,83 @@
+<!-- index.html -->
+<!doctype html>
+<html">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>WebGL GameEditor</title>
+	<!-- Fragment Shader Program -->
+
+	<script id = "shader-fs" type="x-shader/x-fragment">
+		//varying lowp vec4 vColor;
+		precision mediump float;
+		varying vec2 vTextureCoordinate;
+		uniform sampler2D uSampler;
+		
+
+		void main(void){	
+			//gl_FragColor = vColor;
+			gl_FragColor = texture2D(uSampler, vTextureCoordinate);
+		}
+	</script>
+
+	<!-- Vertex Shader Program -->
+
+	<script id = "shader-vs" type = "x-shader/x-vertex">
+		attribute vec2 aVertexPosition;
+		attribute vec2 aTextureCoordinate;
+		varying vec2 vTextureCoordinate;
+		
+		uniform mat3 uMatrix;
+		uniform vec2 uResolution;
+
+		
+
+		void main(void){
+			vec2 position = (uMatrix * vec3(aVertexPosition, 1)).xy;
+			vec2 clipSpace = (2.0 * (position / uResolution)) - 1.0;
+			gl_Position = vec4(clipSpace * vec2(1,-1), 0, 1);
+			vTextureCoordinate = aTextureCoordinate;
+		}
+	</script>
+
+	<!-- NO TEXTURE -->
+
+	<script id = "shader-vs-not" type = "x-shader/x-vertex">
+		attribute vec2 aVertexPosition;
+		attribute vec4 aVertexColor;
+		
+		uniform mat3 uMatrix;
+		uniform vec2 uResolution;
+
+		varying lowp vec4 vColor;
+
+		void main(void){
+			vec2 position = (uMatrix * vec3(aVertexPosition, 1)).xy;
+			vec2 clipSpace = (2.0 * (position / uResolution)) - 1.0;
+			gl_Position = vec4(clipSpace * vec2(1,-1), 0, 1);
+			vColor = aVertexColor;
+		}
+	</script>
+	<script id = "shader-fs-not" type="x-shader/x-fragment">
+
+		varying lowp vec4 vColor;
+		void main(void){	
+			gl_FragColor = vColor;
+			//gl_FragColor = vec4(1.0,1.0,1.0,1.0);
+		}
+	</script>
+</head>
+	<script src="../browser/bundle.js"></script>
+	<script type="javascript/text">
+		loader = function() {
+			console.log(WebEngine);
+			WebEngine.startProgram();
+		}
+	</script>
+	<body onload = "console.log(WebEngine); starter();">
+		<canvas id = "glCanvas" width = "960" height = "640">
+			Your browser doesn't appear to support the <code>&lt;canvas&gt;</code> element.
+		</canvas>
+	</body>
+</html>
