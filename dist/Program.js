@@ -6,6 +6,7 @@ var GameObject_1 = require("./GameObject");
 var DrawShapes_1 = require("./DrawShapes");
 var Control_1 = require("./Control");
 var GLUtility_1 = require("./GLUtility");
+var CameraUtility_1 = require("./CameraUtility");
 var MouseData = /** @class */ (function () {
     function MouseData() {
     }
@@ -37,13 +38,16 @@ var Program = /** @class */ (function () {
         this.drawScene();
     }
     Program.prototype.createGameObjects = function () {
+        var camera3d = new CameraUtility_1.Camera(this.surface_shapes_3d.gl);
+        this.camera = camera3d;
         var obj_1 = new GameObject_1.GameObject('box.png', 256, 256, this.surface_texobjects_2d, 0, 0);
         var obj_2 = new GameObject_1.GameObject('box.png', 256, 256, this.surface_texobjects_2d, 256, 0);
         var camera = new GameObject_1.GameObject(null, null, null, null, 0, 0);
-        var cube = new DrawShapes_1.Cube(this.surface_shapes_3d);
+        var cube = new DrawShapes_1.Cube(this.surface_shapes_3d, new EngineUtility_1.Vector3(60, 20, 0), new EngineUtility_1.Vector3(-1, 0, -6), camera3d);
+        var cube2 = new DrawShapes_1.Cube(this.surface_shapes_3d, new EngineUtility_1.Vector3(10, 80, 0), new EngineUtility_1.Vector3(3, 0, -12), camera3d);
         Control_1.GameManager.camera = camera;
         Control_1.GameManager.gameObjects = [obj_1, obj_2, camera];
-        Control_1.GameManager.objects3D = [cube];
+        Control_1.GameManager.objects3D = [cube, cube2];
     };
     Program.prototype.createEditorObjects = function () {
         var editorBox = new GameObject_1.EditorObject('../img/tile.png', 32, 32, this.surface_texobjects_2d, 256, 256);
@@ -98,13 +102,17 @@ var Program = /** @class */ (function () {
     };
     Program.prototype.update = function (dt) {
         var normalizedUpdateValue = (30 * dt) / 1000.0;
-        Control_1.GameManager.updateObjects(dt);
-        Control_1.EditorControl.updateObjects(dt);
+        Control_1.GameManager.updateObjects(normalizedUpdateValue);
+        Control_1.EditorControl.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.update(MouseData.position);
+        //this.camera.update(normalizedUpdateValue);
     };
     Program.prototype.draw = function () {
         Control_1.GameManager.drawObjects();
         Control_1.EditorControl.drawObjects();
+    };
+    Program.prototype.setCameraValue = function (value) {
+        this.camera.update(value);
     };
     Program.prototype.drawScene = function () {
         setInterval(function () {

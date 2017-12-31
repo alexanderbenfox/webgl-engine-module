@@ -1,4 +1,5 @@
 import { DrawSurface } from "./Surface";
+import { Camera } from "./CameraUtility";
 export declare class Program {
     gl: WebGLRenderingContext;
     canvas: HTMLCanvasElement;
@@ -6,6 +7,7 @@ export declare class Program {
     surface_shapes_2d: DrawSurface;
     surface_shapes_3d: DrawSurface;
     lastUpdateTime: number;
+    camera: Camera;
     constructor();
     createGameObjects(): void;
     createEditorObjects(): void;
@@ -14,5 +16,6 @@ export declare class Program {
     updateLoop(): void;
     update(dt: number): void;
     draw(): void;
+    setCameraValue(value: number): void;
     drawScene(): void;
 }

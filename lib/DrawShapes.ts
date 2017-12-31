@@ -1,9 +1,10 @@
 ///<reference path = "./Surface.ts"/>
 declare function require(name:string);
-import {Vector2, Vector3} from "./EngineUtility"
+import {Vector2, Vector3, Vector4, computeMatrix} from "./EngineUtility"
 import {DrawSurface} from "./Surface"
 import {MatrixUtil} from "./Matrix"
 import {mat4} from "gl-matrix"
+import {Camera} from "./CameraUtility"
 
 export interface Drawable{
 	blit() : void;
@@ -54,9 +55,16 @@ export abstract class Shape3D implements Drawable{
 }
 
 export class Cube extends Shape3D{
-	public rotation : number = 0;
-	constructor(surface : DrawSurface){
+	public rotation : Vector3;
+	public position : Vector3;
+	public camera : Camera;
+	constructor(surface : DrawSurface, rotation : Vector3, position : Vector3, camera : Camera){
 		super(surface);
+
+		this.rotation = rotation;
+		this.position = position;
+		this.camera = camera;
+
 		let gl = this.surface.gl;
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
 
@@ -142,19 +150,10 @@ export class Cube extends Shape3D{
 		let gl = this.surface.gl;
 		let program = this.surface.locations.program;
 
-		//stuff for camera??
-		const fieldOfView = 45 * Math.PI / 180; //radians
-		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-		const zNear = 0.1;
-		const zFar = 100.0;
-		const projectionMatrix = mat4.create();
-
-		mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-
 		//drawing position
 		const modelViewMatrix = mat4.create();
 
-		this.moveCube(modelViewMatrix);
+		computeMatrix(modelViewMatrix, modelViewMatrix, this.position, this.rotation);
 
 		this.assignAttrib(this._vertexBuffer,this.surface.locations.position, 3);
 		this.assignAttrib(this._colorBuffer, this.surface.locations.texture, 4);
@@ -165,7 +164,7 @@ export class Cube extends Shape3D{
 		gl.uniformMatrix4fv(
 			surface.locations.projection,
 			false,
-			projectionMatrix
+			this.camera.viewProjectionMatrix
 			);
 
 		gl.uniformMatrix4fv(
@@ -178,23 +177,6 @@ export class Cube extends Shape3D{
 		const type = gl.UNSIGNED_SHORT;
 		const offset = 0;
 		gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-	}
-
-	moveCube(modelViewMatrix){
-		let moveVector = new Vector3(0, 0,-6);
-		let zAxis = new Vector3(0,0,1);
-		let yAxis = new Vector3(0,1,0);
-		  mat4.translate(modelViewMatrix,     // destination matrix
-		                 modelViewMatrix,     // matrix to translate
-		                 moveVector.toArray());  // amount to translate
-		  mat4.rotate(modelViewMatrix,  // destination matrix
-		              modelViewMatrix,  // matrix to rotate
-		              this.rotation,     // amount to rotate in radians
-		              zAxis.toArray());       // axis to rotate around (Z)
-		  mat4.rotate(modelViewMatrix,  // destination matrix
-		              modelViewMatrix,  // matrix to rotate
-		              this.rotation * .7,// amount to rotate in radians
-		              yAxis.toArray());       // axis to rotate around (X)
 	}
 
 	assignAttrib(buffer, attribLocation, components : number) : void{
@@ -224,7 +206,25 @@ export class Cube extends Shape3D{
 	}
 
 	update(dt : number){
-		this.rotation += dt;
+	}
+
+	cartesianToHomogeneous(point : Vector3) : Vector4 {
+	  
+	  var x = point.x;
+	  var y = point.y;
+	  var z = point.z;
+	  
+	  return new Vector4(x,y,z,1);
+	}
+
+	homogeneousToCartesian(point : Vector4) : Vector3{
+
+	  var x = point.x;
+	  var y = point.y;
+	  var z = point.z;
+	  var w = point.w;
+	  
+	  return new Vector3(x/w, y/w, z/w);
 	}
 }
 

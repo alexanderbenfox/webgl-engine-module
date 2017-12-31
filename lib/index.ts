@@ -1,9 +1,14 @@
 import * as Prog from "./Program";
+var gameProgram;
 
 export function startProgram(){
-	let gameProgram = new Prog.Program();
+	gameProgram = new Prog.Program();
 }
 
 (<any>window).starter = function(){
-	let gameProgram = new Prog.Program();
+	gameProgram = new Prog.Program();
+};
+
+(<any>window).setCameraValue = function(value : number){
+	gameProgram.setCameraValue(value);
 };

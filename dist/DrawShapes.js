@@ -43,9 +43,11 @@ var Shape3D = /** @class */ (function () {
 exports.Shape3D = Shape3D;
 var Cube = /** @class */ (function (_super) {
     __extends(Cube, _super);
-    function Cube(surface) {
+    function Cube(surface, rotation, position, camera) {
         var _this = _super.call(this, surface) || this;
-        _this.rotation = 0;
+        _this.rotation = rotation;
+        _this.position = position;
+        _this.camera = camera;
         var gl = _this.surface.gl;
         gl.bindBuffer(gl.ARRAY_BUFFER, _this._vertexBuffer);
         //4 verticies per side, 24 verticies in total
@@ -113,42 +115,19 @@ var Cube = /** @class */ (function (_super) {
         var surface = this.surface;
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
-        //stuff for camera??
-        var fieldOfView = 45 * Math.PI / 180; //radians
-        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var zNear = 0.1;
-        var zFar = 100.0;
-        var projectionMatrix = gl_matrix_1.mat4.create();
-        gl_matrix_1.mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
         //drawing position
         var modelViewMatrix = gl_matrix_1.mat4.create();
-        this.moveCube(modelViewMatrix);
+        EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.position, this.rotation);
         this.assignAttrib(this._vertexBuffer, this.surface.locations.position, 3);
         this.assignAttrib(this._colorBuffer, this.surface.locations.texture, 4);
         this.bindIndexToVerts();
         gl.useProgram(program);
-        gl.uniformMatrix4fv(surface.locations.projection, false, projectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.projection, false, this.camera.viewProjectionMatrix);
         gl.uniformMatrix4fv(surface.locations.matrix, false, modelViewMatrix);
         var vertexCount = 36;
         var type = gl.UNSIGNED_SHORT;
         var offset = 0;
         gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-    };
-    Cube.prototype.moveCube = function (modelViewMatrix) {
-        var moveVector = new EngineUtility_1.Vector3(0, 0, -6);
-        var zAxis = new EngineUtility_1.Vector3(0, 0, 1);
-        var yAxis = new EngineUtility_1.Vector3(0, 1, 0);
-        gl_matrix_1.mat4.translate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to translate
-        moveVector.toArray()); // amount to translate
-        gl_matrix_1.mat4.rotate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to rotate
-        this.rotation, // amount to rotate in radians
-        zAxis.toArray()); // axis to rotate around (Z)
-        gl_matrix_1.mat4.rotate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to rotate
-        this.rotation * .7, // amount to rotate in radians
-        yAxis.toArray()); // axis to rotate around (X)
     };
     Cube.prototype.assignAttrib = function (buffer, attribLocation, components) {
         var gl = this.surface.gl;
@@ -166,7 +145,19 @@ var Cube = /** @class */ (function (_super) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
     };
     Cube.prototype.update = function (dt) {
-        this.rotation += dt;
+    };
+    Cube.prototype.cartesianToHomogeneous = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        return new EngineUtility_1.Vector4(x, y, z, 1);
+    };
+    Cube.prototype.homogeneousToCartesian = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        var w = point.w;
+        return new EngineUtility_1.Vector3(x / w, y / w, z / w);
     };
     return Cube;
 }(Shape3D));

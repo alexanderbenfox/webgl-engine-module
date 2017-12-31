@@ -1,6 +1,7 @@
 /// <reference path="Surface.d.ts" />
-import { Vector2 } from "./EngineUtility";
+import { Vector2, Vector3, Vector4 } from "./EngineUtility";
 import { DrawSurface } from "./Surface";
+import { Camera } from "./CameraUtility";
 export interface Drawable {
     blit(): void;
 }
@@ -26,13 +27,16 @@ export declare abstract class Shape3D implements Drawable {
     update(dt: number): void;
 }
 export declare class Cube extends Shape3D {
-    rotation: number;
-    constructor(surface: DrawSurface);
+    rotation: Vector3;
+    position: Vector3;
+    camera: Camera;
+    constructor(surface: DrawSurface, rotation: Vector3, position: Vector3, camera: Camera);
     blit(): void;
-    moveCube(modelViewMatrix: any): void;
     assignAttrib(buffer: any, attribLocation: any, components: number): void;
     bindIndexToVerts(): void;
     update(dt: number): void;
+    cartesianToHomogeneous(point: Vector3): Vector4;
+    homogeneousToCartesian(point: Vector4): Vector3;
 }
 export declare class Stroke extends Shape implements Drawable {
     constructor(surface: DrawSurface, startCoord: Vector2, endCoord: Vector2, width: number);

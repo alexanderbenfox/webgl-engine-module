@@ -2,6 +2,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("sylvester");
+var EngineUtility_1 = require("./EngineUtility");
+var gl_matrix_1 = require("gl-matrix");
 var CameraUtility;
 (function (CameraUtility) {
     function makeFrustrum(left, right, bottom, top, znear, zfar) {
@@ -36,8 +38,42 @@ var CameraUtility;
     }
     CameraUtility.makeOrtho = makeOrtho;
 })(CameraUtility || (CameraUtility = {}));
+var Camera = /** @class */ (function () {
+    function Camera(gl) {
+        this._time = 0;
+        //main matrix that carries all of the data
+        this.projectionMatrix = gl_matrix_1.mat4.create();
+        //combination of view & projection
+        this.viewProjectionMatrix = gl_matrix_1.mat4.create();
+        var fieldOfView = 45 * Math.PI / 180; //radians
+        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        var zNear = 0.1;
+        var zFar = 100.0;
+        gl_matrix_1.mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
+        this.position = new EngineUtility_1.Vector3(1, 0, 0);
+        this.rotation = new EngineUtility_1.Vector3(0, 0, 0);
+        this.update(0);
+    }
+    Camera.prototype.update = function (degree) {
+        var radians = (degree / 360) * 360 * Math.PI / 180;
+        console.log(radians);
+        this.rotation = new EngineUtility_1.Vector3(0, radians, 0);
+        this.updateMatrix();
+    };
+    Camera.prototype.updateMatrix = function () {
+        //this matrix represents the position and orientation of the camera in the world
+        var cameraMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+        //view matrix moves everything opposite to the camera - making it as though cam is at origin
+        var viewMatrix = gl_matrix_1.mat4.create();
+        viewMatrix = gl_matrix_1.mat4.invert(viewMatrix, cameraMatrix);
+        this.viewProjectionMatrix = gl_matrix_1.mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+    };
+    return Camera;
+}());
+exports.Camera = Camera;
 
-},{"sylvester":14}],2:[function(require,module,exports){
+},{"./EngineUtility":4,"gl-matrix":13,"sylvester":14}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -164,9 +200,11 @@ var Shape3D = /** @class */ (function () {
 exports.Shape3D = Shape3D;
 var Cube = /** @class */ (function (_super) {
     __extends(Cube, _super);
-    function Cube(surface) {
+    function Cube(surface, rotation, position, camera) {
         var _this = _super.call(this, surface) || this;
-        _this.rotation = 0;
+        _this.rotation = rotation;
+        _this.position = position;
+        _this.camera = camera;
         var gl = _this.surface.gl;
         gl.bindBuffer(gl.ARRAY_BUFFER, _this._vertexBuffer);
         //4 verticies per side, 24 verticies in total
@@ -205,13 +243,8 @@ var Cube = /** @class */ (function (_super) {
         _this.positions = new Float32Array(vertexPositions);
         gl.bufferData(gl.ARRAY_BUFFER, _this.positions, gl.STATIC_DRAW);
         var white_color = [1.0, 1.0, 1.0, 1.0];
-        var red_color = [1.0,0.0,0.0,1.0];
-        var blue_color = [0.0,1.0,0.0,1.0];
-        var other_color = [1.0, 1.0, 0.0, 1.0];
-        var color_color = [0.0, 0.0,1.0, 1.0];
-        var co_color = [0.0,1.0,1.0,1.0];
         //6 faces
-        var faceColors = [white_color, red_color, blue_color, other_color, color_color, co_color];
+        var faceColors = [white_color, white_color, white_color, white_color, white_color, white_color];
         var colors = [];
         for (var i = 0; i < faceColors.length; ++i) {
             var c = faceColors[i];
@@ -239,42 +272,19 @@ var Cube = /** @class */ (function (_super) {
         var surface = this.surface;
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
-        //stuff for camera??
-        var fieldOfView = 45 * Math.PI / 180; //radians
-        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        var zNear = 0.001;
-        var zFar = 100.0;
-        var projectionMatrix = gl_matrix_1.mat4.create();
-        gl_matrix_1.mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
         //drawing position
         var modelViewMatrix = gl_matrix_1.mat4.create();
-        this.moveCube(modelViewMatrix);
+        EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.position, this.rotation);
         this.assignAttrib(this._vertexBuffer, this.surface.locations.position, 3);
         this.assignAttrib(this._colorBuffer, this.surface.locations.texture, 4);
         this.bindIndexToVerts();
         gl.useProgram(program);
-        gl.uniformMatrix4fv(surface.locations.projection, false, projectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.projection, false, this.camera.viewProjectionMatrix);
         gl.uniformMatrix4fv(surface.locations.matrix, false, modelViewMatrix);
         var vertexCount = 36;
         var type = gl.UNSIGNED_SHORT;
         var offset = 0;
         gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-    };
-    Cube.prototype.moveCube = function (modelViewMatrix) {
-        var moveVector = new EngineUtility_1.Vector3(0, 0, -6);
-        var zAxis = new EngineUtility_1.Vector3(0, 0, 1);
-        var yAxis = new EngineUtility_1.Vector3(0, 1, 0);
-        gl_matrix_1.mat4.translate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to translate
-        moveVector.toArray()); // amount to translate
-        gl_matrix_1.mat4.rotate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to rotate
-        this.rotation, // amount to rotate in radians
-        zAxis.toArray()); // axis to rotate around (Z)
-        gl_matrix_1.mat4.rotate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to rotate
-        this.rotation * .7, // amount to rotate in radians
-        yAxis.toArray()); // axis to rotate around (X)
     };
     Cube.prototype.assignAttrib = function (buffer, attribLocation, components) {
         var gl = this.surface.gl;
@@ -292,7 +302,19 @@ var Cube = /** @class */ (function (_super) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
     };
     Cube.prototype.update = function (dt) {
-        this.rotation += (dt/1000);
+    };
+    Cube.prototype.cartesianToHomogeneous = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        return new EngineUtility_1.Vector4(x, y, z, 1);
+    };
+    Cube.prototype.homogeneousToCartesian = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        var w = point.w;
+        return new EngineUtility_1.Vector3(x / w, y / w, z / w);
     };
     return Cube;
 }(Shape3D));
@@ -393,6 +415,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var gl_matrix_1 = require("gl-matrix");
 var Vector2 = /** @class */ (function () {
     function Vector2(x, y) {
         this._x = x;
@@ -402,12 +425,18 @@ var Vector2 = /** @class */ (function () {
         get: function () {
             return this._x;
         },
+        set: function (n) {
+            this.x = n;
+        },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(Vector2.prototype, "y", {
         get: function () {
             return this._y;
+        },
+        set: function (n) {
+            this.y = n;
         },
         enumerable: true,
         configurable: true
@@ -431,6 +460,9 @@ var Vector3 = /** @class */ (function (_super) {
     Object.defineProperty(Vector3.prototype, "z", {
         get: function () {
             return this._z;
+        },
+        set: function (n) {
+            this.z = n;
         },
         enumerable: true,
         configurable: true
@@ -456,6 +488,26 @@ var Vector3 = /** @class */ (function (_super) {
     return Vector3;
 }(Vector2));
 exports.Vector3 = Vector3;
+var Vector4 = /** @class */ (function (_super) {
+    __extends(Vector4, _super);
+    function Vector4(x, y, z, w) {
+        var _this = _super.call(this, x, y, z) || this;
+        _this._w = w;
+        return _this;
+    }
+    Object.defineProperty(Vector4.prototype, "w", {
+        get: function () {
+            return this._w;
+        },
+        set: function (n) {
+            this.w = n;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return Vector4;
+}(Vector3));
+exports.Vector4 = Vector4;
 function inBounds2D(topLeft, bottomRight, boundSize) {
     if (boundSize.x > topLeft.x && boundSize.x < bottomRight.x) {
         if (boundSize.y > topLeft.y && boundSize.y < bottomRight.y)
@@ -464,8 +516,30 @@ function inBounds2D(topLeft, bottomRight, boundSize) {
     return false;
 }
 exports.inBounds2D = inBounds2D;
+function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
+    //setup projection stuff later (camera??)
+    var xAxis = new Vector3(1, 0, 0);
+    var yAxis = new Vector3(0, 1, 0);
+    var zAxis = new Vector3(0, 0, 1);
+    gl_matrix_1.mat4.translate(outputMatrix, // destination matrix
+    relativeToMatrix, // matrix to translate (usually origin)
+    position.toArray()); // amount to translate
+    gl_matrix_1.mat4.rotate(outputMatrix, // destination matrix
+    relativeToMatrix, // matrix to rotate
+    rotation.x, // amount to rotate in radians
+    xAxis.toArray()); // axis to rotate around (x)
+    gl_matrix_1.mat4.rotate(outputMatrix, // destination matrix
+    relativeToMatrix, // matrix to rotate
+    rotation.y, // amount to rotate in radians
+    yAxis.toArray()); // axis to rotate around (y)
+    gl_matrix_1.mat4.rotate(outputMatrix, // destination matrix
+    relativeToMatrix, // matrix to rotate
+    rotation.z, // amount to rotate in radians
+    zAxis.toArray()); // axis to rotate around (z)
+}
+exports.computeMatrix = computeMatrix;
 
-},{}],5:[function(require,module,exports){
+},{"gl-matrix":13}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
@@ -868,6 +942,7 @@ var GameObject_1 = require("./GameObject");
 var DrawShapes_1 = require("./DrawShapes");
 var Control_1 = require("./Control");
 var GLUtility_1 = require("./GLUtility");
+var CameraUtility_1 = require("./CameraUtility");
 var MouseData = /** @class */ (function () {
     function MouseData() {
     }
@@ -899,13 +974,16 @@ var Program = /** @class */ (function () {
         this.drawScene();
     }
     Program.prototype.createGameObjects = function () {
+        var camera3d = new CameraUtility_1.Camera(this.surface_shapes_3d.gl);
+        this.camera = camera3d;
         var obj_1 = new GameObject_1.GameObject('box.png', 256, 256, this.surface_texobjects_2d, 0, 0);
         var obj_2 = new GameObject_1.GameObject('box.png', 256, 256, this.surface_texobjects_2d, 256, 0);
         var camera = new GameObject_1.GameObject(null, null, null, null, 0, 0);
-        var cube = new DrawShapes_1.Cube(this.surface_shapes_3d);
+        var cube = new DrawShapes_1.Cube(this.surface_shapes_3d, new EngineUtility_1.Vector3(60, 20, 0), new EngineUtility_1.Vector3(-1, 0, -6), camera3d);
+        var cube2 = new DrawShapes_1.Cube(this.surface_shapes_3d, new EngineUtility_1.Vector3(10, 80, 0), new EngineUtility_1.Vector3(3, 0, -12), camera3d);
         Control_1.GameManager.camera = camera;
         Control_1.GameManager.gameObjects = [obj_1, obj_2, camera];
-        Control_1.GameManager.objects3D = [cube];
+        Control_1.GameManager.objects3D = [cube, cube2];
     };
     Program.prototype.createEditorObjects = function () {
         var editorBox = new GameObject_1.EditorObject('../img/tile.png', 32, 32, this.surface_texobjects_2d, 256, 256);
@@ -960,35 +1038,36 @@ var Program = /** @class */ (function () {
     };
     Program.prototype.update = function (dt) {
         var normalizedUpdateValue = (30 * dt) / 1000.0;
-        Control_1.GameManager.updateObjects(dt);
-        Control_1.EditorControl.updateObjects(dt);
+        Control_1.GameManager.updateObjects(normalizedUpdateValue);
+        Control_1.EditorControl.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.update(MouseData.position);
+        //this.camera.update(normalizedUpdateValue);
     };
     Program.prototype.draw = function () {
         Control_1.GameManager.drawObjects();
         Control_1.EditorControl.drawObjects();
     };
+    Program.prototype.setCameraValue = function (value) {
+        this.camera.update(value);
+    };
     Program.prototype.drawScene = function () {
         setInterval(function () {
             //define update loop
-            this.surface_shapes_3d.clear();
             this.surface_texobjects_2d.clear();
             this.surface_shapes_2d.clear();
-            
-            this.surface_shapes_3d.push();
+            this.surface_shapes_3d.clear();
             this.surface_texobjects_2d.push();
             this.surface_shapes_2d.push();
-            
+            this.surface_shapes_3d.push();
             //this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
             //this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
             //this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
             //this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
             this.updateLoop();
             this.draw();
-            this.surface_shapes_3d.pop();
             this.surface_texobjects_2d.pop();
             this.surface_shapes_2d.pop();
-            
+            this.surface_shapes_3d.pop();
         }.bind(this), 15);
     };
     return Program;
@@ -1023,7 +1102,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Control":2,"./DrawShapes":3,"./EngineUtility":4,"./GLUtility":5,"./GameObject":6,"./Surface":10}],9:[function(require,module,exports){
+},{"./CameraUtility":1,"./Control":2,"./DrawShapes":3,"./EngineUtility":4,"./GLUtility":5,"./GameObject":6,"./Surface":10}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1120,6 +1199,7 @@ var Sprite = /** @class */ (function () {
         var x2 = x + this.size.x;
         var y1 = y;
         var y2 = y + this.size.y;
+        //creating a new array on every draw call is gonna be really slow...
         var verticies = new Float32Array([
             x1, y1, x2, y1,
             x1, y2, x1, y2,
@@ -1223,12 +1303,16 @@ exports.DrawSurface = DrawSurface;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
+var gameProgram;
 function startProgram() {
-    var gameProgram = new Prog.Program();
+    gameProgram = new Prog.Program();
 }
 exports.startProgram = startProgram;
 window.starter = function () {
-    var gameProgram = new Prog.Program();
+    gameProgram = new Prog.Program();
+};
+window.setCameraValue = function (value) {
+    gameProgram.setCameraValue(value);
 };
 
 },{"./Program":8}],12:[function(require,module,exports){

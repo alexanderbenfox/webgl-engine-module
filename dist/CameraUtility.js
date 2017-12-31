@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("sylvester");
+var EngineUtility_1 = require("./EngineUtility");
+var gl_matrix_1 = require("gl-matrix");
 var CameraUtility;
 (function (CameraUtility) {
     function makeFrustrum(left, right, bottom, top, znear, zfar) {
@@ -35,3 +37,37 @@ var CameraUtility;
     }
     CameraUtility.makeOrtho = makeOrtho;
 })(CameraUtility || (CameraUtility = {}));
+var Camera = /** @class */ (function () {
+    function Camera(gl) {
+        this._time = 0;
+        //main matrix that carries all of the data
+        this.projectionMatrix = gl_matrix_1.mat4.create();
+        //combination of view & projection
+        this.viewProjectionMatrix = gl_matrix_1.mat4.create();
+        var fieldOfView = 45 * Math.PI / 180; //radians
+        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        var zNear = 0.1;
+        var zFar = 100.0;
+        gl_matrix_1.mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
+        this.position = new EngineUtility_1.Vector3(1, 0, 0);
+        this.rotation = new EngineUtility_1.Vector3(0, 0, 0);
+        this.update(0);
+    }
+    Camera.prototype.update = function (degree) {
+        var radians = (degree / 360) * 360 * Math.PI / 180;
+        console.log(radians);
+        this.rotation = new EngineUtility_1.Vector3(0, radians, 0);
+        this.updateMatrix();
+    };
+    Camera.prototype.updateMatrix = function () {
+        //this matrix represents the position and orientation of the camera in the world
+        var cameraMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+        //view matrix moves everything opposite to the camera - making it as though cam is at origin
+        var viewMatrix = gl_matrix_1.mat4.create();
+        viewMatrix = gl_matrix_1.mat4.invert(viewMatrix, cameraMatrix);
+        this.viewProjectionMatrix = gl_matrix_1.mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+    };
+    return Camera;
+}());
+exports.Camera = Camera;

@@ -1,10 +1,11 @@
 declare function require(name:string);
-import {Vector2} from "./EngineUtility"
+import {Vector2, Vector3} from "./EngineUtility"
 import {DrawSurface} from "./Surface"
 import {GameObject, EditorObject} from "./GameObject"
 import {Stroke, Shape, Square, Cube} from "./DrawShapes"
 import {EditorControl, GameManager} from "./Control"
 import {ShaderType} from "./GLUtility"
+import {Camera} from "./CameraUtility"
 
 class MouseData{
 	public static offset : Vector2;
@@ -26,6 +27,8 @@ export class Program{
 	surface_shapes_3d : DrawSurface;
 
 	lastUpdateTime : number;
+
+	camera : Camera;
 
 
 	constructor(){
@@ -58,13 +61,17 @@ export class Program{
 	}
 
 	createGameObjects() : void{
+		let camera3d = new Camera(this.surface_shapes_3d.gl);
+		this.camera = camera3d;
+
 		let obj_1 = new GameObject('box.png', 256, 256, this.surface_texobjects_2d, 0,0);
 		let obj_2 = new GameObject('box.png', 256, 256, this.surface_texobjects_2d, 256, 0);
 		let camera = new GameObject(null, null, null, null, 0,0);
-		let cube = new Cube(this.surface_shapes_3d);
+		let cube = new Cube(this.surface_shapes_3d, new Vector3(60,20,0), new Vector3(-1,0,-6), camera3d);
+		let cube2 = new Cube(this.surface_shapes_3d, new Vector3(10,80,0), new Vector3(3,0,-12), camera3d);
 		GameManager.camera = camera;
 		GameManager.gameObjects = [obj_1, obj_2, camera];
-		GameManager.objects3D = [cube];
+		GameManager.objects3D = [cube, cube2];
 	}
 
 	createEditorObjects() : void {
@@ -128,14 +135,19 @@ export class Program{
 
 	update(dt : number) : void{
 		let normalizedUpdateValue = (30 * dt) / 1000.0;
-		GameManager.updateObjects(dt);
-		EditorControl.updateObjects(dt);
+		GameManager.updateObjects(normalizedUpdateValue);
+		EditorControl.updateObjects(normalizedUpdateValue);
 		EditorControl.update(MouseData.position);
+		//this.camera.update(normalizedUpdateValue);
 	}
 
 	draw() : void{
 		GameManager.drawObjects();
 		EditorControl.drawObjects();
+	}
+
+	setCameraValue(value : number){
+		this.camera.update(value);
 	}
 
 	drawScene() : void{

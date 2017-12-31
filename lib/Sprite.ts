@@ -127,6 +127,8 @@ export class Sprite{
 		var y1 = y;
 		var y2 = y + this.size.y;
 
+		//creating a new array on every draw call is gonna be really slow...
+
 		var verticies = new Float32Array([
 			x1, y1, x2, y1,
 			x1, y2, x1, y2,

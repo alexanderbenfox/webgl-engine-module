@@ -1,4 +1,6 @@
 import "sylvester"
+import {Vector2, Vector3, Vector4, computeMatrix} from "./EngineUtility"
+import {mat4} from "gl-matrix"
 module CameraUtility
 {
 	export function makeFrustrum(left : number, right : number, bottom : number, top : number, znear : number, zfar:number){
@@ -35,4 +37,60 @@ module CameraUtility
 	               [0, 0, -2/(zfar-znear), tz],
 	               [0, 0, 0, 1]]);
 	}
+
+}
+
+export class Camera{
+	public position : Vector3;
+	public rotation : Vector3;
+	private _time : number = 0;
+	//main matrix that carries all of the data
+	public projectionMatrix = mat4.create();
+	//combination of view & projection
+	public viewProjectionMatrix = mat4.create();
+
+	constructor(gl : WebGLRenderingContext){
+		const fieldOfView = 45 * Math.PI / 180; //radians
+		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+		const zNear = 0.1;
+		const zFar = 100.0;
+		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
+
+		this.position = new Vector3(1,0,0);
+		this.rotation = new Vector3(0,0,0);
+
+		this.update(0);
+	}
+
+	update(degree : number){
+		//let radians = (degree/360)*360 * Math.PI/180;
+		//console.log(radians);
+		//this.rotation = new Vector3(0,radians,0);
+		this.updateMatrix();
+	}
+
+	updateMatrix(){
+		//this matrix represents the position and orientation of the camera in the world
+		var cameraMatrix = mat4.create();
+		computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+		//view matrix moves everything opposite to the camera - making it as though cam is at origin
+		var viewMatrix = mat4.create();
+		viewMatrix = mat4.invert(viewMatrix, cameraMatrix);
+		this.viewProjectionMatrix = mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+	}
+
+	lookAt(cameraPosition : Vector3, targetPosition : Vector3, up : Vector3) : any[] {
+		let zAxis = cameraPosition.sub(targetPosition).normalize();
+		let xAxis = up.cross(zAxis);
+		let yAxis = zAxis.cross(xAxis);
+		return [
+			xAxis.x, xAxis.y, xAxis.z, 0,
+			yAxis.x, yAxis.y, zAxis.z, 0,
+			zAxis.x, zAxis.y, zAxis.z, 0,
+			cameraPosition.x, cameraPosition.y, cameraPosition.z, 1
+		];
+	}
+
+
+
 }
