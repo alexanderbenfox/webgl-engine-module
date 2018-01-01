@@ -68,6 +68,10 @@ export class Vector3 extends Vector2{
 		return [this.x,this.y,this.z];
 	}
 
+	add(b : Vector3) : Vector3{
+		return new Vector3(this.x + b.x, this.y + b.y, this.z + b.z);
+	}
+
 	sub(b : Vector3) : Vector3 {
 		return new Vector3(this.x - b.x, this.y - b.y, this.z - b.z);
 	}

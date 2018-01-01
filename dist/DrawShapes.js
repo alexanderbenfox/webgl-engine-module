@@ -31,10 +31,13 @@ var Shape = /** @class */ (function () {
 }());
 exports.Shape = Shape;
 var Shape3D = /** @class */ (function () {
-    function Shape3D(surface) {
+    function Shape3D(surface, rotation, position, camera) {
         this.surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
         this._colorBuffer = surface.gl.createBuffer();
+        this.rotation = rotation;
+        this.position = position;
+        this.camera = camera;
     }
     Shape3D.prototype.blit = function () { };
     Shape3D.prototype.update = function (dt) { };
@@ -44,10 +47,7 @@ exports.Shape3D = Shape3D;
 var Cube = /** @class */ (function (_super) {
     __extends(Cube, _super);
     function Cube(surface, rotation, position, camera) {
-        var _this = _super.call(this, surface) || this;
-        _this.rotation = rotation;
-        _this.position = position;
-        _this.camera = camera;
+        var _this = _super.call(this, surface, rotation, position, camera) || this;
         var gl = _this.surface.gl;
         gl.bindBuffer(gl.ARRAY_BUFFER, _this._vertexBuffer);
         //4 verticies per side, 24 verticies in total

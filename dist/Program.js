@@ -35,6 +35,7 @@ var Program = /** @class */ (function () {
         //obj_1.move(5,5);
         //obj_2.move(-5,5);
         //camera.move(5,3);
+        this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         this.drawScene();
     }
     Program.prototype.createGameObjects = function () {
@@ -91,6 +92,28 @@ var Program = /** @class */ (function () {
             }
             Control_1.EditorControl.checkForClick(Control_1.EditorControl.editorObjects, mousePosition.x, mousePosition.y);
         };
+        document.onkeydown = function (evt) {
+            evt = evt || window.event;
+            var charCode = evt.keyCode || evt.which;
+            var down = 40;
+            var up = 38;
+            var left = 37;
+            var right = 39;
+            var z = 90;
+            var x = 88;
+            console.log(charCode);
+            if (charCode == down)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(0, -1, 0));
+            if (charCode == up)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(0, 1, 0));
+            if (charCode == right)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(1, 0, 0));
+            if (charCode == left)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(-1, 0, 0));
+        }.bind(this);
+        document.onkeyup = function (evt) {
+            this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
+        }.bind(this);
     };
     Program.prototype.updateLoop = function () {
         var currentTime = (new Date).getTime();
@@ -105,14 +128,14 @@ var Program = /** @class */ (function () {
         Control_1.GameManager.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.update(MouseData.position);
-        //this.camera.update(normalizedUpdateValue);
+        this.camera.update(Control_1.GameManager.objects3D[0], this.positionDelta);
     };
     Program.prototype.draw = function () {
         Control_1.GameManager.drawObjects();
         Control_1.EditorControl.drawObjects();
     };
     Program.prototype.setCameraValue = function (value) {
-        this.camera.update(value);
+        //this.camera.update(value);
     };
     Program.prototype.drawScene = function () {
         setInterval(function () {

@@ -51,13 +51,15 @@ var Camera = /** @class */ (function () {
         gl_matrix_1.mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
         this.position = new EngineUtility_1.Vector3(1, 0, 0);
         this.rotation = new EngineUtility_1.Vector3(0, 0, 0);
-        this.update(0);
-    }
-    Camera.prototype.update = function (degree) {
-        var radians = (degree / 360) * 360 * Math.PI / 180;
-        console.log(radians);
-        this.rotation = new EngineUtility_1.Vector3(0, radians, 0);
         this.updateMatrix();
+    }
+    Camera.prototype.update = function (lookAt, deltaMovement) {
+        //let radians = (degree/360)*360 * Math.PI/180;
+        //console.log(radians);
+        //this.rotation = new Vector3(0,radians,0);
+        //this.updateMatrix();
+        this.position = this.position.add(deltaMovement);
+        this.updateMatrixLookAt(lookAt);
     };
     Camera.prototype.updateMatrix = function () {
         //this matrix represents the position and orientation of the camera in the world
@@ -67,6 +69,27 @@ var Camera = /** @class */ (function () {
         var viewMatrix = gl_matrix_1.mat4.create();
         viewMatrix = gl_matrix_1.mat4.invert(viewMatrix, cameraMatrix);
         this.viewProjectionMatrix = gl_matrix_1.mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+    };
+    Camera.prototype.updateMatrixLookAt = function (lookAt) {
+        var cameraMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+        var cameraPosition = new EngineUtility_1.Vector3(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]);
+        var up = new EngineUtility_1.Vector3(0, 1, 0);
+        cameraMatrix = this.lookAt(cameraPosition, lookAt.position, up);
+        var viewMatrix = gl_matrix_1.mat4.create();
+        viewMatrix = gl_matrix_1.mat4.invert(viewMatrix, cameraMatrix);
+        this.viewProjectionMatrix = gl_matrix_1.mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+    };
+    Camera.prototype.lookAt = function (cameraPosition, targetPosition, up) {
+        var zAxis = cameraPosition.sub(targetPosition).normalize();
+        var xAxis = up.cross(zAxis);
+        var yAxis = zAxis.cross(xAxis);
+        return [
+            xAxis.x, xAxis.y, xAxis.z, 0,
+            yAxis.x, yAxis.y, zAxis.z, 0,
+            zAxis.x, zAxis.y, zAxis.z, 0,
+            cameraPosition.x, cameraPosition.y, cameraPosition.z, 1
+        ];
     };
     return Camera;
 }());

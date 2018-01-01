@@ -1,3 +1,4 @@
+import { Vector3 } from "./EngineUtility";
 import { DrawSurface } from "./Surface";
 import { Camera } from "./CameraUtility";
 export declare class Program {
@@ -8,6 +9,7 @@ export declare class Program {
     surface_shapes_3d: DrawSurface;
     lastUpdateTime: number;
     camera: Camera;
+    positionDelta: Vector3;
     constructor();
     createGameObjects(): void;
     createEditorObjects(): void;

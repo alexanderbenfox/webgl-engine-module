@@ -29,6 +29,7 @@ export class Program{
 	lastUpdateTime : number;
 
 	camera : Camera;
+	positionDelta : Vector3;
 
 
 	constructor(){
@@ -56,6 +57,8 @@ export class Program{
 		//obj_1.move(5,5);
 		//obj_2.move(-5,5);
 		//camera.move(5,3);
+
+		this.positionDelta = new Vector3(0,0,0); 
 
 		this.drawScene();
 	}
@@ -99,6 +102,8 @@ export class Program{
 		EditorControl.grid = lines;
 	}
 
+
+
 	assignPageEvents() : void{
 		document.onmousemove = function(ev){
 			ev = ev || <MouseEvent>window.event;
@@ -122,6 +127,33 @@ export class Program{
 			}
 			EditorControl.checkForClick(EditorControl.editorObjects, mousePosition.x, mousePosition.y);
 		};
+
+		document.onkeydown = function(evt){
+			evt = evt || <KeyboardEvent>window.event;
+			var charCode = evt.keyCode || evt.which;
+
+			var down = 40;
+			var up = 38;
+			var left = 37;
+			var right = 39;
+			var z = 90;
+			var x = 88;
+
+			console.log(charCode);
+
+			if(charCode == down)
+				this.positionDelta = this.positionDelta.add(new Vector3(0,-1,0));
+			if(charCode == up)
+				this.positionDelta = this.positionDelta.add(new Vector3(0,1,0));
+			if(charCode == right)
+				this.positionDelta = this.positionDelta.add(new Vector3(1,0,0));
+			if(charCode == left)
+				this.positionDelta = this.positionDelta.add(new Vector3(-1,0,0));
+		}.bind(this);
+
+		document.onkeyup = function(evt){
+			this.positionDelta = new Vector3(0,0,0);
+		}.bind(this);
 	}
 
 	updateLoop() : void{
@@ -138,7 +170,7 @@ export class Program{
 		GameManager.updateObjects(normalizedUpdateValue);
 		EditorControl.updateObjects(normalizedUpdateValue);
 		EditorControl.update(MouseData.position);
-		//this.camera.update(normalizedUpdateValue);
+		this.camera.update(GameManager.objects3D[0], this.positionDelta);
 	}
 
 	draw() : void{
@@ -147,7 +179,7 @@ export class Program{
 	}
 
 	setCameraValue(value : number){
-		this.camera.update(value);
+		//this.camera.update(value);
 	}
 
 	drawScene() : void{

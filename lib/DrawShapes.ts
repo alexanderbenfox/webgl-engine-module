@@ -43,10 +43,18 @@ export abstract class Shape3D implements Drawable{
 	protected _colorBuffer : any;
 	protected _indexBuffer : any;
 
-	constructor(surface : DrawSurface){
+	public rotation : Vector3;
+	public position : Vector3;
+	public camera : Camera;
+
+	constructor(surface : DrawSurface, rotation : Vector3, position : Vector3, camera : Camera){
 		this.surface = surface;
 		this._vertexBuffer = surface.gl.createBuffer();
 		this._colorBuffer = surface.gl.createBuffer();
+
+		this.rotation = rotation;
+		this.position = position;
+		this.camera = camera;
 	}
 
 	blit(){}
@@ -59,11 +67,7 @@ export class Cube extends Shape3D{
 	public position : Vector3;
 	public camera : Camera;
 	constructor(surface : DrawSurface, rotation : Vector3, position : Vector3, camera : Camera){
-		super(surface);
-
-		this.rotation = rotation;
-		this.position = position;
-		this.camera = camera;
+		super(surface, rotation, position, camera);
 
 		let gl = this.surface.gl;
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);

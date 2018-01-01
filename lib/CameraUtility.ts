@@ -1,6 +1,8 @@
 import "sylvester"
 import {Vector2, Vector3, Vector4, computeMatrix} from "./EngineUtility"
 import {mat4} from "gl-matrix"
+import {Shape3D} from "./DrawShapes"
+
 module CameraUtility
 {
 	export function makeFrustrum(left : number, right : number, bottom : number, top : number, znear : number, zfar:number){
@@ -59,14 +61,17 @@ export class Camera{
 		this.position = new Vector3(1,0,0);
 		this.rotation = new Vector3(0,0,0);
 
-		this.update(0);
+		this.updateMatrix();
 	}
 
-	update(degree : number){
+	update(lookAt : Shape3D, deltaMovement : Vector3){//degree : number){
 		//let radians = (degree/360)*360 * Math.PI/180;
 		//console.log(radians);
 		//this.rotation = new Vector3(0,radians,0);
-		this.updateMatrix();
+		//this.updateMatrix();
+
+		this.position = this.position.add(deltaMovement);
+		this.updateMatrixLookAt(lookAt);
 	}
 
 	updateMatrix(){
@@ -74,6 +79,20 @@ export class Camera{
 		var cameraMatrix = mat4.create();
 		computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
 		//view matrix moves everything opposite to the camera - making it as though cam is at origin
+		var viewMatrix = mat4.create();
+		viewMatrix = mat4.invert(viewMatrix, cameraMatrix);
+		this.viewProjectionMatrix = mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+	}
+
+	updateMatrixLookAt(lookAt : Shape3D){
+		var cameraMatrix = mat4.create();
+		computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+
+		var cameraPosition = new Vector3(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]);
+
+		var up = new Vector3(0,1,0);
+
+		cameraMatrix = this.lookAt(cameraPosition, lookAt.position, up);
 		var viewMatrix = mat4.create();
 		viewMatrix = mat4.invert(viewMatrix, cameraMatrix);
 		this.viewProjectionMatrix = mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);

@@ -80,6 +80,40 @@ var Vector3 = /** @class */ (function (_super) {
     Vector3.prototype.toArray = function () {
         return [this.x, this.y, this.z];
     };
+    Vector3.prototype.add = function (b) {
+        return new Vector3(this.x + b.x, this.y + b.y, this.z + b.z);
+    };
+    Vector3.prototype.sub = function (b) {
+        return new Vector3(this.x - b.x, this.y - b.y, this.z - b.z);
+    };
+    Vector3.prototype.cross = function (b) {
+        var a = this;
+        var x = a.y * b.z - a.z * b.y;
+        var y = a.z * b.x - a.x * b.z;
+        var z = a.x * b.y - a.y * b.x;
+        return new Vector3(x, y, z);
+    };
+    Vector3.prototype.dot = function (b) {
+        var a = this;
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    };
+    Vector3.prototype.magnitude = function () {
+        var a = this;
+        return Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    };
+    Vector3.prototype.angleBetween = function (b) {
+        //a.b = |a||b|cos(theta)
+        var dot = this.dot(b);
+        var cosTerm = dot / (this.magnitude() * b.magnitude());
+        var theta = Math.acos(cosTerm);
+        return theta;
+    };
+    Vector3.prototype.normalize = function () {
+        var mag = this.magnitude();
+        if (mag < 0.000001)
+            return new Vector3(0, 0, 0);
+        return new Vector3(this.x / mag, this.y / mag, this.z / mag);
+    };
     return Vector3;
 }(Vector2));
 exports.Vector3 = Vector3;

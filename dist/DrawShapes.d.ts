@@ -22,7 +22,10 @@ export declare abstract class Shape3D implements Drawable {
     protected _vertexBuffer: any;
     protected _colorBuffer: any;
     protected _indexBuffer: any;
-    constructor(surface: DrawSurface);
+    rotation: Vector3;
+    position: Vector3;
+    camera: Camera;
+    constructor(surface: DrawSurface, rotation: Vector3, position: Vector3, camera: Camera);
     blit(): void;
     update(dt: number): void;
 }

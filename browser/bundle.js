@@ -52,13 +52,15 @@ var Camera = /** @class */ (function () {
         gl_matrix_1.mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
         this.position = new EngineUtility_1.Vector3(1, 0, 0);
         this.rotation = new EngineUtility_1.Vector3(0, 0, 0);
-        this.update(0);
-    }
-    Camera.prototype.update = function (degree) {
-        var radians = (degree / 360) * 360 * Math.PI / 180;
-        console.log(radians);
-        this.rotation = new EngineUtility_1.Vector3(0, radians, 0);
         this.updateMatrix();
+    }
+    Camera.prototype.update = function (lookAt, deltaMovement) {
+        //let radians = (degree/360)*360 * Math.PI/180;
+        //console.log(radians);
+        //this.rotation = new Vector3(0,radians,0);
+        //this.updateMatrix();
+        this.position = this.position.add(deltaMovement);
+        this.updateMatrixLookAt(lookAt);
     };
     Camera.prototype.updateMatrix = function () {
         //this matrix represents the position and orientation of the camera in the world
@@ -68,6 +70,27 @@ var Camera = /** @class */ (function () {
         var viewMatrix = gl_matrix_1.mat4.create();
         viewMatrix = gl_matrix_1.mat4.invert(viewMatrix, cameraMatrix);
         this.viewProjectionMatrix = gl_matrix_1.mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+    };
+    Camera.prototype.updateMatrixLookAt = function (lookAt) {
+        var cameraMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+        var cameraPosition = new EngineUtility_1.Vector3(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]);
+        var up = new EngineUtility_1.Vector3(0, 1, 0);
+        cameraMatrix = this.lookAt(cameraPosition, lookAt.position, up);
+        var viewMatrix = gl_matrix_1.mat4.create();
+        viewMatrix = gl_matrix_1.mat4.invert(viewMatrix, cameraMatrix);
+        this.viewProjectionMatrix = gl_matrix_1.mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
+    };
+    Camera.prototype.lookAt = function (cameraPosition, targetPosition, up) {
+        var zAxis = cameraPosition.sub(targetPosition).normalize();
+        var xAxis = up.cross(zAxis);
+        var yAxis = zAxis.cross(xAxis);
+        return [
+            xAxis.x, xAxis.y, xAxis.z, 0,
+            yAxis.x, yAxis.y, zAxis.z, 0,
+            zAxis.x, zAxis.y, zAxis.z, 0,
+            cameraPosition.x, cameraPosition.y, cameraPosition.z, 1
+        ];
     };
     return Camera;
 }());
@@ -188,10 +211,13 @@ var Shape = /** @class */ (function () {
 }());
 exports.Shape = Shape;
 var Shape3D = /** @class */ (function () {
-    function Shape3D(surface) {
+    function Shape3D(surface, rotation, position, camera) {
         this.surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
         this._colorBuffer = surface.gl.createBuffer();
+        this.rotation = rotation;
+        this.position = position;
+        this.camera = camera;
     }
     Shape3D.prototype.blit = function () { };
     Shape3D.prototype.update = function (dt) { };
@@ -201,10 +227,7 @@ exports.Shape3D = Shape3D;
 var Cube = /** @class */ (function (_super) {
     __extends(Cube, _super);
     function Cube(surface, rotation, position, camera) {
-        var _this = _super.call(this, surface) || this;
-        _this.rotation = rotation;
-        _this.position = position;
-        _this.camera = camera;
+        var _this = _super.call(this, surface, rotation, position, camera) || this;
         var gl = _this.surface.gl;
         gl.bindBuffer(gl.ARRAY_BUFFER, _this._vertexBuffer);
         //4 verticies per side, 24 verticies in total
@@ -484,6 +507,40 @@ var Vector3 = /** @class */ (function (_super) {
     };
     Vector3.prototype.toArray = function () {
         return [this.x, this.y, this.z];
+    };
+    Vector3.prototype.add = function (b) {
+        return new Vector3(this.x + b.x, this.y + b.y, this.z + b.z);
+    };
+    Vector3.prototype.sub = function (b) {
+        return new Vector3(this.x - b.x, this.y - b.y, this.z - b.z);
+    };
+    Vector3.prototype.cross = function (b) {
+        var a = this;
+        var x = a.y * b.z - a.z * b.y;
+        var y = a.z * b.x - a.x * b.z;
+        var z = a.x * b.y - a.y * b.x;
+        return new Vector3(x, y, z);
+    };
+    Vector3.prototype.dot = function (b) {
+        var a = this;
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    };
+    Vector3.prototype.magnitude = function () {
+        var a = this;
+        return Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    };
+    Vector3.prototype.angleBetween = function (b) {
+        //a.b = |a||b|cos(theta)
+        var dot = this.dot(b);
+        var cosTerm = dot / (this.magnitude() * b.magnitude());
+        var theta = Math.acos(cosTerm);
+        return theta;
+    };
+    Vector3.prototype.normalize = function () {
+        var mag = this.magnitude();
+        if (mag < 0.000001)
+            return new Vector3(0, 0, 0);
+        return new Vector3(this.x / mag, this.y / mag, this.z / mag);
     };
     return Vector3;
 }(Vector2));
@@ -971,6 +1028,7 @@ var Program = /** @class */ (function () {
         //obj_1.move(5,5);
         //obj_2.move(-5,5);
         //camera.move(5,3);
+        this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         this.drawScene();
     }
     Program.prototype.createGameObjects = function () {
@@ -1027,6 +1085,28 @@ var Program = /** @class */ (function () {
             }
             Control_1.EditorControl.checkForClick(Control_1.EditorControl.editorObjects, mousePosition.x, mousePosition.y);
         };
+        document.onkeydown = function (evt) {
+            evt = evt || window.event;
+            var charCode = evt.keyCode || evt.which;
+            var down = 40;
+            var up = 38;
+            var left = 37;
+            var right = 39;
+            var z = 90;
+            var x = 88;
+            console.log(charCode);
+            if (charCode == down)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(0, -1, 0));
+            if (charCode == up)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(0, 1, 0));
+            if (charCode == right)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(1, 0, 0));
+            if (charCode == left)
+                this.positionDelta = this.positionDelta.add(new EngineUtility_1.Vector3(-1, 0, 0));
+        }.bind(this);
+        document.onkeyup = function (evt) {
+            this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
+        }.bind(this);
     };
     Program.prototype.updateLoop = function () {
         var currentTime = (new Date).getTime();
@@ -1041,14 +1121,14 @@ var Program = /** @class */ (function () {
         Control_1.GameManager.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.update(MouseData.position);
-        //this.camera.update(normalizedUpdateValue);
+        this.camera.update(Control_1.GameManager.objects3D[0], this.positionDelta);
     };
     Program.prototype.draw = function () {
         Control_1.GameManager.drawObjects();
         Control_1.EditorControl.drawObjects();
     };
     Program.prototype.setCameraValue = function (value) {
-        this.camera.update(value);
+        //this.camera.update(value);
     };
     Program.prototype.drawScene = function () {
         setInterval(function () {
