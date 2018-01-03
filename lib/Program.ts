@@ -170,7 +170,7 @@ export class Program{
 		GameManager.updateObjects(normalizedUpdateValue);
 		EditorControl.updateObjects(normalizedUpdateValue);
 		EditorControl.update(MouseData.position);
-		this.camera.update(GameManager.objects3D[0], this.positionDelta);
+		this.camera.updatePosition(this.positionDelta);
 	}
 
 	draw() : void{
@@ -179,7 +179,7 @@ export class Program{
 	}
 
 	setCameraValue(value : number){
-		//this.camera.update(value);
+		this.camera.update(value);
 	}
 
 	drawScene() : void{

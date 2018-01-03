@@ -8,7 +8,8 @@ export declare class Camera {
     projectionMatrix: any;
     viewProjectionMatrix: any;
     constructor(gl: WebGLRenderingContext);
-    update(lookAt: Shape3D, deltaMovement: Vector3): void;
+    update(degree: number): void;
+    updatePosition(deltaMovement: Vector3): void;
     updateMatrix(): void;
     updateMatrixLookAt(lookAt: Shape3D): void;
     lookAt(cameraPosition: Vector3, targetPosition: Vector3, up: Vector3): any[];

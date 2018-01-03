@@ -49,17 +49,20 @@ var Camera = /** @class */ (function () {
         var zNear = 0.1;
         var zFar = 100.0;
         gl_matrix_1.mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
-        this.position = new EngineUtility_1.Vector3(1, 0, 0);
+        this.position = new EngineUtility_1.Vector3(0, 0, 0);
         this.rotation = new EngineUtility_1.Vector3(0, 0, 0);
         this.updateMatrix();
     }
-    Camera.prototype.update = function (lookAt, deltaMovement) {
-        //let radians = (degree/360)*360 * Math.PI/180;
-        //console.log(radians);
-        //this.rotation = new Vector3(0,radians,0);
-        //this.updateMatrix();
+    Camera.prototype.update = function (degree) {
+        var radians = (degree / 360) * 360 * Math.PI / 180;
+        console.log(radians);
+        this.rotation = new EngineUtility_1.Vector3(0, radians, 0);
+        this.updateMatrix();
+        //this.updateMatrixLookAt(lookAt);
+    };
+    Camera.prototype.updatePosition = function (deltaMovement) {
         this.position = this.position.add(deltaMovement);
-        this.updateMatrixLookAt(lookAt);
+        this.updateMatrix();
     };
     Camera.prototype.updateMatrix = function () {
         //this matrix represents the position and orientation of the camera in the world

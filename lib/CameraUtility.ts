@@ -58,20 +58,23 @@ export class Camera{
 		const zFar = 100.0;
 		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
-		this.position = new Vector3(1,0,0);
+		this.position = new Vector3(0,0,0);
 		this.rotation = new Vector3(0,0,0);
 
 		this.updateMatrix();
 	}
 
-	update(lookAt : Shape3D, deltaMovement : Vector3){//degree : number){
-		//let radians = (degree/360)*360 * Math.PI/180;
-		//console.log(radians);
-		//this.rotation = new Vector3(0,radians,0);
-		//this.updateMatrix();
+	update(degree : number){//(lookAt : Shape3D, deltaMovement : Vector3){//degree : number){
+		let radians = (degree/360)*360 * Math.PI/180;
+		console.log(radians);
+		this.rotation = new Vector3(0,radians,0);
+		this.updateMatrix();
+		//this.updateMatrixLookAt(lookAt);
+	}
 
+	updatePosition(deltaMovement : Vector3){
 		this.position = this.position.add(deltaMovement);
-		this.updateMatrixLookAt(lookAt);
+		this.updateMatrix();
 	}
 
 	updateMatrix(){

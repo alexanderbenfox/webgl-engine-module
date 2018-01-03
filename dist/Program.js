@@ -128,14 +128,14 @@ var Program = /** @class */ (function () {
         Control_1.GameManager.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.updateObjects(normalizedUpdateValue);
         Control_1.EditorControl.update(MouseData.position);
-        this.camera.update(Control_1.GameManager.objects3D[0], this.positionDelta);
+        this.camera.updatePosition(this.positionDelta);
     };
     Program.prototype.draw = function () {
         Control_1.GameManager.drawObjects();
         Control_1.EditorControl.drawObjects();
     };
     Program.prototype.setCameraValue = function (value) {
-        //this.camera.update(value);
+        this.camera.update(value);
     };
     Program.prototype.drawScene = function () {
         setInterval(function () {
