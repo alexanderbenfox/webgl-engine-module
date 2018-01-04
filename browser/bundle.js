@@ -99,7 +99,129 @@ var Camera = /** @class */ (function () {
 }());
 exports.Camera = Camera;
 
-},{"./EngineUtility":4,"gl-matrix":13,"sylvester":14}],2:[function(require,module,exports){
+},{"./EngineUtility":5,"gl-matrix":14,"sylvester":15}],2:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var ComponentFactory = /** @class */ (function () {
+    function ComponentFactory() {
+    }
+    ComponentFactory.CreateComponent = function (type) {
+        return new type();
+    };
+    return ComponentFactory;
+}());
+exports.ComponentFactory = ComponentFactory;
+var Component = /** @class */ (function () {
+    function Component() {
+        this._initialized = false;
+        this.id = this.constructor.name;
+        this._baseComponent = this;
+        this._baseComponent.components = {};
+        this._baseComponent.components[this.id] = this;
+    }
+    Component.prototype.setBase = function (base) {
+        this._baseComponent = base;
+    };
+    Component.prototype.new = function () {
+        this.id = this.constructor.name;
+        this._baseComponent = this;
+        this._baseComponent.components = {};
+        this._baseComponent.components[this.id] = this;
+    };
+    Component.prototype.setComponents = function (components) {
+        this.components = components;
+    };
+    Component.prototype.GetID = function () {
+        return this.id;
+    };
+    Component.prototype.GetComponent = function (type) {
+        var generic = ComponentFactory.CreateComponent(type);
+        var id = generic.GetID();
+        if (typeof this._baseComponent.components[id] === "undefined") {
+            return null;
+        }
+        else
+            return this._baseComponent.components[generic.GetID()];
+    };
+    Component.prototype.AddComponent = function (type) {
+        if (this.GetComponent(type) == null) {
+            var generic = ComponentFactory.CreateComponent(type);
+            this._baseComponent.setComponents(Object.assign({}, generic.components, this.components));
+            generic.setBase(this._baseComponent);
+            if (this.gameObject != null) {
+                generic.gameObject = this.gameObject;
+            }
+            return generic;
+        }
+        else {
+            return this.GetComponent(type);
+        }
+    };
+    Component.prototype.RemoveComponent = function (type) {
+        if (this.GetComponent(type) != null && Object.keys(this._baseComponent.components).length > 1) {
+            var generic = ComponentFactory.CreateComponent(type);
+            var id = generic.GetID();
+            this._baseComponent.components[id] = null;
+            return true;
+        }
+        return false;
+    };
+    return Component;
+}());
+exports.Component = Component;
+var GameObject = /** @class */ (function (_super) {
+    __extends(GameObject, _super);
+    function GameObject() {
+        var _this = _super.call(this) || this;
+        _this.gameObject = _this;
+        _this.transform = _this.AddComponent(Transform);
+        _this.renderer = _this.AddComponent(Renderer);
+        return _this;
+    }
+    return GameObject;
+}(Component));
+exports.GameObject = GameObject;
+var Transform = /** @class */ (function (_super) {
+    __extends(Transform, _super);
+    //get childCount() : number {
+    //	return this._children.length;
+    //}
+    function Transform() {
+        return _super.call(this) || this;
+    }
+    return Transform;
+}(Component));
+exports.Transform = Transform;
+var Renderer = /** @class */ (function (_super) {
+    __extends(Renderer, _super);
+    function Renderer() {
+        return _super.call(this) || this;
+    }
+    return Renderer;
+}(Component));
+exports.Renderer = Renderer;
+function testFunction() {
+    var gameObject = new GameObject();
+    var transform = gameObject.AddComponent(Transform);
+    var transform2 = new Transform();
+    console.log(transform2.gameObject);
+    console.log(gameObject.gameObject);
+    console.log(transform.gameObject);
+    console.log(gameObject.gameObject === transform.gameObject);
+}
+exports.testFunction = testFunction;
+
+},{}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -180,7 +302,7 @@ var GameManager = /** @class */ (function () {
 }());
 exports.GameManager = GameManager;
 
-},{"./EngineUtility":4}],3:[function(require,module,exports){
+},{"./EngineUtility":5}],4:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -428,7 +550,7 @@ var Square = /** @class */ (function (_super) {
 }(Shape));
 exports.Square = Square;
 
-},{"./EngineUtility":4,"./Matrix":7,"gl-matrix":13}],4:[function(require,module,exports){
+},{"./EngineUtility":5,"./Matrix":8,"gl-matrix":14}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -599,7 +721,7 @@ function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
 }
 exports.computeMatrix = computeMatrix;
 
-},{"gl-matrix":13}],5:[function(require,module,exports){
+},{"gl-matrix":14}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
@@ -728,7 +850,7 @@ var GLUtility;
     GLUtility.nextPowerOfTwo = nextPowerOfTwo;
 })(GLUtility = exports.GLUtility || (exports.GLUtility = {}));
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -836,7 +958,7 @@ var GameObject = /** @class */ (function (_super) {
 }(Object2D));
 exports.GameObject = GameObject;
 
-},{"./Control":2,"./EngineUtility":4,"./Sprite":9}],7:[function(require,module,exports){
+},{"./Control":3,"./EngineUtility":5,"./Sprite":10}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -993,7 +1115,7 @@ var MatrixUtil = /** @class */ (function () {
 }());
 exports.MatrixUtil = MatrixUtil;
 
-},{"sylvester":14}],8:[function(require,module,exports){
+},{"sylvester":15}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1185,7 +1307,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./CameraUtility":1,"./Control":2,"./DrawShapes":3,"./EngineUtility":4,"./GLUtility":5,"./GameObject":6,"./Surface":10}],9:[function(require,module,exports){
+},{"./CameraUtility":1,"./Control":3,"./DrawShapes":4,"./EngineUtility":5,"./GLUtility":6,"./GameObject":7,"./Surface":11}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1315,7 +1437,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"./EngineUtility":4,"./GLUtility":5,"./Matrix":7}],10:[function(require,module,exports){
+},{"./EngineUtility":5,"./GLUtility":6,"./Matrix":8}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1382,25 +1504,28 @@ var DrawSurface = /** @class */ (function () {
 }());
 exports.DrawSurface = DrawSurface;
 
-},{"./EngineUtility":4,"./GLUtility":5,"./Matrix":7}],11:[function(require,module,exports){
+},{"./EngineUtility":5,"./GLUtility":6,"./Matrix":8}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
+var Component_1 = require("./Component");
 var gameProgram;
 function startProgram() {
     gameProgram = new Prog.Program();
 }
 exports.startProgram = startProgram;
 window.starter = function () {
+    Component_1.testFunction();
+    console.log("Ran tests");
     gameProgram = new Prog.Program();
 };
 window.setCameraValue = function (value) {
     gameProgram.setCameraValue(value);
 };
 
-},{"./Program":8}],12:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"sylvester":14}],13:[function(require,module,exports){
+},{"./Component":2,"./Program":9}],13:[function(require,module,exports){
+arguments[4][8][0].apply(exports,arguments)
+},{"dup":8,"sylvester":15}],14:[function(require,module,exports){
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations
  * @author Brandon Jones
@@ -8289,7 +8414,7 @@ var forEach = exports.forEach = function () {
 /***/ })
 /******/ ]);
 });
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (global){
 // Copyright (c) 2011, Chris Umbel
 
@@ -8305,7 +8430,7 @@ exports.Line.Segment = require('./line.segment');
 exports.Sylvester = require('./sylvester');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./line":15,"./line.segment":16,"./matrix":17,"./plane":18,"./sylvester":19,"./vector":20}],15:[function(require,module,exports){
+},{"./line":16,"./line.segment":17,"./matrix":18,"./plane":19,"./sylvester":20,"./vector":21}],16:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 var Vector = require('./vector');
 var Matrix = require('./matrix');
@@ -8538,7 +8663,7 @@ Line.Z = Line.create(Vector.Zero(3), Vector.k);
 
 module.exports = Line;
 
-},{"./matrix":17,"./plane":18,"./sylvester":19,"./vector":20}],16:[function(require,module,exports){
+},{"./matrix":18,"./plane":19,"./sylvester":20,"./vector":21}],17:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Line.Segment class - depends on Line and its dependencies.
 
@@ -8666,7 +8791,7 @@ Line.Segment.create = function(v1, v2) {
 
 module.exports = Line.Segment;
 
-},{"./line":15,"./vector":20}],17:[function(require,module,exports){
+},{"./line":16,"./vector":21}],18:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Matrix class - depends on Vector.
 
@@ -9704,7 +9829,7 @@ Matrix.Ones = function(n, m) {
 
 module.exports = Matrix;
 
-},{"./sylvester":19,"./vector":20,"fs":21,"lapack":21}],18:[function(require,module,exports){
+},{"./sylvester":20,"./vector":21,"fs":22,"lapack":22}],19:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Plane class - depends on Vector. Some methods require Matrix and Line.
 var Vector = require('./vector');
@@ -9980,7 +10105,7 @@ Plane.fromPoints = function(points) {
 
 module.exports = Plane;
 
-},{"./line":15,"./matrix":17,"./sylvester":19,"./vector":20}],19:[function(require,module,exports){
+},{"./line":16,"./matrix":18,"./sylvester":20,"./vector":21}],20:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -9997,7 +10122,7 @@ var Sylvester = {
 
 module.exports = Sylvester;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -10437,7 +10562,7 @@ Vector.log = function(v) {
 
 module.exports = Vector;
 
-},{"./matrix":17,"./sylvester":19}],21:[function(require,module,exports){
+},{"./matrix":18,"./sylvester":20}],22:[function(require,module,exports){
 
-},{}]},{},[1,2,3,4,5,6,7,8,9,10,11,12])(12)
+},{}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13])(13)
 });
