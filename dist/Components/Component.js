@@ -112,8 +112,6 @@ var Component = /** @class */ (function () {
         var generic = ComponentFactory.CreateComponent(type);
         var id = generic.GetID();
         if (this._baseComponent.components.containsId(id)) {
-            console.log(id);
-            console.log(this._baseComponent.components.lookUp(id));
             return this._baseComponent.components.lookUp(id);
         }
         else
@@ -127,7 +125,6 @@ var Component = /** @class */ (function () {
             }
             this._baseComponent.components.add(generic.GetID(), generic);
             generic.setBase(this._baseComponent.gameObject);
-            console.log(this._baseComponent.components);
             return generic;
         }
         else {

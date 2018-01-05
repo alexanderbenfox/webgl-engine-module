@@ -14,9 +14,14 @@ export abstract class Renderer3D extends Renderer implements Drawable{
 	protected positions : Float32Array;
 	protected colors : Float32Array;
 	protected indicies : Uint16Array;
-	protected _vertexBuffer : any;
-	protected _colorBuffer : any;
-	protected _indexBuffer : any;
+
+	//used for lighting
+	protected normals : Float32Array;
+	protected _normalBuffer : WebGLBuffer;
+	
+	protected _vertexBuffer : WebGLBuffer;
+	protected _colorBuffer : WebGLBuffer;
+	protected _indexBuffer : WebGLBuffer;
 
 	constructor(){
 		super();
@@ -27,6 +32,7 @@ export abstract class Renderer3D extends Renderer implements Drawable{
 		this.surface = surface;
 		this._vertexBuffer = surface.gl.createBuffer();
 		this._colorBuffer = surface.gl.createBuffer();
+		this._normalBuffer = surface.gl.createBuffer();
 
 		this.camera = camera;
 	}
@@ -40,10 +46,8 @@ export class CubeRenderer extends Renderer3D{
 	constructor(){
 		super();
 	}
-	init(surface : DrawSurface, camera : Camera){
-		super.init(surface, camera);
 
-		let gl = this.surface.gl;
+	initVertexBuffer(gl : WebGLRenderingContext){
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
 
 		//4 verticies per side, 24 verticies in total
@@ -88,8 +92,11 @@ export class CubeRenderer extends Renderer3D{
 		this.positions = new Float32Array(vertexPositions);
 
 		gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+	}
 
-		let white_color = [1.0, 1.0, 1.0, 1.0];
+	initColorBuffer(gl : WebGLRenderingContext){
+		//colors each face white - for now
+		let white_color = [1.0, 1.0, 1.0, 0.9];
 
 		//6 faces
 		const faceColors = [white_color, white_color, white_color, white_color, white_color, white_color];
@@ -105,7 +112,9 @@ export class CubeRenderer extends Renderer3D{
 		this._colorBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+	}
 
+	initIndexBuffer(gl : WebGLRenderingContext){
 		this._indexBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
 
@@ -123,6 +132,63 @@ export class CubeRenderer extends Renderer3D{
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
 	}
 
+	initNormalBuffer(gl : WebGLRenderingContext){
+		this._normalBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
+
+		let vertexNormals = [
+		// Front
+		0.0,  0.0,  1.0,
+		0.0,  0.0,  1.0,
+		0.0,  0.0,  1.0,
+		0.0,  0.0,  1.0,
+
+		// Back
+		0.0,  0.0, -1.0,
+		0.0,  0.0, -1.0,
+		0.0,  0.0, -1.0,
+		0.0,  0.0, -1.0,
+
+		    // Top
+		0.0,  1.0,  0.0,
+		0.0,  1.0,  0.0,
+		0.0,  1.0,  0.0,
+		0.0,  1.0,  0.0,
+
+		// Bottom
+		0.0, -1.0,  0.0,
+		0.0, -1.0,  0.0,
+		0.0, -1.0,  0.0,
+		0.0, -1.0,  0.0,
+
+		// Right
+		1.0,  0.0,  0.0,
+		1.0,  0.0,  0.0,
+		1.0,  0.0,  0.0,
+		1.0,  0.0,  0.0,
+
+		// Left
+		-1.0,  0.0,  0.0,
+		-1.0,  0.0,  0.0,
+		-1.0,  0.0,  0.0,
+		-1.0,  0.0,  0.0
+		];
+
+		this.normals = new Float32Array(vertexNormals);
+
+		gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+	}
+
+	init(surface : DrawSurface, camera : Camera){
+		super.init(surface, camera);
+
+		let gl = this.surface.gl;
+		this.initVertexBuffer(gl);
+		this.initColorBuffer(gl);
+		this.initIndexBuffer(gl);
+		this.initNormalBuffer(gl);
+	}
+
 	blit() : void{
 		let surface = this.surface;
 		let gl = this.surface.gl;
@@ -133,22 +199,34 @@ export class CubeRenderer extends Renderer3D{
 
 		computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
 
-		this.assignAttrib(this._vertexBuffer,this.surface.locations.position, 3);
-		this.assignAttrib(this._colorBuffer, this.surface.locations.texture, 4);
+		this.assignAttrib(this._vertexBuffer,this.surface.locations.attributes.position, 3);
+		this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.texture, 4);
+		this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
+
 		this.bindIndexToVerts();
 
 		gl.useProgram(program);
 
 		gl.uniformMatrix4fv(
-			surface.locations.projection,
+			surface.locations.uniforms.projection,
 			false,
 			this.camera.viewProjectionMatrix
 			);
 
 		gl.uniformMatrix4fv(
-			surface.locations.matrix,
+			surface.locations.uniforms.matrix,
 			false,
 			modelViewMatrix
+			);
+
+		const normalMatrix = mat4.create();
+		mat4.invert(normalMatrix, modelViewMatrix);
+		mat4.transpose(normalMatrix, normalMatrix);
+
+		gl.uniformMatrix4fv(
+			surface.locations.uniforms.normal,
+			false,
+			normalMatrix
 			);
 
 		const vertexCount = 36;

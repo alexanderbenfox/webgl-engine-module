@@ -111,8 +111,6 @@ export class Component{
 		var id = generic.GetID();
 
 		if (this._baseComponent.components.containsId(id)) {
-			console.log(id);
-			console.log(this._baseComponent.components.lookUp(id));
             return this._baseComponent.components.lookUp(id);
         }
         else return null;
@@ -126,8 +124,6 @@ export class Component{
 			}
 			this._baseComponent.components.add(generic.GetID(), generic);
 			generic.setBase(this._baseComponent.gameObject);
-
-			console.log(this._baseComponent.components);
 
 			return <T>generic;
 

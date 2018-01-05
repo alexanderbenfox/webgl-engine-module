@@ -2,13 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
 var ShaderProperties = /** @class */ (function () {
-    function ShaderProperties(position_, texture_, resolution_, matrix_, projection_, program_) {
-        this.position = position_;
-        this.texture = texture_;
-        this.resolution = resolution_;
-        this.matrix = matrix_;
-        this.projection = projection_;
-        this.program = program_;
+    function ShaderProperties(attributes, uniforms, program) {
+        this.attributes = attributes;
+        this.uniforms = uniforms;
+        this.program = program;
     }
     return ShaderProperties;
 }());
@@ -65,11 +62,27 @@ var GLUtility;
         gl.enableVertexAttribArray(vertexPosition);
         var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
         gl.enableVertexAttribArray(textureCoordinate);
+        var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
+        gl.enableVertexAttribArray(vertexNormal);
+        var directionalLightingColor = gl.getAttribLocation(shaderProgram, 'aDirectionalLightColor');
+        gl.enableVertexAttribArray(directionalLightingColor);
+        var directionalLightingVector = gl.getAttribLocation(shaderProgram, 'aDirectionalLightVector');
+        gl.enableVertexAttribArray(directionalLightingVector);
+        var attributes = { position: vertexPosition,
+            texture: textureCoordinate,
+            normal: vertexNormal,
+            directionalLightColor: directionalLightingColor,
+            directionalLightVector: directionalLightingVector };
         var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
         var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
         var projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
+        var normalMatrix = gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+        var uniforms = { resolution: resolutionLocation,
+            matrix: transformationMatrix,
+            projection: projectionMatrix,
+            normal: normalMatrix };
         console.log("Shaders initialized.");
-        return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, projectionMatrix, shaderProgram);
+        return new ShaderProperties(attributes, uniforms, shaderProgram);
     }
     GLUtility.initShaders = initShaders;
     function getShader(gl, id, type) {

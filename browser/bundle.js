@@ -632,8 +632,6 @@ var Component = /** @class */ (function () {
         var generic = ComponentFactory.CreateComponent(type);
         var id = generic.GetID();
         if (this._baseComponent.components.containsId(id)) {
-            console.log(id);
-            console.log(this._baseComponent.components.lookUp(id));
             return this._baseComponent.components.lookUp(id);
         }
         else
@@ -647,7 +645,6 @@ var Component = /** @class */ (function () {
             }
             this._baseComponent.components.add(generic.GetID(), generic);
             generic.setBase(this._baseComponent.gameObject);
-            console.log(this._baseComponent.components);
             return generic;
         }
         else {
@@ -836,6 +833,7 @@ var Renderer3D = /** @class */ (function (_super) {
         this.surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
         this._colorBuffer = surface.gl.createBuffer();
+        this._normalBuffer = surface.gl.createBuffer();
         this.camera = camera;
     };
     Renderer3D.prototype.blit = function () { };
@@ -848,9 +846,7 @@ var CubeRenderer = /** @class */ (function (_super) {
     function CubeRenderer() {
         return _super.call(this) || this;
     }
-    CubeRenderer.prototype.init = function (surface, camera) {
-        _super.prototype.init.call(this, surface, camera);
-        var gl = this.surface.gl;
+    CubeRenderer.prototype.initVertexBuffer = function (gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
         //4 verticies per side, 24 verticies in total
         var vertexPositions = [
@@ -887,7 +883,10 @@ var CubeRenderer = /** @class */ (function (_super) {
         ];
         this.positions = new Float32Array(vertexPositions);
         gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
-        var white_color = [1.0, 1.0, 1.0, 1.0];
+    };
+    CubeRenderer.prototype.initColorBuffer = function (gl) {
+        //colors each face white - for now
+        var white_color = [1.0, 1.0, 1.0, 0.9];
         //6 faces
         var faceColors = [white_color, white_color, white_color, white_color, white_color, white_color];
         var colors = [];
@@ -899,6 +898,8 @@ var CubeRenderer = /** @class */ (function (_super) {
         this._colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    };
+    CubeRenderer.prototype.initIndexBuffer = function (gl) {
         this._indexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
         var indicies = [
@@ -912,6 +913,52 @@ var CubeRenderer = /** @class */ (function (_super) {
         this.indicies = new Uint16Array(indicies);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
     };
+    CubeRenderer.prototype.initNormalBuffer = function (gl) {
+        this._normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
+        var vertexNormals = [
+            // Front
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            // Back
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            // Top
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            // Bottom
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            // Right
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            // Left
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0
+        ];
+        this.normals = new Float32Array(vertexNormals);
+        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+    };
+    CubeRenderer.prototype.init = function (surface, camera) {
+        _super.prototype.init.call(this, surface, camera);
+        var gl = this.surface.gl;
+        this.initVertexBuffer(gl);
+        this.initColorBuffer(gl);
+        this.initIndexBuffer(gl);
+        this.initNormalBuffer(gl);
+    };
     CubeRenderer.prototype.blit = function () {
         var surface = this.surface;
         var gl = this.surface.gl;
@@ -919,12 +966,17 @@ var CubeRenderer = /** @class */ (function (_super) {
         //drawing position
         var modelViewMatrix = gl_matrix_1.mat4.create();
         EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
-        this.assignAttrib(this._vertexBuffer, this.surface.locations.position, 3);
-        this.assignAttrib(this._colorBuffer, this.surface.locations.texture, 4);
+        this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
+        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.texture, 4);
+        this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
         this.bindIndexToVerts();
         gl.useProgram(program);
-        gl.uniformMatrix4fv(surface.locations.projection, false, this.camera.viewProjectionMatrix);
-        gl.uniformMatrix4fv(surface.locations.matrix, false, modelViewMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
+        var normalMatrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
+        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
         var vertexCount = 36;
         var type = gl.UNSIGNED_SHORT;
         var offset = 0;
@@ -1057,9 +1109,9 @@ var SpriteRenderer = /** @class */ (function (_super) {
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
         gl.useProgram(program);
-        var vertexPosition = surface.locations.position;
-        var vertexTexture = surface.locations.texture;
-        var matrixLocation = surface.locations.matrix;
+        var vertexPosition = surface.locations.attributes.position;
+        var vertexTexture = surface.locations.attributes.texture;
+        var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -1160,9 +1212,9 @@ var AnimatedSprite = /** @class */ (function (_super) {
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
         gl.useProgram(program);
-        var vertexPosition = surface.locations.position;
-        var vertexTexture = surface.locations.texture;
-        var matrixLocation = surface.locations.matrix;
+        var vertexPosition = surface.locations.attributes.position;
+        var vertexTexture = surface.locations.attributes.texture;
+        var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -1757,13 +1809,10 @@ exports.computeMatrix = computeMatrix;
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
 var ShaderProperties = /** @class */ (function () {
-    function ShaderProperties(position_, texture_, resolution_, matrix_, projection_, program_) {
-        this.position = position_;
-        this.texture = texture_;
-        this.resolution = resolution_;
-        this.matrix = matrix_;
-        this.projection = projection_;
-        this.program = program_;
+    function ShaderProperties(attributes, uniforms, program) {
+        this.attributes = attributes;
+        this.uniforms = uniforms;
+        this.program = program;
     }
     return ShaderProperties;
 }());
@@ -1820,11 +1869,27 @@ var GLUtility;
         gl.enableVertexAttribArray(vertexPosition);
         var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
         gl.enableVertexAttribArray(textureCoordinate);
+        var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
+        gl.enableVertexAttribArray(vertexNormal);
+        var directionalLightingColor = gl.getAttribLocation(shaderProgram, 'aDirectionalLightColor');
+        gl.enableVertexAttribArray(directionalLightingColor);
+        var directionalLightingVector = gl.getAttribLocation(shaderProgram, 'aDirectionalLightVector');
+        gl.enableVertexAttribArray(directionalLightingVector);
+        var attributes = { position: vertexPosition,
+            texture: textureCoordinate,
+            normal: vertexNormal,
+            directionalLightColor: directionalLightingColor,
+            directionalLightVector: directionalLightingVector };
         var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
         var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
         var projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
+        var normalMatrix = gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+        var uniforms = { resolution: resolutionLocation,
+            matrix: transformationMatrix,
+            projection: projectionMatrix,
+            normal: normalMatrix };
         console.log("Shaders initialized.");
-        return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, projectionMatrix, shaderProgram);
+        return new ShaderProperties(attributes, uniforms, shaderProgram);
     }
     GLUtility.initShaders = initShaders;
     function getShader(gl, id, type) {
@@ -2247,6 +2312,7 @@ var Program = /** @class */ (function () {
         this.worldCamera = worldCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.worldCamera.init(this.gl);
         this.worldCamera.AddComponent(Component_1.GameObject);
+        worldCamera_gameObject.transform.position = new EngineUtility_1.Vector3(0, 0, 5);
         var uiCamera_gameObject = new Component_1.GameObject();
         this.uiCamera = uiCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.uiCamera.init(this.gl);
@@ -2574,7 +2640,7 @@ var DrawSurface = /** @class */ (function () {
         this.density = density;
         this.gl.viewport(0, 0, width, height);
         this.gl.useProgram(this._program);
-        this.gl.uniform2f(this.locations.resolution, width, height);
+        this.gl.uniform2f(this.locations.uniforms.resolution, width, height);
     };
     DrawSurface.prototype.clear = function () {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);

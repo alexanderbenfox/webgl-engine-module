@@ -58,9 +58,9 @@ var LineRenderer = /** @class */ (function (_super) {
         var gl = this._surface.gl;
         var program = this._surface.locations.program;
         gl.useProgram(program);
-        var vertexPosition = surface.locations.position;
-        var vertexColor = surface.locations.texture;
-        var matrixLocation = surface.locations.matrix;
+        var vertexPosition = surface.locations.attributes.position;
+        var vertexColor = surface.locations.attributes.texture;
+        var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         //gl.disableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
@@ -110,9 +110,9 @@ var SquareRenderer = /** @class */ (function (_super) {
         var gl = this._surface.gl;
         var program = this._surface.locations.program;
         gl.useProgram(program);
-        var vertexPosition = surface.locations.position;
-        var vertexColor = surface.locations.texture;
-        var matrixLocation = surface.locations.matrix;
+        var vertexPosition = surface.locations.attributes.position;
+        var vertexColor = surface.locations.attributes.texture;
+        var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         //gl.disableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);

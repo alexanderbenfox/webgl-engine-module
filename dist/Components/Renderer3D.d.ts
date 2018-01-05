@@ -10,9 +10,11 @@ export declare abstract class Renderer3D extends Renderer implements Drawable {
     protected positions: Float32Array;
     protected colors: Float32Array;
     protected indicies: Uint16Array;
-    protected _vertexBuffer: any;
-    protected _colorBuffer: any;
-    protected _indexBuffer: any;
+    protected normals: Float32Array;
+    protected _normalBuffer: WebGLBuffer;
+    protected _vertexBuffer: WebGLBuffer;
+    protected _colorBuffer: WebGLBuffer;
+    protected _indexBuffer: WebGLBuffer;
     constructor();
     init(surface: DrawSurface, camera: Camera): void;
     blit(): void;
@@ -20,6 +22,10 @@ export declare abstract class Renderer3D extends Renderer implements Drawable {
 }
 export declare class CubeRenderer extends Renderer3D {
     constructor();
+    initVertexBuffer(gl: WebGLRenderingContext): void;
+    initColorBuffer(gl: WebGLRenderingContext): void;
+    initIndexBuffer(gl: WebGLRenderingContext): void;
+    initNormalBuffer(gl: WebGLRenderingContext): void;
     init(surface: DrawSurface, camera: Camera): void;
     blit(): void;
     assignAttrib(buffer: any, attribLocation: any, components: number): void;

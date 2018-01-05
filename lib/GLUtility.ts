@@ -3,20 +3,34 @@ declare function require(name:string);
 import {Vector2} from "./EngineUtility"
 
 export class ShaderProperties{
-	public position : GLint;
-	public texture : GLint
-	public resolution : WebGLUniformLocation;
-	public matrix : WebGLUniformLocation;
-	public projection : WebGLUniformLocation;
-	public program : WebGLProgram;
 
-	constructor(position_ : GLint, texture_ : GLint, resolution_ : WebGLUniformLocation, matrix_ : WebGLUniformLocation, projection_ : WebGLUniformLocation,program_ : WebGLProgram){
-		this.position = position_;
-		this.texture = texture_;
-		this.resolution = resolution_;
-		this.matrix = matrix_;
-		this.projection = projection_;
-		this.program = program_;
+	public attributes : {
+		position : GLint,
+		texture : GLint,
+		normal : GLint,
+
+		directionalLightColor : GLint,
+		directionalLightVector : GLint;
+	};
+
+	public uniforms : {
+		resolution : WebGLUniformLocation,
+		matrix : WebGLUniformLocation,
+		projection : WebGLUniformLocation,
+		normal : WebGLUniformLocation;
+	};
+
+	public program : WebGLProgram;
+	
+
+	constructor(attributes : {position : GLint, texture : GLint, normal : GLint, directionalLightColor : GLint, directionalLightVector : GLint;},
+				uniforms : {resolution : WebGLUniformLocation, matrix : WebGLUniformLocation, projection : WebGLUniformLocation, normal : WebGLUniformLocation;},
+				program : WebGLProgram){
+
+		this.attributes = attributes;
+		this.uniforms = uniforms;
+		this.program = program;
+
 	}
 }
 
@@ -77,13 +91,34 @@ export module GLUtility{
 		var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
 		gl.enableVertexAttribArray(textureCoordinate);
 
+		var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
+		gl.enableVertexAttribArray(vertexNormal);
+
+		var directionalLightingColor = gl.getAttribLocation(shaderProgram, 'aDirectionalLightColor');
+		gl.enableVertexAttribArray(directionalLightingColor);
+
+		var directionalLightingVector = gl.getAttribLocation(shaderProgram, 'aDirectionalLightVector');
+		gl.enableVertexAttribArray(directionalLightingVector);
+
+		var attributes = {position : vertexPosition,
+						 texture : textureCoordinate,
+						 normal : vertexNormal, 
+						 directionalLightColor : directionalLightingColor,
+						 directionalLightVector : directionalLightingVector};
+
 		var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
 		var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
 		let projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
+		let normalMatrix = gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+
+		var uniforms = {resolution : resolutionLocation,
+						matrix : transformationMatrix,
+						projection : projectionMatrix,
+						normal : normalMatrix};
 
 		console.log("Shaders initialized.")
 
-		return new ShaderProperties(vertexPosition, textureCoordinate, resolutionLocation, transformationMatrix, projectionMatrix, shaderProgram);
+		return new ShaderProperties(attributes, uniforms, shaderProgram);
 	}
 
 	export function getShader(gl : WebGLRenderingContext, id : string, type : any = false) : WebGLShader{

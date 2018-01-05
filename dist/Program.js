@@ -46,6 +46,7 @@ var Program = /** @class */ (function () {
         this.worldCamera = worldCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.worldCamera.init(this.gl);
         this.worldCamera.AddComponent(Component_1.GameObject);
+        worldCamera_gameObject.transform.position = new EngineUtility_1.Vector3(0, 0, 5);
         var uiCamera_gameObject = new Component_1.GameObject();
         this.uiCamera = uiCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.uiCamera.init(this.gl);

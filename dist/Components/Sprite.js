@@ -90,9 +90,9 @@ var SpriteRenderer = /** @class */ (function (_super) {
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
         gl.useProgram(program);
-        var vertexPosition = surface.locations.position;
-        var vertexTexture = surface.locations.texture;
-        var matrixLocation = surface.locations.matrix;
+        var vertexPosition = surface.locations.attributes.position;
+        var vertexTexture = surface.locations.attributes.texture;
+        var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -193,9 +193,9 @@ var AnimatedSprite = /** @class */ (function (_super) {
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
         gl.useProgram(program);
-        var vertexPosition = surface.locations.position;
-        var vertexTexture = surface.locations.texture;
-        var matrixLocation = surface.locations.matrix;
+        var vertexPosition = surface.locations.attributes.position;
+        var vertexTexture = surface.locations.attributes.texture;
+        var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);

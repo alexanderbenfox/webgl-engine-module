@@ -73,9 +73,9 @@ export class LineRenderer extends Renderer2D implements Drawable{
 
 		gl.useProgram(program);
 
-		let vertexPosition = surface.locations.position;
-		let vertexColor = surface.locations.texture;
-		let matrixLocation = surface.locations.matrix;
+		let vertexPosition = surface.locations.attributes.position;
+		let vertexColor = surface.locations.attributes.texture;
+		let matrixLocation = surface.locations.uniforms.matrix;
 		let matrix = surface.getMatrix();
 
 		//gl.disableVertexAttribArray(vertexTexture);
@@ -139,9 +139,9 @@ export class SquareRenderer extends Renderer2D implements Drawable{
 
 		gl.useProgram(program);
 
-		var vertexPosition = surface.locations.position;
-		var vertexColor = surface.locations.texture;
-		var matrixLocation = surface.locations.matrix;
+		var vertexPosition = surface.locations.attributes.position;
+		var vertexColor = surface.locations.attributes.texture;
+		var matrixLocation = surface.locations.uniforms.matrix;
 		var matrix = surface.getMatrix();
 
 		//gl.disableVertexAttribArray(vertexTexture);

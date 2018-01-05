@@ -23,6 +23,7 @@ var Renderer3D = /** @class */ (function (_super) {
         this.surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
         this._colorBuffer = surface.gl.createBuffer();
+        this._normalBuffer = surface.gl.createBuffer();
         this.camera = camera;
     };
     Renderer3D.prototype.blit = function () { };
@@ -35,9 +36,7 @@ var CubeRenderer = /** @class */ (function (_super) {
     function CubeRenderer() {
         return _super.call(this) || this;
     }
-    CubeRenderer.prototype.init = function (surface, camera) {
-        _super.prototype.init.call(this, surface, camera);
-        var gl = this.surface.gl;
+    CubeRenderer.prototype.initVertexBuffer = function (gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
         //4 verticies per side, 24 verticies in total
         var vertexPositions = [
@@ -74,7 +73,10 @@ var CubeRenderer = /** @class */ (function (_super) {
         ];
         this.positions = new Float32Array(vertexPositions);
         gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
-        var white_color = [1.0, 1.0, 1.0, 1.0];
+    };
+    CubeRenderer.prototype.initColorBuffer = function (gl) {
+        //colors each face white - for now
+        var white_color = [1.0, 1.0, 1.0, 0.9];
         //6 faces
         var faceColors = [white_color, white_color, white_color, white_color, white_color, white_color];
         var colors = [];
@@ -86,6 +88,8 @@ var CubeRenderer = /** @class */ (function (_super) {
         this._colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    };
+    CubeRenderer.prototype.initIndexBuffer = function (gl) {
         this._indexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
         var indicies = [
@@ -99,6 +103,52 @@ var CubeRenderer = /** @class */ (function (_super) {
         this.indicies = new Uint16Array(indicies);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
     };
+    CubeRenderer.prototype.initNormalBuffer = function (gl) {
+        this._normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
+        var vertexNormals = [
+            // Front
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            // Back
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            // Top
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            // Bottom
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            // Right
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            // Left
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0
+        ];
+        this.normals = new Float32Array(vertexNormals);
+        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+    };
+    CubeRenderer.prototype.init = function (surface, camera) {
+        _super.prototype.init.call(this, surface, camera);
+        var gl = this.surface.gl;
+        this.initVertexBuffer(gl);
+        this.initColorBuffer(gl);
+        this.initIndexBuffer(gl);
+        this.initNormalBuffer(gl);
+    };
     CubeRenderer.prototype.blit = function () {
         var surface = this.surface;
         var gl = this.surface.gl;
@@ -106,12 +156,17 @@ var CubeRenderer = /** @class */ (function (_super) {
         //drawing position
         var modelViewMatrix = gl_matrix_1.mat4.create();
         EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
-        this.assignAttrib(this._vertexBuffer, this.surface.locations.position, 3);
-        this.assignAttrib(this._colorBuffer, this.surface.locations.texture, 4);
+        this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
+        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.texture, 4);
+        this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
         this.bindIndexToVerts();
         gl.useProgram(program);
-        gl.uniformMatrix4fv(surface.locations.projection, false, this.camera.viewProjectionMatrix);
-        gl.uniformMatrix4fv(surface.locations.matrix, false, modelViewMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
+        var normalMatrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
+        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
         var vertexCount = 36;
         var type = gl.UNSIGNED_SHORT;
         var offset = 0;

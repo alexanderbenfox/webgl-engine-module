@@ -44,7 +44,7 @@ export class DrawSurface{
 		this.gl.viewport(0,0,width,height);
 
 		this.gl.useProgram(this._program);
-		this.gl.uniform2f(this.locations.resolution, width, height);
+		this.gl.uniform2f(this.locations.uniforms.resolution, width, height);
 	}
 
 	clear() : void{

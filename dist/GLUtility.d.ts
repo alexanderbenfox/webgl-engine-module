@@ -1,13 +1,32 @@
 /// <reference path="EngineUtility.d.ts" />
 import { Vector2 } from "./EngineUtility";
 export declare class ShaderProperties {
-    position: GLint;
-    texture: GLint;
-    resolution: WebGLUniformLocation;
-    matrix: WebGLUniformLocation;
-    projection: WebGLUniformLocation;
+    attributes: {
+        position: GLint;
+        texture: GLint;
+        normal: GLint;
+        directionalLightColor: GLint;
+        directionalLightVector: GLint;
+    };
+    uniforms: {
+        resolution: WebGLUniformLocation;
+        matrix: WebGLUniformLocation;
+        projection: WebGLUniformLocation;
+        normal: WebGLUniformLocation;
+    };
     program: WebGLProgram;
-    constructor(position_: GLint, texture_: GLint, resolution_: WebGLUniformLocation, matrix_: WebGLUniformLocation, projection_: WebGLUniformLocation, program_: WebGLProgram);
+    constructor(attributes: {
+        position: GLint;
+        texture: GLint;
+        normal: GLint;
+        directionalLightColor: GLint;
+        directionalLightVector: GLint;
+    }, uniforms: {
+        resolution: WebGLUniformLocation;
+        matrix: WebGLUniformLocation;
+        projection: WebGLUniformLocation;
+        normal: WebGLUniformLocation;
+    }, program: WebGLProgram);
 }
 export declare enum ShaderType {
     texture_2d = 0,

@@ -108,9 +108,9 @@ export class SpriteRenderer extends Renderer{
 
 		gl.useProgram(program);
 
-		var vertexPosition = surface.locations.position;
-		var vertexTexture = surface.locations.texture;
-		var matrixLocation = surface.locations.matrix;
+		var vertexPosition = surface.locations.attributes.position;
+		var vertexTexture = surface.locations.attributes.texture;
+		var matrixLocation = surface.locations.uniforms.matrix;
 		var matrix = surface.getMatrix();
 
 		gl.enableVertexAttribArray(vertexTexture);
@@ -245,9 +245,9 @@ export class AnimatedSprite extends SpriteRenderer{
 
 		gl.useProgram(program);
 
-		var vertexPosition = surface.locations.position;
-		var vertexTexture = surface.locations.texture;
-		var matrixLocation = surface.locations.matrix;
+		var vertexPosition = surface.locations.attributes.position;
+		var vertexTexture = surface.locations.attributes.texture;
+		var matrixLocation = surface.locations.uniforms.matrix;
 		var matrix = surface.getMatrix();
 
 		gl.enableVertexAttribArray(vertexTexture);

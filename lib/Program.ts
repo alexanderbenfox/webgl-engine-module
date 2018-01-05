@@ -74,6 +74,8 @@ export class Program{
 		this.worldCamera.init(this.gl);
 		this.worldCamera.AddComponent(GameObject);
 
+		worldCamera_gameObject.transform.position = new Vector3(0,0,5);
+
 		let uiCamera_gameObject = new GameObject();
 		this.uiCamera = uiCamera_gameObject.AddComponent(Camera);
 		this.uiCamera.init(this.gl);
