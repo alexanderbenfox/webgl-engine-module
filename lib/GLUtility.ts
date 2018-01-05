@@ -8,23 +8,23 @@ export class ShaderProperties{
 		position : GLint,
 		texture : GLint,
 		normal : GLint,
-
-		directionalLightColor : GLint,
-		directionalLightVector : GLint;
 	};
 
 	public uniforms : {
 		resolution : WebGLUniformLocation,
 		matrix : WebGLUniformLocation,
 		projection : WebGLUniformLocation,
-		normal : WebGLUniformLocation;
+		normal : WebGLUniformLocation,
+
+		light_color : WebGLUniformLocation,
+		light_direction : WebGLUniformLocation;
 	};
 
 	public program : WebGLProgram;
 	
 
-	constructor(attributes : {position : GLint, texture : GLint, normal : GLint, directionalLightColor : GLint, directionalLightVector : GLint;},
-				uniforms : {resolution : WebGLUniformLocation, matrix : WebGLUniformLocation, projection : WebGLUniformLocation, normal : WebGLUniformLocation;},
+	constructor(attributes : {position : GLint, texture : GLint, normal : GLint;},
+				uniforms : {resolution : WebGLUniformLocation, matrix : WebGLUniformLocation, projection : WebGLUniformLocation, normal : WebGLUniformLocation, light_color : WebGLUniformLocation, light_direction : WebGLUniformLocation;},
 				program : WebGLProgram){
 
 		this.attributes = attributes;
@@ -94,27 +94,23 @@ export module GLUtility{
 		var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
 		gl.enableVertexAttribArray(vertexNormal);
 
-		var directionalLightingColor = gl.getAttribLocation(shaderProgram, 'aDirectionalLightColor');
-		gl.enableVertexAttribArray(directionalLightingColor);
-
-		var directionalLightingVector = gl.getAttribLocation(shaderProgram, 'aDirectionalLightVector');
-		gl.enableVertexAttribArray(directionalLightingVector);
-
 		var attributes = {position : vertexPosition,
 						 texture : textureCoordinate,
-						 normal : vertexNormal, 
-						 directionalLightColor : directionalLightingColor,
-						 directionalLightVector : directionalLightingVector};
+						 normal : vertexNormal};
 
 		var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
 		var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
 		let projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
 		let normalMatrix = gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+		let lightVector = gl.getUniformLocation(shaderProgram, 'uDirectionalLightVector');
+		let lightColor = gl.getUniformLocation(shaderProgram, 'uDirectionalLightColor');
 
 		var uniforms = {resolution : resolutionLocation,
 						matrix : transformationMatrix,
 						projection : projectionMatrix,
-						normal : normalMatrix};
+						normal : normalMatrix,
+						light_color : lightColor,
+						light_direction: lightVector};
 
 		console.log("Shaders initialized.")
 

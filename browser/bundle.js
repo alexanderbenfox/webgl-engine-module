@@ -99,7 +99,7 @@ var Camera = /** @class */ (function () {
 }());
 exports.Camera = Camera;
 
-},{"./EngineUtility":11,"gl-matrix":21,"sylvester":22}],2:[function(require,module,exports){
+},{"./EngineUtility":12,"gl-matrix":22,"sylvester":23}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -338,7 +338,7 @@ var Camera = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.Camera = Camera;
 
-},{"../EngineUtility":11,"./Component":5,"gl-matrix":21,"sylvester":22}],4:[function(require,module,exports){
+},{"../EngineUtility":12,"./Component":5,"gl-matrix":22,"sylvester":23}],4:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -517,7 +517,7 @@ var CircleCollider = /** @class */ (function (_super) {
 }(Collider2D));
 exports.CircleCollider = CircleCollider;
 
-},{"../EngineUtility":11,"./Component":5}],5:[function(require,module,exports){
+},{"../EngineUtility":12,"./Component":5}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -738,7 +738,7 @@ function testFunction() {
 }
 exports.testFunction = testFunction;
 
-},{"../EngineUtility":11}],6:[function(require,module,exports){
+},{"../EngineUtility":12}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -807,7 +807,44 @@ var DraggableUI = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.DraggableUI = DraggableUI;
 
-},{"../EngineUtility":11,"./Collider":4,"./Component":5,"./Sprite":8}],7:[function(require,module,exports){
+},{"../EngineUtility":12,"./Collider":4,"./Component":5,"./Sprite":9}],7:[function(require,module,exports){
+"use strict";
+//references: Phong Shading
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var Light = /** @class */ (function () {
+    function Light(surface) {
+        this.surface = surface;
+    }
+    return Light;
+}());
+exports.Light = Light;
+var DirectionalLight = /** @class */ (function (_super) {
+    __extends(DirectionalLight, _super);
+    function DirectionalLight(surface, rotation) {
+        var _this = _super.call(this, surface) || this;
+        _this.rotation = rotation;
+        _this.initRender();
+        return _this;
+    }
+    DirectionalLight.prototype.initRender = function () {
+        this.surface.gl.useProgram(this.surface.locations.program);
+        this.surface.gl.uniform3f(this.surface.locations.uniforms.light_direction, this.rotation.x, this.rotation.y, this.rotation.z);
+    };
+    return DirectionalLight;
+}(Light));
+exports.DirectionalLight = DirectionalLight;
+
+},{}],8:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1016,7 +1053,7 @@ var CubeRenderer = /** @class */ (function (_super) {
 }(Renderer3D));
 exports.CubeRenderer = CubeRenderer;
 
-},{"../EngineUtility":11,"./Component":5,"gl-matrix":21}],8:[function(require,module,exports){
+},{"../EngineUtility":12,"./Component":5,"gl-matrix":22}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1257,7 +1294,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"../EngineUtility":11,"../GLUtility":12,"../Matrix":15,"./Component":5}],9:[function(require,module,exports){
+},{"../EngineUtility":12,"../GLUtility":13,"../Matrix":16,"./Component":5}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1338,7 +1375,7 @@ var GameManager = /** @class */ (function () {
 }());
 exports.GameManager = GameManager;
 
-},{"./EngineUtility":11}],10:[function(require,module,exports){
+},{"./EngineUtility":12}],11:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1586,7 +1623,7 @@ var Square = /** @class */ (function (_super) {
 }(Shape));
 exports.Square = Square;
 
-},{"./EngineUtility":11,"./Matrix":15,"gl-matrix":21}],11:[function(require,module,exports){
+},{"./EngineUtility":12,"./Matrix":16,"gl-matrix":22}],12:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1804,7 +1841,7 @@ function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
 }
 exports.computeMatrix = computeMatrix;
 
-},{"gl-matrix":21}],12:[function(require,module,exports){
+},{"gl-matrix":22}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
@@ -1871,23 +1908,21 @@ var GLUtility;
         gl.enableVertexAttribArray(textureCoordinate);
         var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
         gl.enableVertexAttribArray(vertexNormal);
-        var directionalLightingColor = gl.getAttribLocation(shaderProgram, 'aDirectionalLightColor');
-        gl.enableVertexAttribArray(directionalLightingColor);
-        var directionalLightingVector = gl.getAttribLocation(shaderProgram, 'aDirectionalLightVector');
-        gl.enableVertexAttribArray(directionalLightingVector);
         var attributes = { position: vertexPosition,
             texture: textureCoordinate,
-            normal: vertexNormal,
-            directionalLightColor: directionalLightingColor,
-            directionalLightVector: directionalLightingVector };
+            normal: vertexNormal };
         var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
         var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
         var projectionMatrix = gl.getUniformLocation(shaderProgram, 'uProjectionMatrix');
         var normalMatrix = gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+        var lightVector = gl.getUniformLocation(shaderProgram, 'uDirectionalLightVector');
+        var lightColor = gl.getUniformLocation(shaderProgram, 'uDirectionalLightColor');
         var uniforms = { resolution: resolutionLocation,
             matrix: transformationMatrix,
             projection: projectionMatrix,
-            normal: normalMatrix };
+            normal: normalMatrix,
+            light_color: lightColor,
+            light_direction: lightVector };
         console.log("Shaders initialized.");
         return new ShaderProperties(attributes, uniforms, shaderProgram);
     }
@@ -1946,7 +1981,7 @@ var GLUtility;
     GLUtility.nextPowerOfTwo = nextPowerOfTwo;
 })(GLUtility = exports.GLUtility || (exports.GLUtility = {}));
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -2054,7 +2089,7 @@ var GameObject = /** @class */ (function (_super) {
 }(Object2D));
 exports.GameObject = GameObject;
 
-},{"./Control":9,"./EngineUtility":11,"./Sprite":17}],14:[function(require,module,exports){
+},{"./Control":10,"./EngineUtility":12,"./Sprite":18}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2106,7 +2141,7 @@ var ObjectManager = /** @class */ (function () {
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./EngineUtility":11}],15:[function(require,module,exports){
+},{"./EngineUtility":12}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -2263,7 +2298,7 @@ var MatrixUtil = /** @class */ (function () {
 }());
 exports.MatrixUtil = MatrixUtil;
 
-},{"sylvester":22}],16:[function(require,module,exports){
+},{"sylvester":23}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2276,6 +2311,7 @@ var GLUtility_1 = require("./GLUtility");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
 var GLUtility_2 = require("./GLUtility");
+var Lighting_1 = require("./Components/Lighting");
 var MouseData = /** @class */ (function () {
     function MouseData() {
     }
@@ -2343,6 +2379,7 @@ var Program = /** @class */ (function () {
         editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_texobjects_2d, 256, 256);
         Managers_1.ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
+        var dirLight = new Lighting_1.DirectionalLight(this.surface_shapes_3d, new EngineUtility_1.Vector3(100, 20, 30));
     };
     /*setupGrid() : void{
         let lines : Stroke[] = [];
@@ -2480,7 +2517,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Renderer3D":7,"./Components/Sprite":8,"./EngineUtility":11,"./GLUtility":12,"./Managers":14,"./Surface":18}],17:[function(require,module,exports){
+},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/Renderer3D":8,"./Components/Sprite":9,"./EngineUtility":12,"./GLUtility":13,"./Managers":15,"./Surface":19}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2610,7 +2647,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"./EngineUtility":11,"./GLUtility":12,"./Matrix":15}],18:[function(require,module,exports){
+},{"./EngineUtility":12,"./GLUtility":13,"./Matrix":16}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2677,7 +2714,7 @@ var DrawSurface = /** @class */ (function () {
 }());
 exports.DrawSurface = DrawSurface;
 
-},{"./EngineUtility":11,"./GLUtility":12,"./Matrix":15}],19:[function(require,module,exports){
+},{"./EngineUtility":12,"./GLUtility":13,"./Matrix":16}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
@@ -2696,9 +2733,9 @@ window.setCameraValue = function (value) {
     gameProgram.setCameraValue(value);
 };
 
-},{"./Components/Component":5,"./Program":16}],20:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15,"sylvester":22}],21:[function(require,module,exports){
+},{"./Components/Component":5,"./Program":17}],21:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16,"sylvester":23}],22:[function(require,module,exports){
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations
  * @author Brandon Jones
@@ -9587,7 +9624,7 @@ var forEach = exports.forEach = function () {
 /***/ })
 /******/ ]);
 });
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 (function (global){
 // Copyright (c) 2011, Chris Umbel
 
@@ -9603,7 +9640,7 @@ exports.Line.Segment = require('./line.segment');
 exports.Sylvester = require('./sylvester');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./line":23,"./line.segment":24,"./matrix":25,"./plane":26,"./sylvester":27,"./vector":28}],23:[function(require,module,exports){
+},{"./line":24,"./line.segment":25,"./matrix":26,"./plane":27,"./sylvester":28,"./vector":29}],24:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 var Vector = require('./vector');
 var Matrix = require('./matrix');
@@ -9836,7 +9873,7 @@ Line.Z = Line.create(Vector.Zero(3), Vector.k);
 
 module.exports = Line;
 
-},{"./matrix":25,"./plane":26,"./sylvester":27,"./vector":28}],24:[function(require,module,exports){
+},{"./matrix":26,"./plane":27,"./sylvester":28,"./vector":29}],25:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Line.Segment class - depends on Line and its dependencies.
 
@@ -9964,7 +10001,7 @@ Line.Segment.create = function(v1, v2) {
 
 module.exports = Line.Segment;
 
-},{"./line":23,"./vector":28}],25:[function(require,module,exports){
+},{"./line":24,"./vector":29}],26:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Matrix class - depends on Vector.
 
@@ -11002,7 +11039,7 @@ Matrix.Ones = function(n, m) {
 
 module.exports = Matrix;
 
-},{"./sylvester":27,"./vector":28,"fs":29,"lapack":29}],26:[function(require,module,exports){
+},{"./sylvester":28,"./vector":29,"fs":30,"lapack":30}],27:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Plane class - depends on Vector. Some methods require Matrix and Line.
 var Vector = require('./vector');
@@ -11278,7 +11315,7 @@ Plane.fromPoints = function(points) {
 
 module.exports = Plane;
 
-},{"./line":23,"./matrix":25,"./sylvester":27,"./vector":28}],27:[function(require,module,exports){
+},{"./line":24,"./matrix":26,"./sylvester":28,"./vector":29}],28:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -11295,7 +11332,7 @@ var Sylvester = {
 
 module.exports = Sylvester;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -11735,7 +11772,7 @@ Vector.log = function(v) {
 
 module.exports = Vector;
 
-},{"./matrix":25,"./sylvester":27}],29:[function(require,module,exports){
+},{"./matrix":26,"./sylvester":28}],30:[function(require,module,exports){
 
-},{}]},{},[1,2,9,10,11,12,13,14,15,16,17,18,19,20])(20)
+},{}]},{},[1,2,10,11,12,13,14,15,16,17,18,19,20,21])(21)
 });

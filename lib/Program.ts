@@ -10,6 +10,7 @@ import {ShaderType} from "./GLUtility"
 import {Camera} from "./Components/CameraUtility"
 import {DraggableUI} from "./Components/EditorObject"
 import {GLUtility} from "./GLUtility"
+import {DirectionalLight} from "./Components/Lighting"
 
 class MouseData{
 	public static offset : Vector2;
@@ -52,6 +53,7 @@ export class Program{
 		this.surface_texobjects_2d = new DrawSurface(this.canvas, ShaderType.texture_2d);
 		this.surface_shapes_2d = new DrawSurface(this.canvas, ShaderType.no_texture_2d);
 		this.surface_shapes_3d = new DrawSurface(this.canvas, ShaderType.no_texture3d);
+
 
 		this.createGameObjects();
 		//this.setupGrid();
@@ -113,6 +115,8 @@ export class Program{
 
 		ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
 		EditorControl.clickables = [editorBox_draggableObject];
+
+		let dirLight = new DirectionalLight(this.surface_shapes_3d, new Vector3(100,20,30));
 	}
 
 	/*setupGrid() : void{

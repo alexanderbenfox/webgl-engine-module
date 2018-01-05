@@ -5,27 +5,27 @@ export declare class ShaderProperties {
         position: GLint;
         texture: GLint;
         normal: GLint;
-        directionalLightColor: GLint;
-        directionalLightVector: GLint;
     };
     uniforms: {
         resolution: WebGLUniformLocation;
         matrix: WebGLUniformLocation;
         projection: WebGLUniformLocation;
         normal: WebGLUniformLocation;
+        light_color: WebGLUniformLocation;
+        light_direction: WebGLUniformLocation;
     };
     program: WebGLProgram;
     constructor(attributes: {
         position: GLint;
         texture: GLint;
         normal: GLint;
-        directionalLightColor: GLint;
-        directionalLightVector: GLint;
     }, uniforms: {
         resolution: WebGLUniformLocation;
         matrix: WebGLUniformLocation;
         projection: WebGLUniformLocation;
         normal: WebGLUniformLocation;
+        light_color: WebGLUniformLocation;
+        light_direction: WebGLUniformLocation;
     }, program: WebGLProgram);
 }
 export declare enum ShaderType {

@@ -10,6 +10,7 @@ var GLUtility_1 = require("./GLUtility");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
 var GLUtility_2 = require("./GLUtility");
+var Lighting_1 = require("./Components/Lighting");
 var MouseData = /** @class */ (function () {
     function MouseData() {
     }
@@ -77,6 +78,7 @@ var Program = /** @class */ (function () {
         editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_texobjects_2d, 256, 256);
         Managers_1.ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
+        var dirLight = new Lighting_1.DirectionalLight(this.surface_shapes_3d, new EngineUtility_1.Vector3(100, 20, 30));
     };
     /*setupGrid() : void{
         let lines : Stroke[] = [];
