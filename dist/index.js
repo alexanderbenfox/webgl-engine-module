@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
-var Component_1 = require("./Component");
+var Component_1 = require("./Components/Component");
 var gameProgram;
 function startProgram() {
     gameProgram = new Prog.Program();

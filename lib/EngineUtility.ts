@@ -28,6 +28,60 @@ export class Vector2{
 	checkZero() : boolean{
 		return this._x == 0 && this._y == 0;
 	}
+
+	cross(b : Vector2) : Vector2{
+		let a = this;
+		let x = a.y * b.x - a.x*b.y;
+		let y = a.x * b.y - a.y*b.x;
+		return new Vector2(x, y);
+
+	}
+
+	dot(b : Vector2) : number{
+		let a = this;
+		return a.x*b.x + a.y*b.y;
+	}
+
+	add(b : Vector2) : Vector2{
+		return new Vector2(this.x + b.x, this.y + b.y);
+	}
+
+	sub(b : Vector2) : Vector2 {
+		return new Vector2(this.x - b.x, this.y - b.y);
+	}
+
+	magnitude() : number{
+		let a = this;
+		return Math.sqrt(a.x * a.x + a.y*a.y);
+	}
+
+	normalize() : Vector2 {
+		let mag = this.magnitude();
+		if (mag < 0.000001)
+			return new Vector2(0,0);
+		return new Vector2(this.x/mag, this.y/mag);
+	}
+
+	static getMinMaxProjections(vectors : Vector2[], axis : Vector2) : any{
+		let minProj = vectors[1].dot(axis);
+		let minDot = 1;
+		let maxProj = vectors[1].dot(axis);
+		let maxDot = 1;
+
+		for(let i = 2; i < vectors.length; i++){
+			let currProj = vectors[i].dot(axis);
+
+			if(minProj > currProj) minProj = currProj; minDot = i;
+			if(currProj > maxProj) maxProj = currProj; maxDot = i;
+		}
+
+		return{
+			minProj : minProj,
+			maxProj : maxProj,
+			minIndex : minDot,
+			maxIndex : maxDot
+		}
+	}
 }
 
 export class Vector3 extends Vector2{
@@ -155,3 +209,4 @@ export function computeMatrix(relativeToMatrix, outputMatrix, position : Vector3
 	            rotation.z,// amount to rotate in radians
 	            zAxis.toArray());       // axis to rotate around (z)
 }
+

@@ -1,7 +1,7 @@
 import "sylvester"
-import {Vector2, Vector3, Vector4, computeMatrix} from "./EngineUtility"
+import {Vector2, Vector3, Vector4, computeMatrix} from "../EngineUtility"
 import {mat4} from "gl-matrix"
-import {Shape3D} from "./DrawShapes"
+import {Component, GameObject} from "./Component"
 
 module CameraUtility
 {
@@ -42,24 +42,26 @@ module CameraUtility
 
 }
 
-export class Camera{
-	public position : Vector3;
-	public rotation : Vector3;
+export class Camera extends Component{
 	private _time : number = 0;
 	//main matrix that carries all of the data
 	public projectionMatrix = mat4.create();
 	//combination of view & projection
 	public viewProjectionMatrix = mat4.create();
 
-	constructor(gl : WebGLRenderingContext){
+	constructor(){
+		super();
+	}
+
+	init(gl : WebGLRenderingContext){
 		const fieldOfView = 45 * Math.PI / 180; //radians
 		const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
 		const zNear = 0.1;
 		const zFar = 100.0;
 		mat4.perspective(this.projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
-		this.position = new Vector3(0,0,0);
-		this.rotation = new Vector3(0,0,0);
+		this.gameObject.transform.position = new Vector3(0,0,0);
+		this.gameObject.transform.rotation = new Vector3(0,0,0);
 
 		this.updateMatrix();
 	}
@@ -67,35 +69,35 @@ export class Camera{
 	update(degree : number){//(lookAt : Shape3D, deltaMovement : Vector3){//degree : number){
 		let radians = (degree/360)*360 * Math.PI/180;
 		console.log(radians);
-		this.rotation = new Vector3(0,radians,0);
+		this.gameObject.transform.rotation = new Vector3(0,radians,0);
 		this.updateMatrix();
 		//this.updateMatrixLookAt(lookAt);
 	}
 
 	updatePosition(deltaMovement : Vector3){
-		this.position = this.position.add(deltaMovement);
+		this.gameObject.transform.position = this.gameObject.transform.position.add(deltaMovement);
 		this.updateMatrix();
 	}
 
 	updateMatrix(){
 		//this matrix represents the position and orientation of the camera in the world
 		var cameraMatrix = mat4.create();
-		computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+		computeMatrix(cameraMatrix, cameraMatrix, this.pos, this.rot);
 		//view matrix moves everything opposite to the camera - making it as though cam is at origin
 		var viewMatrix = mat4.create();
 		viewMatrix = mat4.invert(viewMatrix, cameraMatrix);
 		this.viewProjectionMatrix = mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);
 	}
 
-	updateMatrixLookAt(lookAt : Shape3D){
+	updateMatrixLookAt(lookAt : GameObject){
 		var cameraMatrix = mat4.create();
-		computeMatrix(cameraMatrix, cameraMatrix, this.position, this.rotation);
+		computeMatrix(cameraMatrix, cameraMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
 
 		var cameraPosition = new Vector3(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]);
 
 		var up = new Vector3(0,1,0);
 
-		cameraMatrix = this.lookAt(cameraPosition, lookAt.position, up);
+		cameraMatrix = this.lookAt(cameraPosition, lookAt.transform.position, up);
 		var viewMatrix = mat4.create();
 		viewMatrix = mat4.invert(viewMatrix, cameraMatrix);
 		this.viewProjectionMatrix = mat4.multiply(this.viewProjectionMatrix, this.projectionMatrix, viewMatrix);

@@ -42,6 +42,53 @@ var Vector2 = /** @class */ (function () {
     Vector2.prototype.checkZero = function () {
         return this._x == 0 && this._y == 0;
     };
+    Vector2.prototype.cross = function (b) {
+        var a = this;
+        var x = a.y * b.x - a.x * b.y;
+        var y = a.x * b.y - a.y * b.x;
+        return new Vector2(x, y);
+    };
+    Vector2.prototype.dot = function (b) {
+        var a = this;
+        return a.x * b.x + a.y * b.y;
+    };
+    Vector2.prototype.add = function (b) {
+        return new Vector2(this.x + b.x, this.y + b.y);
+    };
+    Vector2.prototype.sub = function (b) {
+        return new Vector2(this.x - b.x, this.y - b.y);
+    };
+    Vector2.prototype.magnitude = function () {
+        var a = this;
+        return Math.sqrt(a.x * a.x + a.y * a.y);
+    };
+    Vector2.prototype.normalize = function () {
+        var mag = this.magnitude();
+        if (mag < 0.000001)
+            return new Vector2(0, 0);
+        return new Vector2(this.x / mag, this.y / mag);
+    };
+    Vector2.getMinMaxProjections = function (vectors, axis) {
+        var minProj = vectors[1].dot(axis);
+        var minDot = 1;
+        var maxProj = vectors[1].dot(axis);
+        var maxDot = 1;
+        for (var i = 2; i < vectors.length; i++) {
+            var currProj = vectors[i].dot(axis);
+            if (minProj > currProj)
+                minProj = currProj;
+            minDot = i;
+            if (currProj > maxProj)
+                maxProj = currProj;
+            maxDot = i;
+        }
+        return {
+            minProj: minProj,
+            maxProj: maxProj,
+            minIndex: minDot,
+            maxIndex: maxDot
+        };
+    };
     return Vector2;
 }());
 exports.Vector2 = Vector2;

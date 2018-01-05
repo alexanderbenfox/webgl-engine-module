@@ -2,11 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Surface_1 = require("./Surface");
-var GameObject_1 = require("./GameObject");
-var DrawShapes_1 = require("./DrawShapes");
-var Control_1 = require("./Control");
+var Component_1 = require("./Components/Component");
+var Sprite_1 = require("./Components/Sprite");
+var Renderer3D_1 = require("./Components/Renderer3D");
+var Managers_1 = require("./Managers");
 var GLUtility_1 = require("./GLUtility");
-var CameraUtility_1 = require("./CameraUtility");
+var CameraUtility_1 = require("./Components/CameraUtility");
+var EditorObject_1 = require("./Components/EditorObject");
+var GLUtility_2 = require("./GLUtility");
 var MouseData = /** @class */ (function () {
     function MouseData() {
     }
@@ -20,6 +23,7 @@ var MouseData = /** @class */ (function () {
 var Program = /** @class */ (function () {
     function Program() {
         this.canvas = document.getElementById('glCanvas');
+        this.gl = GLUtility_2.GLUtility.getGLContext(this.canvas, { alpha: false, premultipliedAlpha: false });
         this.assignPageEvents();
         console.log("Initializing...");
         console.log('CANVAS ' + this.canvas);
@@ -29,8 +33,7 @@ var Program = /** @class */ (function () {
         this.surface_shapes_2d = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.no_texture_2d);
         this.surface_shapes_3d = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.no_texture3d);
         this.createGameObjects();
-        this.createEditorObjects();
-        this.setupGrid();
+        //this.setupGrid();
         //line = new Line(surface_lines, 100,256,100,256,2);
         //obj_1.move(5,5);
         //obj_2.move(-5,5);
@@ -38,38 +41,61 @@ var Program = /** @class */ (function () {
         this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         this.drawScene();
     }
+    Program.prototype.createCameras = function () {
+        var worldCamera_gameObject = new Component_1.GameObject();
+        this.worldCamera = worldCamera_gameObject.AddComponent(CameraUtility_1.Camera);
+        this.worldCamera.init(this.gl);
+        this.worldCamera.AddComponent(Component_1.GameObject);
+        var uiCamera_gameObject = new Component_1.GameObject();
+        this.uiCamera = uiCamera_gameObject.AddComponent(CameraUtility_1.Camera);
+        this.uiCamera.init(this.gl);
+        this.uiCamera.AddComponent(Component_1.GameObject);
+    };
     Program.prototype.createGameObjects = function () {
-        var camera3d = new CameraUtility_1.Camera(this.surface_shapes_3d.gl);
-        this.camera = camera3d;
-        var obj_1 = new GameObject_1.GameObject('box.png', 256, 256, this.surface_texobjects_2d, 0, 0);
-        var obj_2 = new GameObject_1.GameObject('box.png', 256, 256, this.surface_texobjects_2d, 256, 0);
-        var camera = new GameObject_1.GameObject(null, null, null, null, 0, 0);
-        var cube = new DrawShapes_1.Cube(this.surface_shapes_3d, new EngineUtility_1.Vector3(60, 20, 0), new EngineUtility_1.Vector3(-1, 0, -6), camera3d);
-        var cube2 = new DrawShapes_1.Cube(this.surface_shapes_3d, new EngineUtility_1.Vector3(10, 80, 0), new EngineUtility_1.Vector3(3, 0, -12), camera3d);
-        Control_1.GameManager.camera = camera;
-        Control_1.GameManager.gameObjects = [obj_1, obj_2, camera];
-        Control_1.GameManager.objects3D = [cube, cube2];
+        this.createCameras();
+        var uiBox1 = new Component_1.GameObject();
+        var uiBox1_sprite = uiBox1.AddComponent(Sprite_1.SpriteRenderer);
+        uiBox1_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+        uiBox1.transform.position = new EngineUtility_1.Vector3(0, 0, 0);
+        var uiBox2 = new Component_1.GameObject();
+        var uiBox2_sprite = uiBox2.AddComponent(Sprite_1.SpriteRenderer);
+        uiBox2_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+        uiBox1.transform.position = new EngineUtility_1.Vector3(256, 0, 0);
+        var worldCube1 = new Component_1.GameObject();
+        var worldCube1_renderer = worldCube1.AddComponent(Renderer3D_1.CubeRenderer);
+        worldCube1_renderer.init(this.surface_shapes_3d, this.worldCamera);
+        worldCube1.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
+        worldCube1.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var worldCube2 = new Component_1.GameObject();
+        var worldCube2_renderer = worldCube2.AddComponent(Renderer3D_1.CubeRenderer);
+        worldCube2_renderer.init(this.surface_shapes_3d, this.worldCamera);
+        worldCube2.transform.position = new EngineUtility_1.Vector3(3, 0, -12);
+        worldCube2.transform.rotation = new EngineUtility_1.Vector3(10, 80, 0);
+        var editorBox = new Component_1.GameObject();
+        var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
+        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_texobjects_2d, 256, 256);
+        Managers_1.ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
+        Managers_1.EditorControl.clickables = [editorBox_draggableObject];
     };
-    Program.prototype.createEditorObjects = function () {
-        var editorBox = new GameObject_1.EditorObject('../img/tile.png', 32, 32, this.surface_texobjects_2d, 256, 256);
-        Control_1.EditorControl.editorObjects.push(editorBox);
-    };
-    Program.prototype.setupGrid = function () {
-        var lines = [];
-        var screen_width = this.surface_shapes_2d.size.x;
-        var screen_height = this.surface_shapes_2d.size.y;
-        var square = new DrawShapes_1.Square(this.surface_shapes_2d, new EngineUtility_1.Vector2(screen_width - 3 * 32, 0), new EngineUtility_1.Vector2(screen_width, screen_height), 0);
-        Control_1.EditorControl.editorShapes = [square];
-        for (var x = 0; x < screen_width; x += 32) {
-            var line = new DrawShapes_1.Stroke(this.surface_shapes_2d, new EngineUtility_1.Vector2(x, 0), new EngineUtility_1.Vector2(x, screen_height), 2);
+    /*setupGrid() : void{
+        let lines : Stroke[] = [];
+        let screen_width = this.surface_shapes_2d.size.x;
+        let screen_height = this.surface_shapes_2d.size.y;
+
+        let square = new Square(this.surface_shapes_2d, new Vector2(screen_width-3*32, 0), new Vector2(screen_width, screen_height), 0);
+        EditorControl.editorShapes = [square];
+
+        for(var x = 0; x < screen_width; x+=32){
+            var line = new Stroke(this.surface_shapes_2d, new Vector2(x,0), new Vector2(x,screen_height), 2);
             lines.push(line);
         }
-        for (var y = 0; y < screen_height; y += 32) {
-            var line = new DrawShapes_1.Stroke(this.surface_shapes_2d, new EngineUtility_1.Vector2(0, y), new EngineUtility_1.Vector2(screen_width, y), 2);
+
+        for(var y = 0; y < screen_height; y+=32){
+            var line = new Stroke(this.surface_shapes_2d, new Vector2(0, y), new Vector2(screen_width,y),2);
             lines.push(line);
         }
-        Control_1.EditorControl.grid = lines;
-    };
+        EditorControl.grid = lines;
+    }*/
     Program.prototype.assignPageEvents = function () {
         document.onmousemove = function (ev) {
             ev = ev || window.event;
@@ -82,7 +108,7 @@ var Program = /** @class */ (function () {
             return mousePosition;
         };
         document.onmouseup = function (ev) {
-            Control_1.EditorControl.draggingObject = null;
+            Managers_1.EditorControl.draggingObject = null;
         };
         document.onmousedown = function (ev) {
             var mousePosition = MouseData.getMouseCoords(ev);
@@ -90,7 +116,7 @@ var Program = /** @class */ (function () {
                 var offsetMousePosition = new EngineUtility_1.Vector2(mousePosition.x - MouseData.offset.x, mousePosition.y - MouseData.offset.y);
                 mousePosition = offsetMousePosition;
             }
-            Control_1.EditorControl.checkForClick(Control_1.EditorControl.editorObjects, mousePosition.x, mousePosition.y);
+            Managers_1.EditorControl.checkForClick(Managers_1.EditorControl.clickables, mousePosition.x, mousePosition.y);
         };
         document.onkeydown = function (evt) {
             evt = evt || window.event;
@@ -125,17 +151,15 @@ var Program = /** @class */ (function () {
     };
     Program.prototype.update = function (dt) {
         var normalizedUpdateValue = (30 * dt) / 1000.0;
-        Control_1.GameManager.updateObjects(normalizedUpdateValue);
-        Control_1.EditorControl.updateObjects(normalizedUpdateValue);
-        Control_1.EditorControl.update(MouseData.position);
-        this.camera.updatePosition(this.positionDelta);
+        Managers_1.ObjectManager.update(normalizedUpdateValue);
+        Managers_1.EditorControl.update(MouseData.position);
+        this.worldCamera.updatePosition(this.positionDelta);
     };
-    Program.prototype.draw = function () {
-        Control_1.GameManager.drawObjects();
-        Control_1.EditorControl.drawObjects();
+    Program.prototype.render = function () {
+        Managers_1.ObjectManager.render();
     };
     Program.prototype.setCameraValue = function (value) {
-        this.camera.update(value);
+        this.worldCamera.update(value);
     };
     Program.prototype.drawScene = function () {
         setInterval(function () {
@@ -151,7 +175,7 @@ var Program = /** @class */ (function () {
             //this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
             //this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
             this.updateLoop();
-            this.draw();
+            this.render();
             this.surface_texobjects_2d.pop();
             this.surface_shapes_2d.pop();
             this.surface_shapes_3d.pop();

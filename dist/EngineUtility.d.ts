@@ -6,6 +6,13 @@ export declare class Vector2 {
     y: number;
     static zero(): Vector2;
     checkZero(): boolean;
+    cross(b: Vector2): Vector2;
+    dot(b: Vector2): number;
+    add(b: Vector2): Vector2;
+    sub(b: Vector2): Vector2;
+    magnitude(): number;
+    normalize(): Vector2;
+    static getMinMaxProjections(vectors: Vector2[], axis: Vector2): any;
 }
 export declare class Vector3 extends Vector2 {
     protected _z: number;

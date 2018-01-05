@@ -1,5 +1,5 @@
 import * as Prog from "./Program";
-import {testFunction} from "./Component"
+import {testFunction} from "./Components/Component"
 var gameProgram;
 
 export function startProgram(){

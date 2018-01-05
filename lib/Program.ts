@@ -1,11 +1,15 @@
 declare function require(name:string);
 import {Vector2, Vector3} from "./EngineUtility"
 import {DrawSurface} from "./Surface"
-import {GameObject, EditorObject} from "./GameObject"
-import {Stroke, Shape, Square, Cube} from "./DrawShapes"
-import {EditorControl, GameManager} from "./Control"
+import {GameObject} from "./Components/Component"
+import {LineRenderer} from "./Components/Renderer2D"
+import {SpriteRenderer} from "./Components/Sprite"
+import {CubeRenderer} from "./Components/Renderer3D"
+import {EditorControl, ObjectManager} from "./Managers"
 import {ShaderType} from "./GLUtility"
-import {Camera} from "./CameraUtility"
+import {Camera} from "./Components/CameraUtility"
+import {DraggableUI} from "./Components/EditorObject"
+import {GLUtility} from "./GLUtility"
 
 class MouseData{
 	public static offset : Vector2;
@@ -28,12 +32,15 @@ export class Program{
 
 	lastUpdateTime : number;
 
-	camera : Camera;
+	uiCamera : Camera;
+	worldCamera : Camera;
+
 	positionDelta : Vector3;
 
 
 	constructor(){
 		this.canvas = <HTMLCanvasElement>document.getElementById('glCanvas');
+		this.gl = GLUtility.getGLContext(this.canvas, {alpha: false, premultipliedAlpha: false});
 		this.assignPageEvents();
 
 		console.log("Initializing...");
@@ -47,9 +54,7 @@ export class Program{
 		this.surface_shapes_3d = new DrawSurface(this.canvas, ShaderType.no_texture3d);
 
 		this.createGameObjects();
-
-		this.createEditorObjects();
-		this.setupGrid();
+		//this.setupGrid();
 		
 
 		//line = new Line(surface_lines, 100,256,100,256,2);
@@ -63,26 +68,52 @@ export class Program{
 		this.drawScene();
 	}
 
+	createCameras(){
+		let worldCamera_gameObject = new GameObject();
+		this.worldCamera = worldCamera_gameObject.AddComponent(Camera);
+		this.worldCamera.init(this.gl);
+		this.worldCamera.AddComponent(GameObject);
+
+		let uiCamera_gameObject = new GameObject();
+		this.uiCamera = uiCamera_gameObject.AddComponent(Camera);
+		this.uiCamera.init(this.gl);
+		this.uiCamera.AddComponent(GameObject);
+	}
+
 	createGameObjects() : void{
-		let camera3d = new Camera(this.surface_shapes_3d.gl);
-		this.camera = camera3d;
+		this.createCameras();
 
-		let obj_1 = new GameObject('box.png', 256, 256, this.surface_texobjects_2d, 0,0);
-		let obj_2 = new GameObject('box.png', 256, 256, this.surface_texobjects_2d, 256, 0);
-		let camera = new GameObject(null, null, null, null, 0,0);
-		let cube = new Cube(this.surface_shapes_3d, new Vector3(60,20,0), new Vector3(-1,0,-6), camera3d);
-		let cube2 = new Cube(this.surface_shapes_3d, new Vector3(10,80,0), new Vector3(3,0,-12), camera3d);
-		GameManager.camera = camera;
-		GameManager.gameObjects = [obj_1, obj_2, camera];
-		GameManager.objects3D = [cube, cube2];
+		let uiBox1 = new GameObject();
+		let uiBox1_sprite : SpriteRenderer = <SpriteRenderer>uiBox1.AddComponent(SpriteRenderer);
+		uiBox1_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+		uiBox1.transform.position = new Vector3(0,0,0);
+
+		let uiBox2 = new GameObject();
+		let uiBox2_sprite : SpriteRenderer = <SpriteRenderer>uiBox2.AddComponent(SpriteRenderer);
+		uiBox2_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+		uiBox1.transform.position = new Vector3(256,0,0);
+
+		let worldCube1 = new GameObject();
+		let worldCube1_renderer : CubeRenderer = <CubeRenderer>worldCube1.AddComponent(CubeRenderer);
+		worldCube1_renderer.init(this.surface_shapes_3d, this.worldCamera);
+		worldCube1.transform.position = new Vector3(-1, 0, -6);
+		worldCube1.transform.rotation = new Vector3(60,20,0);
+
+		let worldCube2 = new GameObject();
+		let worldCube2_renderer : CubeRenderer = <CubeRenderer>worldCube2.AddComponent(CubeRenderer);
+		worldCube2_renderer.init(this.surface_shapes_3d, this.worldCamera);
+		worldCube2.transform.position = new Vector3(3,0,-12);
+		worldCube2.transform.rotation = new Vector3(10,80,0);
+
+		let editorBox = new GameObject();
+		let editorBox_draggableObject : DraggableUI = <DraggableUI>editorBox.AddComponent(DraggableUI);
+		editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_texobjects_2d, 256, 256);
+
+		ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
+		EditorControl.clickables = [editorBox_draggableObject];
 	}
 
-	createEditorObjects() : void {
-		let editorBox = new EditorObject('../img/tile.png', 32, 32, this.surface_texobjects_2d, 256, 256);
-		EditorControl.editorObjects.push(editorBox);
-	}
-
-	setupGrid() : void{
+	/*setupGrid() : void{
 		let lines : Stroke[] = [];
 		let screen_width = this.surface_shapes_2d.size.x;
 		let screen_height = this.surface_shapes_2d.size.y;
@@ -100,7 +131,7 @@ export class Program{
 			lines.push(line);
 		}
 		EditorControl.grid = lines;
-	}
+	}*/
 
 
 
@@ -125,7 +156,7 @@ export class Program{
 				let offsetMousePosition = new Vector2(mousePosition.x - MouseData.offset.x,mousePosition.y - MouseData.offset.y);
 				mousePosition = offsetMousePosition;
 			}
-			EditorControl.checkForClick(EditorControl.editorObjects, mousePosition.x, mousePosition.y);
+			EditorControl.checkForClick(EditorControl.clickables, mousePosition.x, mousePosition.y);
 		};
 
 		document.onkeydown = function(evt){
@@ -167,19 +198,17 @@ export class Program{
 
 	update(dt : number) : void{
 		let normalizedUpdateValue = (30 * dt) / 1000.0;
-		GameManager.updateObjects(normalizedUpdateValue);
-		EditorControl.updateObjects(normalizedUpdateValue);
+		ObjectManager.update(normalizedUpdateValue);
 		EditorControl.update(MouseData.position);
-		this.camera.updatePosition(this.positionDelta);
+		this.worldCamera.updatePosition(this.positionDelta);
 	}
 
-	draw() : void{
-		GameManager.drawObjects();
-		EditorControl.drawObjects();
+	render() : void{
+		ObjectManager.render();
 	}
 
 	setCameraValue(value : number){
-		this.camera.update(value);
+		this.worldCamera.update(value);
 	}
 
 	drawScene() : void{
@@ -199,7 +228,7 @@ export class Program{
 			//this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
 
 			this.updateLoop();
-			this.draw();
+			this.render();
 
 			this.surface_texobjects_2d.pop();
 			this.surface_shapes_2d.pop();
