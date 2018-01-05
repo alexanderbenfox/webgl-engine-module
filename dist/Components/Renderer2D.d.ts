@@ -11,10 +11,10 @@ export declare abstract class Renderer2D extends Renderer {
     protected _colorBuffer: any;
     protected _topLeft: Vector2;
     protected _bottomRight: Vector2;
-    protected _size: Vector2;
     constructor();
     init(surface: DrawSurface, camera: Camera): void;
     blit(): void;
+    update(dt: number): void;
 }
 export declare class LineRenderer extends Renderer2D implements Drawable {
     protected _points: Float32Array;

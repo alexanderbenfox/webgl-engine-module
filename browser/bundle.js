@@ -387,7 +387,7 @@ var RectCollider = /** @class */ (function (_super) {
     }
     RectCollider.prototype.init = function (topLeft, size) {
         this._size = new EngineUtility_1.Vector2(size.x, size.y);
-        this._dots[0] = new EngineUtility_1.Vector2(topLeft.x + size.x, topLeft.y - size.y);
+        this._dots[0] = new EngineUtility_1.Vector2(topLeft.x + size.x / 2, topLeft.y + size.y / 2);
         this._dots[1] = new EngineUtility_1.Vector2(topLeft.x, topLeft.y);
         this._dots[2] = new EngineUtility_1.Vector2(topLeft.x + this._size.x, topLeft.y);
         this._dots[3] = new EngineUtility_1.Vector2(topLeft.x, topLeft.y + this._size.y);
@@ -400,15 +400,21 @@ var RectCollider = /** @class */ (function (_super) {
     };
     RectCollider.prototype.updatePosition = function () {
         //update positions 
-        var newPos = new EngineUtility_1.Vector2(this.gameObject.transform.position.x, this.gameObject.transform.position.x);
+        var newPos = new EngineUtility_1.Vector2(this.gameObject.transform.position.x, this.gameObject.transform.position.y);
         var oldPos = this._dots[0];
         var deltaPosition = newPos.sub(oldPos);
         if (deltaPosition.checkZero())
             return;
         //update dots
-        for (var i = 0; i < this._dots.length; i++) {
-            this._dots[i].add(deltaPosition);
-        }
+        var left = newPos.x - this._size.x / 2;
+        var top = newPos.y - this._size.y / 2;
+        var right = newPos.x + this._size.x / 2;
+        var bottom = newPos.y + this._size.y / 2;
+        this._dots[0] = newPos;
+        this._dots[1] = new EngineUtility_1.Vector2(left, top);
+        this._dots[2] = new EngineUtility_1.Vector2(right, top);
+        this._dots[3] = new EngineUtility_1.Vector2(left, bottom);
+        this._dots[4] = new EngineUtility_1.Vector2(right, bottom);
     };
     RectCollider.prototype.updateRotation = function () {
         var deltaRotation = this._rotation.z - this.gameObject.transform.rotation.z;
@@ -716,7 +722,9 @@ exports.Transform = Transform;
 var Renderer = /** @class */ (function (_super) {
     __extends(Renderer, _super);
     function Renderer() {
-        return _super.call(this) || this;
+        var _this = _super.call(this) || this;
+        _this.renderPoint = new EngineUtility_1.Vector3(0, 0, 0);
+        return _this;
     }
     Renderer.prototype.blit = function () { };
     return Renderer;
@@ -776,17 +784,19 @@ var DraggableUI = /** @class */ (function (_super) {
             this.gameObject.renderer = this.AddComponent(Sprite_1.SpriteRenderer);
             var spriteRenderer = this.GetComponent(Sprite_1.SpriteRenderer);
             spriteRenderer.init_renderer(camera, surf, img);
+            width = spriteRenderer.size.x;
+            height = spriteRenderer.size.y;
         }
         else {
             //this.gameObject.renderer = this.AddComponent(SquareRenderer);
             //let squareRenderer : SquareRenderer = <SquareRenderer>this.GetComponent(SquareRenderer);
             //squareRenderer.init_renderer(surface, )
         }
-        this.gameObject.transform.position = new EngineUtility_1.Vector3(startX, startY, 0);
+        this.gameObject.transform.position = new EngineUtility_1.Vector3(startX + width / 2, startY + height / 2, 0);
         this.gameObject.transform.scale = new EngineUtility_1.Vector3(width, height, 0);
         this.gameObject.collider = this.AddComponent(Collider_1.RectCollider);
         this.rect = this.GetComponent(Collider_1.RectCollider);
-        this.rect.init(new EngineUtility_1.Vector2(startX - width / 2, startY + height / 2), new EngineUtility_1.Vector2(width, height));
+        this.rect.init(new EngineUtility_1.Vector2(startX, startY), new EngineUtility_1.Vector2(width, height));
     };
     DraggableUI.prototype.isClicked = function (mousePos) {
         return this.rect.detectPoint(mousePos);
@@ -903,7 +913,6 @@ var CubeRenderer = /** @class */ (function (_super) {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
     };
     CubeRenderer.prototype.blit = function () {
-        console.log("drawing cube");
         var surface = this.surface;
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
@@ -982,7 +991,9 @@ var SpriteRenderer = /** @class */ (function (_super) {
         this.surface = surface;
         this.camera = camera;
         this.image = new Image();
-        this.size = new EngineUtility_1.Vector2(32, 32);
+        width = width || 32;
+        height = height || 32;
+        this.size = new EngineUtility_1.Vector3(width, height, 0);
         //this.size = new Vector2(this.image.width, this.image.height);
         this.vertexBuffer = this.surface.gl.createBuffer();
         this.textureBuffer = this.surface.gl.createBuffer();
@@ -995,6 +1006,12 @@ var SpriteRenderer = /** @class */ (function (_super) {
         if (url)
             this.loadUrl(url);
         this._initialized = true;
+    };
+    SpriteRenderer.prototype.update = function (dt) {
+        var x = this.gameObject.transform.position.x - this.size.x / 2;
+        var y = this.gameObject.transform.position.y - this.size.y / 2;
+        var z = this.gameObject.transform.position.z - this.size.z / 2;
+        this.renderPoint = new EngineUtility_1.Vector3(x, y, z);
     };
     SpriteRenderer.prototype.onLoad = function () {
         var canvas = document.createElement('canvas');
@@ -1046,8 +1063,8 @@ var SpriteRenderer = /** @class */ (function (_super) {
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        var x = this.gameObject.transform.position.x;
-        var y = this.gameObject.transform.position.y;
+        var x = this.renderPoint.x;
+        var y = this.renderPoint.y;
         var x1 = x;
         var x2 = x + this.size.x;
         var y1 = y;
@@ -1089,7 +1106,7 @@ var AnimatedSprite = /** @class */ (function (_super) {
         height = height || this.image.height;
         this.currentFrame = 0;
         this.textures = [];
-        this.size = new EngineUtility_1.Vector2(width, height);
+        this.size = new EngineUtility_1.Vector3(width, height, 0);
         this._currentFrameTime = 0;
         this._initialized = true;
     };
@@ -1149,8 +1166,8 @@ var AnimatedSprite = /** @class */ (function (_super) {
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        var x = this.gameObject.transform.position.x;
-        var y = this.gameObject.transform.position.y;
+        var x = this.renderPoint.x;
+        var y = this.renderPoint.y;
         var x1 = x;
         var x2 = x + this.size.x;
         var y1 = y;

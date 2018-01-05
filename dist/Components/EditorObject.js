@@ -40,17 +40,19 @@ var DraggableUI = /** @class */ (function (_super) {
             this.gameObject.renderer = this.AddComponent(Sprite_1.SpriteRenderer);
             var spriteRenderer = this.GetComponent(Sprite_1.SpriteRenderer);
             spriteRenderer.init_renderer(camera, surf, img);
+            width = spriteRenderer.size.x;
+            height = spriteRenderer.size.y;
         }
         else {
             //this.gameObject.renderer = this.AddComponent(SquareRenderer);
             //let squareRenderer : SquareRenderer = <SquareRenderer>this.GetComponent(SquareRenderer);
             //squareRenderer.init_renderer(surface, )
         }
-        this.gameObject.transform.position = new EngineUtility_1.Vector3(startX, startY, 0);
+        this.gameObject.transform.position = new EngineUtility_1.Vector3(startX + width / 2, startY + height / 2, 0);
         this.gameObject.transform.scale = new EngineUtility_1.Vector3(width, height, 0);
         this.gameObject.collider = this.AddComponent(Collider_1.RectCollider);
         this.rect = this.GetComponent(Collider_1.RectCollider);
-        this.rect.init(new EngineUtility_1.Vector2(startX - width / 2, startY + height / 2), new EngineUtility_1.Vector2(width, height));
+        this.rect.init(new EngineUtility_1.Vector2(startX, startY), new EngineUtility_1.Vector2(width, height));
     };
     DraggableUI.prototype.isClicked = function (mousePos) {
         return this.rect.detectPoint(mousePos);

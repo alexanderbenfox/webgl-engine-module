@@ -33,7 +33,7 @@ export class RectCollider extends Collider2D{
 	init(topLeft, size){
 		this._size = new Vector2(size.x, size.y);
 
-		this._dots[0] = new Vector2(topLeft.x + size.x, topLeft.y - size.y);
+		this._dots[0] = new Vector2(topLeft.x + size.x/2, topLeft.y + size.y/2);
 		this._dots[1] = new Vector2(topLeft.x, topLeft.y);
 		this._dots[2] = new Vector2(topLeft.x + this._size.x, topLeft.y);
 		this._dots[3] = new Vector2(topLeft.x, topLeft.y + this._size.y);
@@ -50,17 +50,24 @@ export class RectCollider extends Collider2D{
 
 	updatePosition(){
 		//update positions 
-		let newPos = new Vector2(this.gameObject.transform.position.x, this.gameObject.transform.position.x);
+		let newPos = new Vector2(this.gameObject.transform.position.x, this.gameObject.transform.position.y);
 		let oldPos = this._dots[0];
 
 		let deltaPosition = newPos.sub(oldPos);
 
 		if(deltaPosition.checkZero()) return;
-
 		//update dots
-		for(let i = 0; i < this._dots.length; i++){
-			this._dots[i].add(deltaPosition);
-		}
+
+		let left = newPos.x - this._size.x/2;
+		let top = newPos.y - this._size.y/2;
+		let right = newPos.x + this._size.x/2;
+		let bottom = newPos.y + this._size.y/2;
+
+		this._dots[0] = newPos;
+		this._dots[1] = new Vector2(left, top);
+		this._dots[2] = new Vector2(right, top);
+		this._dots[3] = new Vector2(left, bottom);
+		this._dots[4] = new Vector2(right, bottom);
 
 	}
 

@@ -66,6 +66,8 @@ export declare class Transform extends Component {
 }
 export declare class Renderer extends Component {
     camera: Camera;
+    renderPoint: Vector3;
+    size: Vector3;
     constructor();
     blit(): void;
 }

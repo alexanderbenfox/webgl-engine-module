@@ -202,7 +202,9 @@ exports.Transform = Transform;
 var Renderer = /** @class */ (function (_super) {
     __extends(Renderer, _super);
     function Renderer() {
-        return _super.call(this) || this;
+        var _this = _super.call(this) || this;
+        _this.renderPoint = new EngineUtility_1.Vector3(0, 0, 0);
+        return _this;
     }
     Renderer.prototype.blit = function () { };
     return Renderer;

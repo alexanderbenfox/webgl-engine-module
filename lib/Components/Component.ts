@@ -219,10 +219,12 @@ export class Transform extends Component{
 
 export class Renderer extends Component{
 	public camera : Camera;
+	public renderPoint : Vector3;
+	public size : Vector3;
 	constructor(){
-		super();		
+		super();
+		this.renderPoint = new Vector3(0,0,0);
 	}
-
 	blit(){}
 }
 

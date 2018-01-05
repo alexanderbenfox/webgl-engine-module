@@ -1,4 +1,4 @@
-import {Vector2} from "../EngineUtility"
+import {Vector2, Vector3} from "../EngineUtility"
 import {DrawSurface} from "../Surface"
 import {GLUtility} from "../GLUtility"
 import {MatrixUtil} from "../Matrix"
@@ -6,7 +6,6 @@ import {Component, Renderer} from "./Component"
 
 export class SpriteRenderer extends Renderer{
 	public surface : DrawSurface;
-	public size : Vector2;
 	public image : HTMLImageElement;
 
 	public vertexBuffer : WebGLBuffer;
@@ -27,7 +26,7 @@ export class SpriteRenderer extends Renderer{
 		this.image = new Image();
 		width = width || 32;
 		height = height || 32;
-		this.size = new Vector2(width,height);
+		this.size = new Vector3(width,height,0);
 		//this.size = new Vector2(this.image.width, this.image.height);
 
 		this.vertexBuffer = this.surface.gl.createBuffer();
@@ -42,6 +41,14 @@ export class SpriteRenderer extends Renderer{
 		if(url) this.loadUrl(url);
 
 		this._initialized = true;
+	}
+
+	update(dt : number){
+		let x = this.gameObject.transform.position.x-this.size.x/2;
+		let y = this.gameObject.transform.position.y-this.size.y/2;
+		let z = this.gameObject.transform.position.z-this.size.z/2;
+
+		this.renderPoint = new Vector3(x,y,z);
 	}
 
 	onLoad() : void {
@@ -110,8 +117,8 @@ export class SpriteRenderer extends Renderer{
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 
-		var x = this.gameObject.transform.position.x;
-		var y = this.gameObject.transform.position.y;
+		var x = this.renderPoint.x;
+		var y = this.renderPoint.y;
 
 		var x1 = x;
 		var x2 = x + this.size.x;
@@ -169,7 +176,7 @@ export class AnimatedSprite extends SpriteRenderer{
 		height = height || this.image.height;
 		this.currentFrame = 0;
 		this.textures = [];
-		this.size = new Vector2(width, height);
+		this.size = new Vector3(width, height, 0);
 		this._currentFrameTime = 0;
 
 		this._initialized = true;
@@ -247,8 +254,8 @@ export class AnimatedSprite extends SpriteRenderer{
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 
-		var x = this.gameObject.transform.position.x;
-		var y = this.gameObject.transform.position.y;
+		var x = this.renderPoint.x;
+		var y = this.renderPoint.y;
 		
 		var x1 = x;
 		var x2 = x + this.size.x;

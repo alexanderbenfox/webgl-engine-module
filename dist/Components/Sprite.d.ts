@@ -1,9 +1,7 @@
-import { Vector2 } from "../EngineUtility";
 import { DrawSurface } from "../Surface";
 import { Renderer } from "./Component";
 export declare class SpriteRenderer extends Renderer {
     surface: DrawSurface;
-    size: Vector2;
     image: HTMLImageElement;
     vertexBuffer: WebGLBuffer;
     textureBuffer: WebGLBuffer;
@@ -11,6 +9,7 @@ export declare class SpriteRenderer extends Renderer {
     protected texture: any;
     constructor();
     init_renderer(camera: any, surface: any, url: any, width?: any, height?: any): void;
+    update(dt: number): void;
     onLoad(): void;
     createTexture(canvas: any, index?: any): void;
     canvasFrame(frame: any, drawFunction: any): void;

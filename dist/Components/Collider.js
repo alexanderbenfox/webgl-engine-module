@@ -46,7 +46,7 @@ var RectCollider = /** @class */ (function (_super) {
     }
     RectCollider.prototype.init = function (topLeft, size) {
         this._size = new EngineUtility_1.Vector2(size.x, size.y);
-        this._dots[0] = new EngineUtility_1.Vector2(topLeft.x + size.x, topLeft.y - size.y);
+        this._dots[0] = new EngineUtility_1.Vector2(topLeft.x + size.x / 2, topLeft.y + size.y / 2);
         this._dots[1] = new EngineUtility_1.Vector2(topLeft.x, topLeft.y);
         this._dots[2] = new EngineUtility_1.Vector2(topLeft.x + this._size.x, topLeft.y);
         this._dots[3] = new EngineUtility_1.Vector2(topLeft.x, topLeft.y + this._size.y);
@@ -59,15 +59,21 @@ var RectCollider = /** @class */ (function (_super) {
     };
     RectCollider.prototype.updatePosition = function () {
         //update positions 
-        var newPos = new EngineUtility_1.Vector2(this.gameObject.transform.position.x, this.gameObject.transform.position.x);
+        var newPos = new EngineUtility_1.Vector2(this.gameObject.transform.position.x, this.gameObject.transform.position.y);
         var oldPos = this._dots[0];
         var deltaPosition = newPos.sub(oldPos);
         if (deltaPosition.checkZero())
             return;
         //update dots
-        for (var i = 0; i < this._dots.length; i++) {
-            this._dots[i].add(deltaPosition);
-        }
+        var left = newPos.x - this._size.x / 2;
+        var top = newPos.y - this._size.y / 2;
+        var right = newPos.x + this._size.x / 2;
+        var bottom = newPos.y + this._size.y / 2;
+        this._dots[0] = newPos;
+        this._dots[1] = new EngineUtility_1.Vector2(left, top);
+        this._dots[2] = new EngineUtility_1.Vector2(right, top);
+        this._dots[3] = new EngineUtility_1.Vector2(left, bottom);
+        this._dots[4] = new EngineUtility_1.Vector2(right, bottom);
     };
     RectCollider.prototype.updateRotation = function () {
         var deltaRotation = this._rotation.z - this.gameObject.transform.rotation.z;

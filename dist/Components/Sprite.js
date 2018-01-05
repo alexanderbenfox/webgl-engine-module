@@ -24,7 +24,9 @@ var SpriteRenderer = /** @class */ (function (_super) {
         this.surface = surface;
         this.camera = camera;
         this.image = new Image();
-        this.size = new EngineUtility_1.Vector2(32, 32);
+        width = width || 32;
+        height = height || 32;
+        this.size = new EngineUtility_1.Vector3(width, height, 0);
         //this.size = new Vector2(this.image.width, this.image.height);
         this.vertexBuffer = this.surface.gl.createBuffer();
         this.textureBuffer = this.surface.gl.createBuffer();
@@ -37,6 +39,12 @@ var SpriteRenderer = /** @class */ (function (_super) {
         if (url)
             this.loadUrl(url);
         this._initialized = true;
+    };
+    SpriteRenderer.prototype.update = function (dt) {
+        var x = this.gameObject.transform.position.x - this.size.x / 2;
+        var y = this.gameObject.transform.position.y - this.size.y / 2;
+        var z = this.gameObject.transform.position.z - this.size.z / 2;
+        this.renderPoint = new EngineUtility_1.Vector3(x, y, z);
     };
     SpriteRenderer.prototype.onLoad = function () {
         var canvas = document.createElement('canvas');
@@ -88,8 +96,8 @@ var SpriteRenderer = /** @class */ (function (_super) {
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        var x = this.gameObject.transform.position.x;
-        var y = this.gameObject.transform.position.y;
+        var x = this.renderPoint.x;
+        var y = this.renderPoint.y;
         var x1 = x;
         var x2 = x + this.size.x;
         var y1 = y;
@@ -131,7 +139,7 @@ var AnimatedSprite = /** @class */ (function (_super) {
         height = height || this.image.height;
         this.currentFrame = 0;
         this.textures = [];
-        this.size = new EngineUtility_1.Vector2(width, height);
+        this.size = new EngineUtility_1.Vector3(width, height, 0);
         this._currentFrameTime = 0;
         this._initialized = true;
     };
@@ -191,8 +199,8 @@ var AnimatedSprite = /** @class */ (function (_super) {
         var matrix = surface.getMatrix();
         gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        var x = this.gameObject.transform.position.x;
-        var y = this.gameObject.transform.position.y;
+        var x = this.renderPoint.x;
+        var y = this.renderPoint.y;
         var x1 = x;
         var x2 = x + this.size.x;
         var y1 = y;

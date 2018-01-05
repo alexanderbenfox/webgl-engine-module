@@ -11,6 +11,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var EngineUtility_1 = require("../EngineUtility");
 var Matrix_1 = require("../Matrix");
 var Component_1 = require("./Component");
 var Renderer2D = /** @class */ (function (_super) {
@@ -27,6 +28,12 @@ var Renderer2D = /** @class */ (function (_super) {
         this._initialized = true;
     };
     Renderer2D.prototype.blit = function () { };
+    Renderer2D.prototype.update = function (dt) {
+        var x = this.gameObject.transform.position.x - this.size.x / 2;
+        var y = this.gameObject.transform.position.y - this.size.y / 2;
+        var z = this.gameObject.transform.position.z - this.size.z / 2;
+        this.renderPoint = new EngineUtility_1.Vector3(x, y, z);
+    };
     return Renderer2D;
 }(Component_1.Renderer));
 exports.Renderer2D = Renderer2D;
@@ -37,6 +44,7 @@ var LineRenderer = /** @class */ (function (_super) {
     }
     LineRenderer.prototype.init_renderer = function (camera, surface, startCoord, endCoord, width) {
         _super.prototype.init.call(this, surface, camera);
+        this.size = new EngineUtility_1.Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
         this._points = new Float32Array([
             startCoord.x, startCoord.y, endCoord.x, startCoord.y,
             startCoord.x, endCoord.y, startCoord.x, endCoord.y,
@@ -89,6 +97,7 @@ var SquareRenderer = /** @class */ (function (_super) {
     }
     SquareRenderer.prototype.init_renderer = function (camera, surface, startCoord, endCoord, width) {
         _super.prototype.init.call(this, surface, camera);
+        this.size = new EngineUtility_1.Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
         this._points = new Float32Array([
             startCoord.x, startCoord.y, endCoord.x, startCoord.y,
             startCoord.x, endCoord.y, startCoord.x, endCoord.y,

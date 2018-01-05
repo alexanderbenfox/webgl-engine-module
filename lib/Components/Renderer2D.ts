@@ -20,8 +20,6 @@ export abstract class Renderer2D extends Renderer{
 	protected _topLeft : Vector2;
 	protected _bottomRight : Vector2;
 
-	protected _size : Vector2;
-
 	constructor(){
 		super();
 	}
@@ -36,6 +34,14 @@ export abstract class Renderer2D extends Renderer{
 	}
 
 	blit() : void {}
+
+	update(dt : number){
+		let x = this.gameObject.transform.position.x-this.size.x/2;
+		let y = this.gameObject.transform.position.y-this.size.y/2;
+		let z = this.gameObject.transform.position.z-this.size.z/2;
+
+		this.renderPoint = new Vector3(x,y,z);
+	}
 }
 
 export class LineRenderer extends Renderer2D implements Drawable{
@@ -48,6 +54,8 @@ export class LineRenderer extends Renderer2D implements Drawable{
 
 	init_renderer(camera : Camera, surface : DrawSurface, startCoord : Vector2, endCoord : Vector2, width : number){
 		super.init(surface, camera);
+
+		this.size = new Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
 
 		this._points = new Float32Array([
 			startCoord.x, startCoord.y, endCoord.x, startCoord.y,
@@ -115,6 +123,7 @@ export class SquareRenderer extends Renderer2D implements Drawable{
 	init_renderer(camera : Camera, surface : DrawSurface, startCoord : Vector2, endCoord : Vector2, width : number){
 		super.init(surface, camera);
 
+		this.size = new Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
 		this._points = new Float32Array([
 			startCoord.x, startCoord.y, endCoord.x, startCoord.y,
 			startCoord.x, endCoord.y, startCoord.x, endCoord.y,

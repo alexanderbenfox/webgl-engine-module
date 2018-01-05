@@ -100,7 +100,6 @@ var CubeRenderer = /** @class */ (function (_super) {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
     };
     CubeRenderer.prototype.blit = function () {
-        console.log("drawing cube");
         var surface = this.surface;
         var gl = this.surface.gl;
         var program = this.surface.locations.program;

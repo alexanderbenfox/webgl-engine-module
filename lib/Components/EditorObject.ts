@@ -24,11 +24,14 @@ export class DraggableUI extends Component implements Draggable, Clickable{
 		super();
 	}
 	init(camera : Camera, img : string, surf, startX, startY, width? : number, height? : number){
-		
+
 		if(img){
 			this.gameObject.renderer = this.AddComponent(SpriteRenderer);
 			let spriteRenderer : SpriteRenderer = <SpriteRenderer>this.GetComponent(SpriteRenderer);
 			spriteRenderer.init_renderer(camera, surf, img);
+
+			width = spriteRenderer.size.x;
+			height = spriteRenderer.size.y;
 		}
 		else{
 			//this.gameObject.renderer = this.AddComponent(SquareRenderer);
@@ -36,12 +39,12 @@ export class DraggableUI extends Component implements Draggable, Clickable{
 			//squareRenderer.init_renderer(surface, )
 		}
 
-		this.gameObject.transform.position = new Vector3(startX, startY, 0);
+		this.gameObject.transform.position = new Vector3(startX + width/2, startY + height/2, 0);
 		this.gameObject.transform.scale = new Vector3(width, height, 0);
 
 		this.gameObject.collider = this.AddComponent(RectCollider);
 		this.rect = <RectCollider>this.GetComponent(RectCollider);
-		this.rect.init(new Vector2(startX - width/2, startY + height/2), new Vector2(width, height));
+		this.rect.init(new Vector2(startX, startY), new Vector2(width, height));
 	}
 
 	isClicked(mousePos : Vector2) : boolean {
