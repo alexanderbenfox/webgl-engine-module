@@ -1,6 +1,7 @@
 import {Vector3} from "../EngineUtility"
 import {Collider} from "./Collider"
 import {Camera} from "./CameraUtility"
+import {Texture2D} from "./Texture"
 
 export class ComponentFactory{
 	static CreateComponent<IComponent extends Component>(type:{new():Component;}) : Component{
@@ -217,9 +218,13 @@ export class Renderer extends Component{
 	public camera : Camera;
 	public renderPoint : Vector3;
 	public size : Vector3;
+	public texture : Texture2D;
 	constructor(){
 		super();
 		this.renderPoint = new Vector3(0,0,0);
+	}
+	init(surface){
+		this.texture = null;
 	}
 	blit(){}
 }

@@ -16,9 +16,23 @@ export declare abstract class Renderer3D extends Renderer implements Drawable {
     protected _colorBuffer: WebGLBuffer;
     protected _indexBuffer: WebGLBuffer;
     constructor();
-    init(surface: DrawSurface, camera: Camera): void;
+    init_renderer(surface: DrawSurface, camera: Camera): void;
     blit(): void;
     update(dt: number): void;
+}
+export declare class SpriteRenderer extends Renderer3D {
+    constructor();
+    initVertexBuffer(gl: WebGLRenderingContext): void;
+    initColorBuffer(gl: WebGLRenderingContext): void;
+    initIndexBuffer(gl: WebGLRenderingContext): void;
+    initNormalBuffer(gl: WebGLRenderingContext): void;
+    init_sprite_renderer(surface: DrawSurface, camera: Camera, url?: any, width?: any, height?: any): void;
+    blit(): void;
+    assignAttrib(buffer: any, attribLocation: any, components: number): void;
+    bindIndexToVerts(): void;
+    update(dt: number): void;
+    cartesianToHomogeneous(point: Vector3): Vector4;
+    homogeneousToCartesian(point: Vector4): Vector3;
 }
 export declare class CubeRenderer extends Renderer3D {
     constructor();
@@ -26,7 +40,7 @@ export declare class CubeRenderer extends Renderer3D {
     initColorBuffer(gl: WebGLRenderingContext): void;
     initIndexBuffer(gl: WebGLRenderingContext): void;
     initNormalBuffer(gl: WebGLRenderingContext): void;
-    init(surface: DrawSurface, camera: Camera): void;
+    init_cube_renderer(surface: DrawSurface, camera: Camera, url?: any, width?: any, height?: any): void;
     blit(): void;
     assignAttrib(buffer: any, attribLocation: any, components: number): void;
     bindIndexToVerts(): void;

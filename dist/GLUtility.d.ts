@@ -4,6 +4,7 @@ export declare class ShaderProperties {
     attributes: {
         position: GLint;
         texture: GLint;
+        color: GLint;
         normal: GLint;
     };
     uniforms: {
@@ -18,6 +19,7 @@ export declare class ShaderProperties {
     constructor(attributes: {
         position: GLint;
         texture: GLint;
+        color: GLint;
         normal: GLint;
     }, uniforms: {
         resolution: WebGLUniformLocation;
@@ -29,9 +31,9 @@ export declare class ShaderProperties {
     }, program: WebGLProgram);
 }
 export declare enum ShaderType {
-    texture_2d = 0,
-    no_texture_2d = 1,
-    no_texture3d = 2,
+    shader2d = 0,
+    shader3d = 1,
+    shader3d_notexture = 2,
 }
 export declare module GLUtility {
     function initGL(gl: WebGLRenderingContext, size: Vector2, type: ShaderType): ShaderProperties;

@@ -1,5 +1,5 @@
 import {Vector2, Vector3, inBounds2D} from "../EngineUtility"
-import {SpriteRenderer} from "./Sprite"
+import {UIImage} from "./UIImage"
 import {SquareRenderer} from "./Renderer2D"
 import {Component} from "./Component"
 import {RectCollider} from "./Collider"
@@ -26,9 +26,9 @@ export class DraggableUI extends Component implements Draggable, Clickable{
 	init(camera : Camera, img : string, surf, startX, startY, width? : number, height? : number){
 
 		if(img){
-			this.gameObject.renderer = this.AddComponent(SpriteRenderer);
-			let spriteRenderer : SpriteRenderer = <SpriteRenderer>this.GetComponent(SpriteRenderer);
-			spriteRenderer.init_renderer(camera, surf, img);
+			this.gameObject.renderer = this.AddComponent(UIImage);
+			let spriteRenderer : UIImage = <UIImage>this.GetComponent(UIImage);
+			spriteRenderer.init_renderer(camera, surf, img, width, height);
 
 			width = spriteRenderer.size.x;
 			height = spriteRenderer.size.y;

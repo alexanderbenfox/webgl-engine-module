@@ -8,38 +8,43 @@
   <title>WebGL GameEditor</title>
 	<!-- Fragment Shader Program -->
 
-	<script id = "shader-fs-texture" type="x-shader/x-fragment">
-		//varying lowp vec4 vColor;
+	<script id = "shader-fs-2d" type="x-shader/x-fragment">
+		varying lowp vec4 vColor;
+		varying lowp vec2 vTexture;
+
 		precision mediump float;
-		varying vec2 vTextureCoordinate;
+
 		uniform sampler2D uSampler;
 		
 
 		void main(void){	
 			//gl_FragColor = vColor;
-			gl_FragColor = texture2D(uSampler, vTextureCoordinate);
+			lowp vec4 texture = texture2D(uSampler, vTexture);
+			lowp vec4 coloredTexture = vec4(texture.rgb * vColor.rgb, vColor.a);
+			gl_FragColor = coloredTexture;
 		}
 	</script>
 
 	<!-- Vertex Shader Program -->
 
-	<script id = "shader-vs-texture-2d" type = "x-shader/x-vertex">
+	<script id = "shader-vs-2d" type = "x-shader/x-vertex">
 		attribute vec2 aVertexPosition;
-		attribute vec2 aTextureColorCoordinate;
+		attribute vec2 aTextureCoordinate;
+		attribute vec4 aColorCoordinate;
 		attribute vec3 aVertexNormal;
 
-		varying vec2 vTextureCoordinate;
+		varying vec2 vTexture;
+		varying vec4 vColor;
 		
 		uniform mat3 uMatrix;
 		uniform vec2 uResolution;
-
-		
 
 		void main(void){
 			vec2 position = (uMatrix * vec3(aVertexPosition, 1)).xy;
 			vec2 clipSpace = (2.0 * (position / uResolution)) - 1.0;
 			gl_Position = vec4(clipSpace * vec2(1,-1), 0, 1);
-			vTextureCoordinate = aTextureColorCoordinate;
+			vTexture = aTextureCoordinate;
+			vColor = aColorCoordinate;
 		}
 	</script>
 
@@ -47,7 +52,8 @@
 
 	<script id = "shader-vs-3d" type = "x-shader/x-vertex">
 		attribute vec4 aVertexPosition;
-		attribute vec4 aTextureColorCoordinate;
+		attribute vec4 aColorCoordinate;
+		attribute vec4 aTextureCoordinate;
 		attribute vec3 aVertexNormal;
 
 		uniform vec3 uDirectionalLightVector;
@@ -58,11 +64,13 @@
 		uniform mat4 uNormalMatrix;
 
 		varying lowp vec4 vColor;
+		varying highp vec2 vTexture;
 		varying highp vec3 vLighting;
 
 		void main(void){
 			gl_Position = uProjectionMatrix * uMatrix * aVertexPosition;
-			vColor = aTextureColorCoordinate;
+			vColor = aColorCoordinate;
+			vTexture = aTextureCoordinate.st;
 
 				//apply lighting effect
 			highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
@@ -78,33 +86,31 @@
 		}
 	</script>
 
-	<script id = "shader-vs-2d" type = "x-shader/x-vertex">
-		attribute vec2 aVertexPosition;
-		attribute vec4 aTextureColorCoordinate;
-		attribute vec3 aVertexNormal;
-		
-		uniform mat3 uMatrix;
-		uniform vec2 uResolution;
-
+	<script id = "shader-fs-3d" type="x-shader/x-fragment">
 		varying lowp vec4 vColor;
+		varying highp vec2 vTexture;
 		varying highp vec3 vLighting;
 
+		uniform sampler2D uSampler;
+
+
 		void main(void){
-			vec2 position = (uMatrix * vec3(aVertexPosition, 1)).xy;
-			vec2 clipSpace = (2.0 * (position / uResolution)) - 1.0;
-			gl_Position = vec4(clipSpace * vec2(1,-1), 0, 1);
-			vColor = aTextureColorCoordinate;
+			highp vec4 texture = texture2D(uSampler, vTexture);
+			highp vec4 coloredTexture = vec4(texture.rgb * vColor.rgb, vColor.a);
+			highp vec4 lightedTexture = vec4(coloredTexture.rgb * vLighting, vColor.a);	
+			gl_FragColor = lightedTexture;
+			//gl_FragColor = vColor;
+			//gl_FragColor = vec4(1.0,1.0,1.0,1.0);
 		}
 	</script>
 
-	<script id = "shader-fs" type="x-shader/x-fragment">
+	<script id = "shader-fs-3d-no-texture" type="x-shader/x-fragment">
 		varying lowp vec4 vColor;
 		varying highp vec3 vLighting;
 
-
 		void main(void){
-			highp vec4 lightingColor = vec4(vColor.rgb * vLighting, vColor.a);	
-			gl_FragColor = lightingColor;
+			highp vec4 lightedObject = vec4(vColor.rgb * vLighting, vColor.a);	
+			gl_FragColor = lightedObject;
 			//gl_FragColor = vColor;
 			//gl_FragColor = vec4(1.0,1.0,1.0,1.0);
 		}

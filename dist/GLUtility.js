@@ -12,9 +12,9 @@ var ShaderProperties = /** @class */ (function () {
 exports.ShaderProperties = ShaderProperties;
 var ShaderType;
 (function (ShaderType) {
-    ShaderType[ShaderType["texture_2d"] = 0] = "texture_2d";
-    ShaderType[ShaderType["no_texture_2d"] = 1] = "no_texture_2d";
-    ShaderType[ShaderType["no_texture3d"] = 2] = "no_texture3d";
+    ShaderType[ShaderType["shader2d"] = 0] = "shader2d";
+    ShaderType[ShaderType["shader3d"] = 1] = "shader3d";
+    ShaderType[ShaderType["shader3d_notexture"] = 2] = "shader3d_notexture";
 })(ShaderType = exports.ShaderType || (exports.ShaderType = {}));
 var GLUtility;
 (function (GLUtility) {
@@ -30,18 +30,17 @@ var GLUtility;
         var fs_name = '';
         var vs_name = '';
         switch (type) {
-            case ShaderType.no_texture3d:
-                fs_name = 'shader-fs';
+            case ShaderType.shader3d:
+                fs_name = 'shader-fs-3d';
                 vs_name = 'shader-vs-3d';
                 break;
-            case ShaderType.no_texture_2d:
-                fs_name = 'shader-fs';
+            case ShaderType.shader2d:
+                fs_name = 'shader-fs-2d';
                 vs_name = 'shader-vs-2d';
                 break;
-            case ShaderType.texture_2d:
-                fs_name = 'shader-fs-texture';
-                vs_name = 'shader-vs-texture-2d';
-                break;
+            case ShaderType.shader3d_notexture:
+                fs_name = 'shader-fs-3d-no-texture';
+                vs_name = 'shader-vs-3d';
         }
         return initShaders(gl, fs_name, vs_name);
     }
@@ -60,12 +59,15 @@ var GLUtility;
         gl.useProgram(shaderProgram);
         var vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
         gl.enableVertexAttribArray(vertexPosition);
-        var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
+        var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureCoordinate');
         gl.enableVertexAttribArray(textureCoordinate);
+        var colorCoordinate = gl.getAttribLocation(shaderProgram, 'aColorCoordinate');
+        gl.enableVertexAttribArray(colorCoordinate);
         var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
         gl.enableVertexAttribArray(vertexNormal);
         var attributes = { position: vertexPosition,
             texture: textureCoordinate,
+            color: colorCoordinate,
             normal: vertexNormal };
         var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
         var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');

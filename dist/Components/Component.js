@@ -203,6 +203,9 @@ var Renderer = /** @class */ (function (_super) {
         _this.renderPoint = new EngineUtility_1.Vector3(0, 0, 0);
         return _this;
     }
+    Renderer.prototype.init = function (surface) {
+        this.texture = null;
+    };
     Renderer.prototype.blit = function () { };
     return Renderer;
 }(Component));

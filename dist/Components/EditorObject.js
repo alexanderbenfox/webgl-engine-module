@@ -11,7 +11,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("../EngineUtility");
-var Sprite_1 = require("./Sprite");
+var UIImage_1 = require("./UIImage");
 var Component_1 = require("./Component");
 var Collider_1 = require("./Collider");
 var Draggable = /** @class */ (function () {
@@ -37,9 +37,9 @@ var DraggableUI = /** @class */ (function (_super) {
     }
     DraggableUI.prototype.init = function (camera, img, surf, startX, startY, width, height) {
         if (img) {
-            this.gameObject.renderer = this.AddComponent(Sprite_1.SpriteRenderer);
-            var spriteRenderer = this.GetComponent(Sprite_1.SpriteRenderer);
-            spriteRenderer.init_renderer(camera, surf, img);
+            this.gameObject.renderer = this.AddComponent(UIImage_1.UIImage);
+            var spriteRenderer = this.GetComponent(UIImage_1.UIImage);
+            spriteRenderer.init_renderer(camera, surf, img, width, height);
             width = spriteRenderer.size.x;
             height = spriteRenderer.size.y;
         }

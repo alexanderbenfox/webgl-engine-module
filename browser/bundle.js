@@ -99,7 +99,7 @@ var Camera = /** @class */ (function () {
 }());
 exports.Camera = Camera;
 
-},{"./EngineUtility":12,"gl-matrix":22,"sylvester":23}],2:[function(require,module,exports){
+},{"./EngineUtility":13,"gl-matrix":23,"sylvester":24}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -338,7 +338,7 @@ var Camera = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.Camera = Camera;
 
-},{"../EngineUtility":12,"./Component":5,"gl-matrix":22,"sylvester":23}],4:[function(require,module,exports){
+},{"../EngineUtility":13,"./Component":5,"gl-matrix":23,"sylvester":24}],4:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -517,7 +517,7 @@ var CircleCollider = /** @class */ (function (_super) {
 }(Collider2D));
 exports.CircleCollider = CircleCollider;
 
-},{"../EngineUtility":12,"./Component":5}],5:[function(require,module,exports){
+},{"../EngineUtility":13,"./Component":5}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -723,6 +723,9 @@ var Renderer = /** @class */ (function (_super) {
         _this.renderPoint = new EngineUtility_1.Vector3(0, 0, 0);
         return _this;
     }
+    Renderer.prototype.init = function (surface) {
+        this.texture = null;
+    };
     Renderer.prototype.blit = function () { };
     return Renderer;
 }(Component));
@@ -738,7 +741,7 @@ function testFunction() {
 }
 exports.testFunction = testFunction;
 
-},{"../EngineUtility":12}],6:[function(require,module,exports){
+},{"../EngineUtility":13}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -752,7 +755,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("../EngineUtility");
-var Sprite_1 = require("./Sprite");
+var UIImage_1 = require("./UIImage");
 var Component_1 = require("./Component");
 var Collider_1 = require("./Collider");
 var Draggable = /** @class */ (function () {
@@ -778,9 +781,9 @@ var DraggableUI = /** @class */ (function (_super) {
     }
     DraggableUI.prototype.init = function (camera, img, surf, startX, startY, width, height) {
         if (img) {
-            this.gameObject.renderer = this.AddComponent(Sprite_1.SpriteRenderer);
-            var spriteRenderer = this.GetComponent(Sprite_1.SpriteRenderer);
-            spriteRenderer.init_renderer(camera, surf, img);
+            this.gameObject.renderer = this.AddComponent(UIImage_1.UIImage);
+            var spriteRenderer = this.GetComponent(UIImage_1.UIImage);
+            spriteRenderer.init_renderer(camera, surf, img, width, height);
             width = spriteRenderer.size.x;
             height = spriteRenderer.size.y;
         }
@@ -807,7 +810,7 @@ var DraggableUI = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.DraggableUI = DraggableUI;
 
-},{"../EngineUtility":12,"./Collider":4,"./Component":5,"./Sprite":9}],7:[function(require,module,exports){
+},{"../EngineUtility":13,"./Collider":4,"./Component":5,"./UIImage":10}],7:[function(require,module,exports){
 "use strict";
 //references: Phong Shading
 var __extends = (this && this.__extends) || (function () {
@@ -860,12 +863,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var Component_1 = require("./Component");
 var EngineUtility_1 = require("../EngineUtility");
 var gl_matrix_1 = require("gl-matrix");
+var Texture_1 = require("./Texture");
 var Renderer3D = /** @class */ (function (_super) {
     __extends(Renderer3D, _super);
     function Renderer3D() {
         return _super.call(this) || this;
     }
-    Renderer3D.prototype.init = function (surface, camera) {
+    Renderer3D.prototype.init_renderer = function (surface, camera) {
+        _super.prototype.init.call(this, surface);
         this.gameObject.renderer = this;
         this.surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
@@ -878,6 +883,129 @@ var Renderer3D = /** @class */ (function (_super) {
     return Renderer3D;
 }(Component_1.Renderer));
 exports.Renderer3D = Renderer3D;
+var SpriteRenderer = /** @class */ (function (_super) {
+    __extends(SpriteRenderer, _super);
+    function SpriteRenderer() {
+        return _super.call(this) || this;
+    }
+    SpriteRenderer.prototype.initVertexBuffer = function (gl) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
+        //1 verticies per side, 4 verticies in total
+        var vertexPositions = [
+            // Front face
+            -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0,
+            1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0,
+        ];
+        this.positions = new Float32Array(vertexPositions);
+        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+    };
+    SpriteRenderer.prototype.initColorBuffer = function (gl) {
+        //colors each face white - for now
+        var white_color = [1.0, 1.0, 1.0, 0.9];
+        //6 faces
+        var faceColors = [white_color];
+        var colors = [];
+        for (var i = 0; i < faceColors.length; ++i) {
+            var c = faceColors[i];
+            colors = colors.concat(c, c, c, c);
+        }
+        this.colors = new Float32Array(colors);
+        this._colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    };
+    SpriteRenderer.prototype.initIndexBuffer = function (gl) {
+        this._indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+        var indicies = [
+            0, 1, 2, 0, 2, 3,
+        ];
+        this.indicies = new Uint16Array(indicies);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
+    };
+    SpriteRenderer.prototype.initNormalBuffer = function (gl) {
+        this._normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
+        var vertexNormals = [
+            // Front
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+        ];
+        this.normals = new Float32Array(vertexNormals);
+        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+    };
+    SpriteRenderer.prototype.init_sprite_renderer = function (surface, camera, url, width, height) {
+        _super.prototype.init_renderer.call(this, surface, camera);
+        var gl = this.surface.gl;
+        this.initVertexBuffer(gl);
+        this.initColorBuffer(gl);
+        this.initIndexBuffer(gl);
+        this.initNormalBuffer(gl);
+        if (url && width && height)
+            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+    };
+    SpriteRenderer.prototype.blit = function () {
+        var surface = this.surface;
+        var gl = this.surface.gl;
+        var program = this.surface.locations.program;
+        //drawing position
+        var modelViewMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
+        this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
+        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.color, 4);
+        this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
+        this.bindIndexToVerts();
+        gl.useProgram(program);
+        if (this.texture != null)
+            this.texture.bindTexture();
+        gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
+        var normalMatrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
+        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
+        var vertexCount = 6;
+        var type = gl.UNSIGNED_SHORT;
+        var offset = 0;
+        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    };
+    SpriteRenderer.prototype.assignAttrib = function (buffer, attribLocation, components) {
+        var gl = this.surface.gl;
+        var numComponents = components;
+        var type = this.surface.gl.FLOAT;
+        var normalize = false;
+        var stride = 0;
+        var offset = 0;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.vertexAttribPointer(attribLocation, numComponents, type, normalize, stride, offset);
+        gl.enableVertexAttribArray(attribLocation);
+    };
+    SpriteRenderer.prototype.bindIndexToVerts = function () {
+        var gl = this.surface.gl;
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+    };
+    SpriteRenderer.prototype.update = function (dt) {
+    };
+    SpriteRenderer.prototype.cartesianToHomogeneous = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        return new EngineUtility_1.Vector4(x, y, z, 1);
+    };
+    SpriteRenderer.prototype.homogeneousToCartesian = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        var w = point.w;
+        return new EngineUtility_1.Vector3(x / w, y / w, z / w);
+    };
+    return SpriteRenderer;
+}(Renderer3D));
+exports.SpriteRenderer = SpriteRenderer;
 var CubeRenderer = /** @class */ (function (_super) {
     __extends(CubeRenderer, _super);
     function CubeRenderer() {
@@ -988,13 +1116,15 @@ var CubeRenderer = /** @class */ (function (_super) {
         this.normals = new Float32Array(vertexNormals);
         gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
     };
-    CubeRenderer.prototype.init = function (surface, camera) {
-        _super.prototype.init.call(this, surface, camera);
+    CubeRenderer.prototype.init_cube_renderer = function (surface, camera, url, width, height) {
+        _super.prototype.init_renderer.call(this, surface, camera);
         var gl = this.surface.gl;
         this.initVertexBuffer(gl);
         this.initColorBuffer(gl);
         this.initIndexBuffer(gl);
         this.initNormalBuffer(gl);
+        if (url && width && height)
+            this.texture = new Texture_1.Texture2D(surface, url, width, height);
     };
     CubeRenderer.prototype.blit = function () {
         var surface = this.surface;
@@ -1004,17 +1134,21 @@ var CubeRenderer = /** @class */ (function (_super) {
         var modelViewMatrix = gl_matrix_1.mat4.create();
         EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
         this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
-        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.texture, 4);
+        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.color, 4);
         this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
         this.bindIndexToVerts();
         gl.useProgram(program);
+        if (this.texture != null)
+            this.texture.bindTexture();
+        else
+            gl.disableVertexAttribArray(this.surface.locations.attributes.texture);
         gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
         gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
         var normalMatrix = gl_matrix_1.mat4.create();
         gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
         gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
         gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
-        var vertexCount = 36;
+        var vertexCount = this.indicies.length;
         var type = gl.UNSIGNED_SHORT;
         var offset = 0;
         gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
@@ -1053,7 +1187,7 @@ var CubeRenderer = /** @class */ (function (_super) {
 }(Renderer3D));
 exports.CubeRenderer = CubeRenderer;
 
-},{"../EngineUtility":12,"./Component":5,"gl-matrix":22}],9:[function(require,module,exports){
+},{"../EngineUtility":13,"./Component":5,"./Texture":9,"gl-matrix":23}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1066,43 +1200,29 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var EngineUtility_1 = require("../EngineUtility");
 var GLUtility_1 = require("../GLUtility");
-var Matrix_1 = require("../Matrix");
-var Component_1 = require("./Component");
-var SpriteRenderer = /** @class */ (function (_super) {
-    __extends(SpriteRenderer, _super);
-    function SpriteRenderer() {
-        return _super.call(this) || this;
-    }
-    SpriteRenderer.prototype.init_renderer = function (camera, surface, url, width, height) {
-        this.gameObject.renderer = this;
-        this.surface = surface;
-        this.camera = camera;
+var EngineUtility_1 = require("../EngineUtility");
+var Texture2D = /** @class */ (function () {
+    function Texture2D(surface, url, width, height) {
         this.image = new Image();
-        width = width || 32;
-        height = height || 32;
-        this.size = new EngineUtility_1.Vector3(width, height, 0);
-        //this.size = new Vector2(this.image.width, this.image.height);
-        this.vertexBuffer = this.surface.gl.createBuffer();
-        this.textureBuffer = this.surface.gl.createBuffer();
-        this.textureCoords = new Float32Array([
+        this.surface = surface;
+        this.buffer = this.surface.gl.createBuffer();
+        this.size = new EngineUtility_1.Vector2(width, height);
+        this.coords = new Float32Array([
             0.0, 0.0, 1.0, 0.0,
             0.0, 1.0, 0.0, 1.0,
             1.0, 0.0, 1.0, 1.0
         ]);
         this.image.onload = this.onLoad.bind(this);
-        if (url)
+        if (url) {
             this.loadUrl(url);
-        this._initialized = true;
+        }
+    }
+    Texture2D.prototype.createPlaceholderTex = function () {
+        this.texture = this.surface.gl.createTexture();
+        ;
     };
-    SpriteRenderer.prototype.update = function (dt) {
-        var x = this.gameObject.transform.position.x - this.size.x / 2;
-        var y = this.gameObject.transform.position.y - this.size.y / 2;
-        var z = this.gameObject.transform.position.z - this.size.z / 2;
-        this.renderPoint = new EngineUtility_1.Vector3(x, y, z);
-    };
-    SpriteRenderer.prototype.onLoad = function () {
+    Texture2D.prototype.onLoad = function () {
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
         var size = GLUtility_1.GLUtility.nextPowerOfTwo(Math.max(this.size.x, this.size.y));
@@ -1114,7 +1234,7 @@ var SpriteRenderer = /** @class */ (function (_super) {
         context.drawImage(this.image, 0, 0, safeW, safeH, 0, 0, size, size);
         this.createTexture(canvas);
     };
-    SpriteRenderer.prototype.createTexture = function (canvas, index) {
+    Texture2D.prototype.createTexture = function (canvas, index) {
         if (index === void 0) { index = false; }
         var texture = this.surface.gl.createTexture();
         var gl = this.surface.gl;
@@ -1129,7 +1249,7 @@ var SpriteRenderer = /** @class */ (function (_super) {
         // Store the texture
         this.texture = texture;
     };
-    SpriteRenderer.prototype.canvasFrame = function (frame, drawFunction) {
+    Texture2D.prototype.canvasFrame = function (frame, drawFunction) {
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
         var size = GLUtility_1.GLUtility.nextPowerOfTwo(Math.max(this.size.x, this.size.y));
@@ -1138,68 +1258,36 @@ var SpriteRenderer = /** @class */ (function (_super) {
         drawFunction(context, canvas.width, canvas.height);
         this.createTexture(canvas, frame);
     };
-    SpriteRenderer.prototype.loadUrl = function (url) {
+    Texture2D.prototype.loadUrl = function (url) {
         this.image.src = '../img/' + url;
     };
-    SpriteRenderer.prototype.blit = function () {
-        var surface = this.surface;
+    Texture2D.prototype.update = function (dt) { };
+    Texture2D.prototype.bindTexture = function () {
         var gl = this.surface.gl;
-        var program = this.surface.locations.program;
-        gl.useProgram(program);
-        var vertexPosition = surface.locations.attributes.position;
-        var vertexTexture = surface.locations.attributes.texture;
-        var matrixLocation = surface.locations.uniforms.matrix;
-        var matrix = surface.getMatrix();
-        gl.enableVertexAttribArray(vertexTexture);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        var x = this.renderPoint.x;
-        var y = this.renderPoint.y;
-        var x1 = x;
-        var x2 = x + this.size.x;
-        var y1 = y;
-        var y2 = y + this.size.y;
-        //creating a new array on every draw call is gonna be really slow...
-        var verticies = new Float32Array([
-            x1, y1, x2, y1,
-            x1, y2, x1, y2,
-            x2, y1, x2, y2
-        ]);
-        gl.bufferData(gl.ARRAY_BUFFER, verticies, gl.STATIC_DRAW);
-        //vertex buffer -> shader position attribute
-        gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(this.surface.locations.attributes.texture);
         //set shader buffer to current buffer and add texture data
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.textureCoords, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.coords, gl.STATIC_DRAW);
         //texture buffer -> shader texture attribute
-        gl.vertexAttribPointer(vertexTexture, 2, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(this.surface.locations.attributes.texture, 2, gl.FLOAT, false, 0, 0);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        var n_matrix = new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(matrix));
-        //apply matrix transformations
-        gl.uniformMatrix3fv(matrixLocation, false, n_matrix);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindTexture(gl.TEXTURE_2D, null);
     };
-    return SpriteRenderer;
-}(Component_1.Renderer));
-exports.SpriteRenderer = SpriteRenderer;
-var AnimatedSprite = /** @class */ (function (_super) {
-    __extends(AnimatedSprite, _super);
-    function AnimatedSprite() {
-        return _super.call(this) || this;
+    return Texture2D;
+}());
+exports.Texture2D = Texture2D;
+var AnimatedTexture2D = /** @class */ (function (_super) {
+    __extends(AnimatedTexture2D, _super);
+    function AnimatedTexture2D(surface, url, width, height) {
+        var _this = _super.call(this, surface, url, width, height) || this;
+        _this._currentFrameTime = 0;
+        _this.currentFrame = 0;
+        _this.textures = [];
+        _this.size = new EngineUtility_1.Vector2(width, height);
+        _this._currentFrameTime = 0;
+        return _this;
     }
-    AnimatedSprite.prototype.init_renderer = function (camera, surface, url, width, height) {
-        _super.prototype.init_renderer.call(this, camera, surface, url);
-        width = width || this.image.width;
-        height = height || this.image.height;
-        this.currentFrame = 0;
-        this.textures = [];
-        this.size = new EngineUtility_1.Vector3(width, height, 0);
-        this._currentFrameTime = 0;
-        this._initialized = true;
-    };
-    AnimatedSprite.prototype.createTexture = function (canvas, index) {
+    AnimatedTexture2D.prototype.createTexture = function (canvas, index) {
         if (index === void 0) { index = false; }
         var texture = this.surface.gl.createTexture();
         //push it on to the end
@@ -1216,7 +1304,7 @@ var AnimatedSprite = /** @class */ (function (_super) {
         // Store the texture with a base amount of time
         this.textures[index] = { texture: texture, frameTime: 1.0 };
     };
-    AnimatedSprite.prototype.onLoad = function () {
+    AnimatedTexture2D.prototype.onLoad = function () {
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
         var size = GLUtility_1.GLUtility.nextPowerOfTwo(Math.max(this.size.x, this.size.y));
@@ -1232,7 +1320,7 @@ var AnimatedSprite = /** @class */ (function (_super) {
             }
         }
     };
-    AnimatedSprite.prototype.update = function (dt) {
+    AnimatedTexture2D.prototype.update = function (dt) {
         this._currentFrameTime += dt;
         if (this._currentFrameTime >= this.textures[this.currentFrame].frameTime) {
             this.currentFrame++;
@@ -1241,19 +1329,70 @@ var AnimatedSprite = /** @class */ (function (_super) {
                 this.currentFrame = 0;
         }
     };
-    AnimatedSprite.prototype.blit = function () {
+    AnimatedTexture2D.prototype.bindTexture = function () {
         var frame = this.currentFrame;
         if (!this.textures[frame])
             return;
+        this.texture = this.textures[frame];
+        _super.prototype.bindTexture.call(this);
+    };
+    return AnimatedTexture2D;
+}(Texture2D));
+exports.AnimatedTexture2D = AnimatedTexture2D;
+
+},{"../EngineUtility":13,"../GLUtility":14}],10:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var EngineUtility_1 = require("../EngineUtility");
+var Matrix_1 = require("../Matrix");
+var Component_1 = require("./Component");
+var Texture_1 = require("./Texture");
+var UIImage = /** @class */ (function (_super) {
+    __extends(UIImage, _super);
+    function UIImage() {
+        return _super.call(this) || this;
+    }
+    UIImage.prototype.init_renderer = function (camera, surface, url, width, height) {
+        this.gameObject.renderer = this;
+        this.surface = surface;
+        this.camera = camera;
+        width = width || 32;
+        height = height || 32;
+        this.size = new EngineUtility_1.Vector3(width, height, 0);
+        //this.size = new Vector2(this.image.width, this.image.height);
+        if (url && width && height)
+            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+        this.vertexBuffer = this.surface.gl.createBuffer();
+        this.colorBuffer = this.surface.gl.createBuffer();
+        this._initialized = true;
+    };
+    UIImage.prototype.update = function (dt) {
+        var x = this.gameObject.transform.position.x - this.size.x / 2;
+        var y = this.gameObject.transform.position.y - this.size.y / 2;
+        var z = this.gameObject.transform.position.z - this.size.z / 2;
+        this.renderPoint = new EngineUtility_1.Vector3(x, y, z);
+        if (this.texture)
+            this.texture.update(dt);
+    };
+    UIImage.prototype.blit = function () {
         var surface = this.surface;
         var gl = this.surface.gl;
         var program = this.surface.locations.program;
         gl.useProgram(program);
         var vertexPosition = surface.locations.attributes.position;
-        var vertexTexture = surface.locations.attributes.texture;
         var matrixLocation = surface.locations.uniforms.matrix;
+        var colorLocation = surface.locations.attributes.color;
         var matrix = surface.getMatrix();
-        gl.enableVertexAttribArray(vertexTexture);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
         var x = this.renderPoint.x;
         var y = this.renderPoint.y;
@@ -1270,13 +1409,17 @@ var AnimatedSprite = /** @class */ (function (_super) {
         gl.bufferData(gl.ARRAY_BUFFER, verticies, gl.STATIC_DRAW);
         //vertex buffer -> shader position attribute
         gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
-        //set shader buffer to current buffer and add texture data
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.textureCoords, gl.STATIC_DRAW);
-        //texture buffer -> shader texture attribute
-        gl.vertexAttribPointer(vertexTexture, 2, gl.FLOAT, false, 0, 0);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures[frame]);
+        var colors = [
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 0.0, 0.0, 1.0
+        ];
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(colorLocation, 1, gl.FLOAT, false, 0, 0);
+        if (this.texture != null)
+            this.texture.bindTexture();
+        else
+            gl.disableVertexAttribArray(this.surface.locations.attributes.texture);
         var n_matrix = new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(matrix));
         //apply matrix transformations
         gl.uniformMatrix3fv(matrixLocation, false, n_matrix);
@@ -1284,9 +1427,9 @@ var AnimatedSprite = /** @class */ (function (_super) {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindTexture(gl.TEXTURE_2D, null);
     };
-    return AnimatedSprite;
-}(SpriteRenderer));
-exports.AnimatedSprite = AnimatedSprite;
+    return UIImage;
+}(Component_1.Renderer));
+exports.UIImage = UIImage;
 function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) {
     var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
     gl.uniformMatrix4fv(pUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(perspectiveMatrix)));
@@ -1294,7 +1437,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"../EngineUtility":12,"../GLUtility":13,"../Matrix":16,"./Component":5}],10:[function(require,module,exports){
+},{"../EngineUtility":13,"../Matrix":17,"./Component":5,"./Texture":9}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1375,7 +1518,7 @@ var GameManager = /** @class */ (function () {
 }());
 exports.GameManager = GameManager;
 
-},{"./EngineUtility":12}],11:[function(require,module,exports){
+},{"./EngineUtility":13}],12:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1623,7 +1766,7 @@ var Square = /** @class */ (function (_super) {
 }(Shape));
 exports.Square = Square;
 
-},{"./EngineUtility":12,"./Matrix":16,"gl-matrix":22}],12:[function(require,module,exports){
+},{"./EngineUtility":13,"./Matrix":17,"gl-matrix":23}],13:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1841,7 +1984,7 @@ function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
 }
 exports.computeMatrix = computeMatrix;
 
-},{"gl-matrix":22}],13:[function(require,module,exports){
+},{"gl-matrix":23}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
@@ -1856,9 +1999,9 @@ var ShaderProperties = /** @class */ (function () {
 exports.ShaderProperties = ShaderProperties;
 var ShaderType;
 (function (ShaderType) {
-    ShaderType[ShaderType["texture_2d"] = 0] = "texture_2d";
-    ShaderType[ShaderType["no_texture_2d"] = 1] = "no_texture_2d";
-    ShaderType[ShaderType["no_texture3d"] = 2] = "no_texture3d";
+    ShaderType[ShaderType["shader2d"] = 0] = "shader2d";
+    ShaderType[ShaderType["shader3d"] = 1] = "shader3d";
+    ShaderType[ShaderType["shader3d_notexture"] = 2] = "shader3d_notexture";
 })(ShaderType = exports.ShaderType || (exports.ShaderType = {}));
 var GLUtility;
 (function (GLUtility) {
@@ -1874,18 +2017,17 @@ var GLUtility;
         var fs_name = '';
         var vs_name = '';
         switch (type) {
-            case ShaderType.no_texture3d:
-                fs_name = 'shader-fs';
+            case ShaderType.shader3d:
+                fs_name = 'shader-fs-3d';
                 vs_name = 'shader-vs-3d';
                 break;
-            case ShaderType.no_texture_2d:
-                fs_name = 'shader-fs';
+            case ShaderType.shader2d:
+                fs_name = 'shader-fs-2d';
                 vs_name = 'shader-vs-2d';
                 break;
-            case ShaderType.texture_2d:
-                fs_name = 'shader-fs-texture';
-                vs_name = 'shader-vs-texture-2d';
-                break;
+            case ShaderType.shader3d_notexture:
+                fs_name = 'shader-fs-3d-no-texture';
+                vs_name = 'shader-vs-3d';
         }
         return initShaders(gl, fs_name, vs_name);
     }
@@ -1904,12 +2046,15 @@ var GLUtility;
         gl.useProgram(shaderProgram);
         var vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
         gl.enableVertexAttribArray(vertexPosition);
-        var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
+        var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureCoordinate');
         gl.enableVertexAttribArray(textureCoordinate);
+        var colorCoordinate = gl.getAttribLocation(shaderProgram, 'aColorCoordinate');
+        gl.enableVertexAttribArray(colorCoordinate);
         var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
         gl.enableVertexAttribArray(vertexNormal);
         var attributes = { position: vertexPosition,
             texture: textureCoordinate,
+            color: colorCoordinate,
             normal: vertexNormal };
         var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');
         var transformationMatrix = gl.getUniformLocation(shaderProgram, 'uMatrix');
@@ -1981,7 +2126,7 @@ var GLUtility;
     GLUtility.nextPowerOfTwo = nextPowerOfTwo;
 })(GLUtility = exports.GLUtility || (exports.GLUtility = {}));
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -2089,7 +2234,7 @@ var GameObject = /** @class */ (function (_super) {
 }(Object2D));
 exports.GameObject = GameObject;
 
-},{"./Control":10,"./EngineUtility":12,"./Sprite":18}],15:[function(require,module,exports){
+},{"./Control":11,"./EngineUtility":13,"./Sprite":19}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2141,7 +2286,7 @@ var ObjectManager = /** @class */ (function () {
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./EngineUtility":12}],16:[function(require,module,exports){
+},{"./EngineUtility":13}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -2298,13 +2443,13 @@ var MatrixUtil = /** @class */ (function () {
 }());
 exports.MatrixUtil = MatrixUtil;
 
-},{"sylvester":23}],17:[function(require,module,exports){
+},{"sylvester":24}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Surface_1 = require("./Surface");
 var Component_1 = require("./Components/Component");
-var Sprite_1 = require("./Components/Sprite");
+var UIImage_1 = require("./Components/UIImage");
 var Renderer3D_1 = require("./Components/Renderer3D");
 var Managers_1 = require("./Managers");
 var GLUtility_1 = require("./GLUtility");
@@ -2331,9 +2476,9 @@ var Program = /** @class */ (function () {
         console.log('CANVAS ' + this.canvas);
         var offset = new EngineUtility_1.Vector2(this.canvas.getBoundingClientRect().left, this.canvas.getBoundingClientRect().top);
         MouseData.offset = offset;
-        this.surface_texobjects_2d = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.texture_2d);
-        this.surface_shapes_2d = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.no_texture_2d);
-        this.surface_shapes_3d = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.no_texture3d);
+        this.surface_ui = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader2d);
+        this.surface_world = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d);
+        this.surface_world_notex = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d_notexture);
         this.createGameObjects();
         //this.setupGrid();
         //line = new Line(surface_lines, 100,256,100,256,2);
@@ -2357,29 +2502,37 @@ var Program = /** @class */ (function () {
     Program.prototype.createGameObjects = function () {
         this.createCameras();
         var uiBox1 = new Component_1.GameObject();
-        var uiBox1_sprite = uiBox1.AddComponent(Sprite_1.SpriteRenderer);
-        uiBox1_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+        var uiBox1_sprite = uiBox1.AddComponent(UIImage_1.UIImage);
+        uiBox1_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
         uiBox1.transform.position = new EngineUtility_1.Vector3(0, 0, 0);
         var uiBox2 = new Component_1.GameObject();
-        var uiBox2_sprite = uiBox2.AddComponent(Sprite_1.SpriteRenderer);
-        uiBox2_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+        var uiBox2_sprite = uiBox2.AddComponent(UIImage_1.UIImage);
+        uiBox2_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
         uiBox1.transform.position = new EngineUtility_1.Vector3(256, 0, 0);
         var worldCube1 = new Component_1.GameObject();
         var worldCube1_renderer = worldCube1.AddComponent(Renderer3D_1.CubeRenderer);
-        worldCube1_renderer.init(this.surface_shapes_3d, this.worldCamera);
+        worldCube1_renderer.init_cube_renderer(this.surface_world_notex, this.worldCamera);
         worldCube1.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         worldCube1.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
         var worldCube2 = new Component_1.GameObject();
         var worldCube2_renderer = worldCube2.AddComponent(Renderer3D_1.CubeRenderer);
-        worldCube2_renderer.init(this.surface_shapes_3d, this.worldCamera);
+        worldCube2_renderer.init_cube_renderer(this.surface_world_notex, this.worldCamera);
         worldCube2.transform.position = new EngineUtility_1.Vector3(3, 0, -12);
         worldCube2.transform.rotation = new EngineUtility_1.Vector3(10, 80, 0);
+        var worldSprite = new Component_1.GameObject();
+        var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
+        worldSprite_renderer.init_sprite_renderer(this.surface_world, this.worldCamera, '../img/tile.png', 256, 256);
+        worldSprite.transform.position = new EngineUtility_1.Vector3(-6, 0, -6);
+        worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
+        this.storedObject = worldSprite;
         var editorBox = new Component_1.GameObject();
         var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
-        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_texobjects_2d, 256, 256);
-        Managers_1.ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
+        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_ui, 256, 256);
+        Managers_1.ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, worldSprite, editorBox];
+        //EditorControl.clickables = [];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
-        var dirLight = new Lighting_1.DirectionalLight(this.surface_shapes_3d, new EngineUtility_1.Vector3(100, 20, 30));
+        var dirLight = new Lighting_1.DirectionalLight(this.surface_world_notex, new EngineUtility_1.Vector3(100, 20, 30));
+        var dirLight2 = new Lighting_1.DirectionalLight(this.surface_world, new EngineUtility_1.Vector3(100, 20, 30));
     };
     /*setupGrid() : void{
         let lines : Stroke[] = [];
@@ -2457,7 +2610,9 @@ var Program = /** @class */ (function () {
         var normalizedUpdateValue = (30 * dt) / 1000.0;
         Managers_1.ObjectManager.update(normalizedUpdateValue);
         Managers_1.EditorControl.update(MouseData.position);
-        this.worldCamera.updatePosition(this.positionDelta);
+        //this.worldCamera.updatePosition(this.positionDelta);
+        var v = new EngineUtility_1.Vector3(this.positionDelta.x * normalizedUpdateValue, this.positionDelta.y * normalizedUpdateValue, this.positionDelta.z * normalizedUpdateValue);
+        this.storedObject.transform.position = this.storedObject.transform.position.add(v);
     };
     Program.prototype.render = function () {
         Managers_1.ObjectManager.render();
@@ -2468,21 +2623,21 @@ var Program = /** @class */ (function () {
     Program.prototype.drawScene = function () {
         setInterval(function () {
             //define update loop
-            this.surface_texobjects_2d.clear();
-            this.surface_shapes_2d.clear();
-            this.surface_shapes_3d.clear();
-            this.surface_texobjects_2d.push();
-            this.surface_shapes_2d.push();
-            this.surface_shapes_3d.push();
+            this.surface_ui.clear();
+            this.surface_world.clear();
+            this.surface_world_notex.clear();
+            this.surface_ui.push();
+            this.surface_world.push();
+            this.surface_world_notex.push();
             //this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
             //this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
             //this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
             //this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
             this.updateLoop();
             this.render();
-            this.surface_texobjects_2d.pop();
-            this.surface_shapes_2d.pop();
-            this.surface_shapes_3d.pop();
+            this.surface_ui.pop();
+            this.surface_world.pop();
+            this.surface_world_notex.pop();
         }.bind(this), 15);
     };
     return Program;
@@ -2517,7 +2672,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/Renderer3D":8,"./Components/Sprite":9,"./EngineUtility":12,"./GLUtility":13,"./Managers":15,"./Surface":19}],18:[function(require,module,exports){
+},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/Renderer3D":8,"./Components/UIImage":10,"./EngineUtility":13,"./GLUtility":14,"./Managers":16,"./Surface":20}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2647,7 +2802,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"./EngineUtility":12,"./GLUtility":13,"./Matrix":16}],19:[function(require,module,exports){
+},{"./EngineUtility":13,"./GLUtility":14,"./Matrix":17}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2714,7 +2869,7 @@ var DrawSurface = /** @class */ (function () {
 }());
 exports.DrawSurface = DrawSurface;
 
-},{"./EngineUtility":12,"./GLUtility":13,"./Matrix":16}],20:[function(require,module,exports){
+},{"./EngineUtility":13,"./GLUtility":14,"./Matrix":17}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
@@ -2733,9 +2888,9 @@ window.setCameraValue = function (value) {
     gameProgram.setCameraValue(value);
 };
 
-},{"./Components/Component":5,"./Program":17}],21:[function(require,module,exports){
-arguments[4][16][0].apply(exports,arguments)
-},{"dup":16,"sylvester":23}],22:[function(require,module,exports){
+},{"./Components/Component":5,"./Program":18}],22:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17,"sylvester":24}],23:[function(require,module,exports){
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations
  * @author Brandon Jones
@@ -9624,7 +9779,7 @@ var forEach = exports.forEach = function () {
 /***/ })
 /******/ ]);
 });
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 // Copyright (c) 2011, Chris Umbel
 
@@ -9640,7 +9795,7 @@ exports.Line.Segment = require('./line.segment');
 exports.Sylvester = require('./sylvester');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./line":24,"./line.segment":25,"./matrix":26,"./plane":27,"./sylvester":28,"./vector":29}],24:[function(require,module,exports){
+},{"./line":25,"./line.segment":26,"./matrix":27,"./plane":28,"./sylvester":29,"./vector":30}],25:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 var Vector = require('./vector');
 var Matrix = require('./matrix');
@@ -9873,7 +10028,7 @@ Line.Z = Line.create(Vector.Zero(3), Vector.k);
 
 module.exports = Line;
 
-},{"./matrix":26,"./plane":27,"./sylvester":28,"./vector":29}],25:[function(require,module,exports){
+},{"./matrix":27,"./plane":28,"./sylvester":29,"./vector":30}],26:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Line.Segment class - depends on Line and its dependencies.
 
@@ -10001,7 +10156,7 @@ Line.Segment.create = function(v1, v2) {
 
 module.exports = Line.Segment;
 
-},{"./line":24,"./vector":29}],26:[function(require,module,exports){
+},{"./line":25,"./vector":30}],27:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Matrix class - depends on Vector.
 
@@ -11039,7 +11194,7 @@ Matrix.Ones = function(n, m) {
 
 module.exports = Matrix;
 
-},{"./sylvester":28,"./vector":29,"fs":30,"lapack":30}],27:[function(require,module,exports){
+},{"./sylvester":29,"./vector":30,"fs":31,"lapack":31}],28:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Plane class - depends on Vector. Some methods require Matrix and Line.
 var Vector = require('./vector');
@@ -11315,7 +11470,7 @@ Plane.fromPoints = function(points) {
 
 module.exports = Plane;
 
-},{"./line":24,"./matrix":26,"./sylvester":28,"./vector":29}],28:[function(require,module,exports){
+},{"./line":25,"./matrix":27,"./sylvester":29,"./vector":30}],29:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -11332,7 +11487,7 @@ var Sylvester = {
 
 module.exports = Sylvester;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -11772,7 +11927,7 @@ Vector.log = function(v) {
 
 module.exports = Vector;
 
-},{"./matrix":26,"./sylvester":28}],30:[function(require,module,exports){
+},{"./matrix":27,"./sylvester":29}],31:[function(require,module,exports){
 
-},{}]},{},[1,2,10,11,12,13,14,15,16,17,18,19,20,21])(21)
+},{}]},{},[1,2,11,12,13,14,15,16,17,18,19,20,21,22])(22)
 });

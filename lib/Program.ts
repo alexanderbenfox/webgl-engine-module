@@ -3,8 +3,8 @@ import {Vector2, Vector3} from "./EngineUtility"
 import {DrawSurface} from "./Surface"
 import {GameObject} from "./Components/Component"
 import {LineRenderer} from "./Components/Renderer2D"
-import {SpriteRenderer} from "./Components/Sprite"
-import {CubeRenderer} from "./Components/Renderer3D"
+import {UIImage} from "./Components/UIImage"
+import {CubeRenderer, SpriteRenderer} from "./Components/Renderer3D"
 import {EditorControl, ObjectManager} from "./Managers"
 import {ShaderType} from "./GLUtility"
 import {Camera} from "./Components/CameraUtility"
@@ -27,9 +27,9 @@ export class Program{
 	gl : WebGLRenderingContext;
 	canvas : HTMLCanvasElement;
 
-	surface_texobjects_2d : DrawSurface;
-	surface_shapes_2d : DrawSurface;
-	surface_shapes_3d : DrawSurface;
+	surface_ui : DrawSurface;
+	surface_world : DrawSurface;
+	surface_world_notex : DrawSurface;
 
 	lastUpdateTime : number;
 
@@ -37,6 +37,8 @@ export class Program{
 	worldCamera : Camera;
 
 	positionDelta : Vector3;
+
+	storedObject : GameObject;
 
 
 	constructor(){
@@ -50,9 +52,9 @@ export class Program{
 		let offset = new Vector2(this.canvas.getBoundingClientRect().left, this.canvas.getBoundingClientRect().top);
 		MouseData.offset = offset;
 
-		this.surface_texobjects_2d = new DrawSurface(this.canvas, ShaderType.texture_2d);
-		this.surface_shapes_2d = new DrawSurface(this.canvas, ShaderType.no_texture_2d);
-		this.surface_shapes_3d = new DrawSurface(this.canvas, ShaderType.no_texture3d);
+		this.surface_ui = new DrawSurface(this.canvas, ShaderType.shader2d);
+		this.surface_world = new DrawSurface(this.canvas, ShaderType.shader3d);
+		this.surface_world_notex = new DrawSurface(this.canvas, ShaderType.shader3d_notexture);
 
 
 		this.createGameObjects();
@@ -88,35 +90,45 @@ export class Program{
 		this.createCameras();
 
 		let uiBox1 = new GameObject();
-		let uiBox1_sprite : SpriteRenderer = <SpriteRenderer>uiBox1.AddComponent(SpriteRenderer);
-		uiBox1_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+		let uiBox1_sprite : UIImage = <UIImage>uiBox1.AddComponent(UIImage);
+		uiBox1_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
 		uiBox1.transform.position = new Vector3(0,0,0);
 
 		let uiBox2 = new GameObject();
-		let uiBox2_sprite : SpriteRenderer = <SpriteRenderer>uiBox2.AddComponent(SpriteRenderer);
-		uiBox2_sprite.init_renderer(this.uiCamera, this.surface_texobjects_2d, 'box.png');
+		let uiBox2_sprite : UIImage = <UIImage>uiBox2.AddComponent(UIImage);
+		uiBox2_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
 		uiBox1.transform.position = new Vector3(256,0,0);
 
 		let worldCube1 = new GameObject();
 		let worldCube1_renderer : CubeRenderer = <CubeRenderer>worldCube1.AddComponent(CubeRenderer);
-		worldCube1_renderer.init(this.surface_shapes_3d, this.worldCamera);
+		worldCube1_renderer.init_cube_renderer(this.surface_world_notex, this.worldCamera);
 		worldCube1.transform.position = new Vector3(-1, 0, -6);
 		worldCube1.transform.rotation = new Vector3(60,20,0);
 
 		let worldCube2 = new GameObject();
 		let worldCube2_renderer : CubeRenderer = <CubeRenderer>worldCube2.AddComponent(CubeRenderer);
-		worldCube2_renderer.init(this.surface_shapes_3d, this.worldCamera);
+		worldCube2_renderer.init_cube_renderer(this.surface_world_notex, this.worldCamera);
 		worldCube2.transform.position = new Vector3(3,0,-12);
 		worldCube2.transform.rotation = new Vector3(10,80,0);
 
+		let worldSprite = new GameObject();
+		let worldSprite_renderer : SpriteRenderer = <SpriteRenderer>worldSprite.AddComponent(SpriteRenderer);
+		worldSprite_renderer.init_sprite_renderer(this.surface_world, this.worldCamera, '../img/tile.png', 256,256);
+		worldSprite.transform.position = new Vector3(-6,0, -6);
+		worldSprite.transform.rotation = new Vector3(0,0,0);
+
+		this.storedObject = worldSprite;
+
 		let editorBox = new GameObject();
 		let editorBox_draggableObject : DraggableUI = <DraggableUI>editorBox.AddComponent(DraggableUI);
-		editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_texobjects_2d, 256, 256);
+		editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_ui, 256, 256);
 
-		ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, editorBox];
+		ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, worldSprite, editorBox];
+		//EditorControl.clickables = [];
 		EditorControl.clickables = [editorBox_draggableObject];
 
-		let dirLight = new DirectionalLight(this.surface_shapes_3d, new Vector3(100,20,30));
+		let dirLight = new DirectionalLight(this.surface_world_notex, new Vector3(100,20,30));
+		let dirLight2 = new DirectionalLight(this.surface_world, new Vector3(100,20,30));
 	}
 
 	/*setupGrid() : void{
@@ -206,7 +218,10 @@ export class Program{
 		let normalizedUpdateValue = (30 * dt) / 1000.0;
 		ObjectManager.update(normalizedUpdateValue);
 		EditorControl.update(MouseData.position);
-		this.worldCamera.updatePosition(this.positionDelta);
+		//this.worldCamera.updatePosition(this.positionDelta);
+		let v = new Vector3(this.positionDelta.x * normalizedUpdateValue, this.positionDelta.y * normalizedUpdateValue, this.positionDelta.z * normalizedUpdateValue);
+		this.storedObject.transform.position = this.storedObject.transform.position.add(v);
+
 	}
 
 	render() : void{
@@ -220,13 +235,13 @@ export class Program{
 	drawScene() : void{
 		setInterval(function(){
 			//define update loop
-			this.surface_texobjects_2d.clear();
-			this.surface_shapes_2d.clear();
-			this.surface_shapes_3d.clear();
+			this.surface_ui.clear();
+			this.surface_world.clear();
+			this.surface_world_notex.clear();
 
-			this.surface_texobjects_2d.push();
-			this.surface_shapes_2d.push();
-			this.surface_shapes_3d.push();
+			this.surface_ui.push();
+			this.surface_world.push();
+			this.surface_world_notex.push();
 
 			//this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
 			//this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
@@ -236,9 +251,9 @@ export class Program{
 			this.updateLoop();
 			this.render();
 
-			this.surface_texobjects_2d.pop();
-			this.surface_shapes_2d.pop();
-			this.surface_shapes_3d.pop();
+			this.surface_ui.pop();
+			this.surface_world.pop();
+			this.surface_world_notex.pop();
 
 		}.bind(this), 15);
 	}

@@ -7,6 +7,7 @@ export class ShaderProperties{
 	public attributes : {
 		position : GLint,
 		texture : GLint,
+		color : GLint,
 		normal : GLint,
 	};
 
@@ -23,7 +24,7 @@ export class ShaderProperties{
 	public program : WebGLProgram;
 	
 
-	constructor(attributes : {position : GLint, texture : GLint, normal : GLint;},
+	constructor(attributes : {position : GLint, texture : GLint, color : GLint, normal : GLint;},
 				uniforms : {resolution : WebGLUniformLocation, matrix : WebGLUniformLocation, projection : WebGLUniformLocation, normal : WebGLUniformLocation, light_color : WebGLUniformLocation, light_direction : WebGLUniformLocation;},
 				program : WebGLProgram){
 
@@ -35,7 +36,7 @@ export class ShaderProperties{
 }
 
 export enum ShaderType{
-	texture_2d, no_texture_2d, no_texture3d
+	shader2d, shader3d, shader3d_notexture
 }
 
 export module GLUtility{
@@ -53,18 +54,17 @@ export module GLUtility{
 		let vs_name = ''
 
 		switch(type){
-			case ShaderType.no_texture3d :
-				fs_name = 'shader-fs';
+			case ShaderType.shader3d :
+				fs_name = 'shader-fs-3d';
 				vs_name = 'shader-vs-3d';
 				break;
-			case ShaderType.no_texture_2d :
-				fs_name = 'shader-fs';
+			case ShaderType.shader2d :
+				fs_name = 'shader-fs-2d';
 				vs_name = 'shader-vs-2d';
 				break;
-			case ShaderType.texture_2d :
-				fs_name = 'shader-fs-texture';
-				vs_name = 'shader-vs-texture-2d';
-				break;
+			case ShaderType.shader3d_notexture:
+				fs_name = 'shader-fs-3d-no-texture';
+				vs_name = 'shader-vs-3d';
 		}
 
 		return initShaders(gl, fs_name, vs_name);
@@ -88,14 +88,18 @@ export module GLUtility{
 		var vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
 		gl.enableVertexAttribArray(vertexPosition);
 
-		var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureColorCoordinate');
+		var textureCoordinate = gl.getAttribLocation(shaderProgram, 'aTextureCoordinate');
 		gl.enableVertexAttribArray(textureCoordinate);
+
+		var colorCoordinate = gl.getAttribLocation(shaderProgram, 'aColorCoordinate');
+		gl.enableVertexAttribArray(colorCoordinate);
 
 		var vertexNormal = gl.getAttribLocation(shaderProgram, 'aVertexNormal');
 		gl.enableVertexAttribArray(vertexNormal);
 
 		var attributes = {position : vertexPosition,
 						 texture : textureCoordinate,
+						 color : colorCoordinate,
 						 normal : vertexNormal};
 
 		var resolutionLocation = gl.getUniformLocation(shaderProgram, 'uResolution');

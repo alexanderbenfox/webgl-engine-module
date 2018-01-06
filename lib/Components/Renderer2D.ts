@@ -24,7 +24,12 @@ export abstract class Renderer2D extends Renderer{
 		super();
 	}
 
-	init(surface : DrawSurface, camera : Camera){
+	init(surface : DrawSurface){
+		super.init(surface);
+	}
+
+	init_renderer(surface : DrawSurface, camera : Camera){
+		this.init(surface);
 		this.gameObject.renderer = this;
 		this._surface = surface;
 		this._vertexBuffer = surface.gl.createBuffer();
@@ -52,8 +57,8 @@ export class LineRenderer extends Renderer2D implements Drawable{
 		super();
 	}
 
-	init_renderer(camera : Camera, surface : DrawSurface, startCoord : Vector2, endCoord : Vector2, width : number){
-		super.init(surface, camera);
+	init_line_renderer(camera : Camera, surface : DrawSurface, startCoord : Vector2, endCoord : Vector2, width : number){
+		super.init_renderer(surface, camera);
 
 		this.size = new Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
 
@@ -74,7 +79,8 @@ export class LineRenderer extends Renderer2D implements Drawable{
 		gl.useProgram(program);
 
 		let vertexPosition = surface.locations.attributes.position;
-		let vertexColor = surface.locations.attributes.texture;
+		let vertexTexture = surface.locations.attributes.texture;
+		let vertexColor = surface.locations.attributes.color;
 		let matrixLocation = surface.locations.uniforms.matrix;
 		let matrix = surface.getMatrix();
 
@@ -120,8 +126,8 @@ export class SquareRenderer extends Renderer2D implements Drawable{
 		super();
 	}
 	
-	init_renderer(camera : Camera, surface : DrawSurface, startCoord : Vector2, endCoord : Vector2, width : number){
-		super.init(surface, camera);
+	init_square_renderer(camera : Camera, surface : DrawSurface, startCoord : Vector2, endCoord : Vector2, width : number){
+		super.init_renderer(surface, camera);
 
 		this.size = new Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
 		this._points = new Float32Array([
@@ -140,7 +146,7 @@ export class SquareRenderer extends Renderer2D implements Drawable{
 		gl.useProgram(program);
 
 		var vertexPosition = surface.locations.attributes.position;
-		var vertexColor = surface.locations.attributes.texture;
+		var vertexColor = surface.locations.attributes.color;
 		var matrixLocation = surface.locations.uniforms.matrix;
 		var matrix = surface.getMatrix();
 

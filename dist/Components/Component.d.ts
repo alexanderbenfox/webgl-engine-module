@@ -1,6 +1,7 @@
 import { Vector3 } from "../EngineUtility";
 import { Collider } from "./Collider";
 import { Camera } from "./CameraUtility";
+import { Texture2D } from "./Texture";
 export declare class ComponentFactory {
     static CreateComponent<IComponent extends Component>(type: {
         new (): Component;
@@ -68,7 +69,9 @@ export declare class Renderer extends Component {
     camera: Camera;
     renderPoint: Vector3;
     size: Vector3;
+    texture: Texture2D;
     constructor();
+    init(surface: any): void;
     blit(): void;
 }
 export declare function testFunction(): void;

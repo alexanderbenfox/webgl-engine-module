@@ -19,7 +19,11 @@ var Renderer2D = /** @class */ (function (_super) {
     function Renderer2D() {
         return _super.call(this) || this;
     }
-    Renderer2D.prototype.init = function (surface, camera) {
+    Renderer2D.prototype.init = function (surface) {
+        _super.prototype.init.call(this, surface);
+    };
+    Renderer2D.prototype.init_renderer = function (surface, camera) {
+        this.init(surface);
         this.gameObject.renderer = this;
         this._surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
@@ -42,8 +46,8 @@ var LineRenderer = /** @class */ (function (_super) {
     function LineRenderer() {
         return _super.call(this) || this;
     }
-    LineRenderer.prototype.init_renderer = function (camera, surface, startCoord, endCoord, width) {
-        _super.prototype.init.call(this, surface, camera);
+    LineRenderer.prototype.init_line_renderer = function (camera, surface, startCoord, endCoord, width) {
+        _super.prototype.init_renderer.call(this, surface, camera);
         this.size = new EngineUtility_1.Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
         this._points = new Float32Array([
             startCoord.x, startCoord.y, endCoord.x, startCoord.y,
@@ -59,7 +63,8 @@ var LineRenderer = /** @class */ (function (_super) {
         var program = this._surface.locations.program;
         gl.useProgram(program);
         var vertexPosition = surface.locations.attributes.position;
-        var vertexColor = surface.locations.attributes.texture;
+        var vertexTexture = surface.locations.attributes.texture;
+        var vertexColor = surface.locations.attributes.color;
         var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         //gl.disableVertexAttribArray(vertexTexture);
@@ -95,8 +100,8 @@ var SquareRenderer = /** @class */ (function (_super) {
     function SquareRenderer() {
         return _super.call(this) || this;
     }
-    SquareRenderer.prototype.init_renderer = function (camera, surface, startCoord, endCoord, width) {
-        _super.prototype.init.call(this, surface, camera);
+    SquareRenderer.prototype.init_square_renderer = function (camera, surface, startCoord, endCoord, width) {
+        _super.prototype.init_renderer.call(this, surface, camera);
         this.size = new EngineUtility_1.Vector3(Math.abs(endCoord.x - startCoord.x), Math.abs(endCoord.y - endCoord.y), 0);
         this._points = new Float32Array([
             startCoord.x, startCoord.y, endCoord.x, startCoord.y,
@@ -111,7 +116,7 @@ var SquareRenderer = /** @class */ (function (_super) {
         var program = this._surface.locations.program;
         gl.useProgram(program);
         var vertexPosition = surface.locations.attributes.position;
-        var vertexColor = surface.locations.attributes.texture;
+        var vertexColor = surface.locations.attributes.color;
         var matrixLocation = surface.locations.uniforms.matrix;
         var matrix = surface.getMatrix();
         //gl.disableVertexAttribArray(vertexTexture);
