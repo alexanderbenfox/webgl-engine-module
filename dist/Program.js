@@ -40,6 +40,7 @@ var Program = /** @class */ (function () {
         //obj_2.move(-5,5);
         //camera.move(5,3);
         this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
+        Managers_1.ObjectManager.populateInspector();
         this.drawScene();
     }
     Program.prototype.createCameras = function () {

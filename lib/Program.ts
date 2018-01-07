@@ -69,6 +69,8 @@ export class Program{
 
 		this.positionDelta = new Vector3(0,0,0); 
 
+		ObjectManager.populateInspector();
+
 		this.drawScene();
 	}
 

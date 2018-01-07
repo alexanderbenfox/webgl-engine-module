@@ -44,6 +44,15 @@ var ObjectManager = /** @class */ (function () {
             ObjectManager.gameObjects[i].render();
         }
     };
+    ObjectManager.populateInspector = function () {
+        var table = document.getElementById('gameObjectTable');
+        for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
+            var tableString = 'gameObject';
+            var row = document.createElement("tr");
+            row.innerHTML = tableString;
+            table.appendChild(row);
+        }
+    };
     ObjectManager.gameObjects = [];
     return ObjectManager;
 }());

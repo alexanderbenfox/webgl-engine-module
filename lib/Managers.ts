@@ -38,6 +38,7 @@ export class EditorControl{
 
 export class ObjectManager{
 	public static gameObjects : GameObject[] = [];
+	public static selectedObject : GameObject;
 
 	static update(dt : number){
 		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
@@ -48,6 +49,19 @@ export class ObjectManager{
 	static render(){
 		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
 			ObjectManager.gameObjects[i].render();
+		}
+	}
+
+	static populateInspector() : void{
+		let table = document.getElementById('gameObjectTable');
+		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
+			let tableString = 'gameObject';
+			let row = document.createElement("tr");
+			row.addEventListener("click", function(){
+				ObjectManager.selectedObject = ObjectManager.gameObjects[i];
+			});
+			row.innerHTML = tableString;
+			table.appendChild(row);
 		}
 	}
 }

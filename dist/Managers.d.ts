@@ -13,4 +13,5 @@ export declare class ObjectManager {
     static gameObjects: GameObject[];
     static update(dt: number): void;
     static render(): void;
+    static populateInspector(): void;
 }

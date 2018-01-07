@@ -1,0 +1,22 @@
+table tr:hover {
+    background-color: #EBECCD;
+}
+
+table tr {
+    background-color: #dcddc0;
+}
+
+table td {
+    background:#dcddc0 url('/static/cell-grey.jpg'); // remove this line
+    padding: 3px;
+}
+
+table {
+	width : 150px;
+}
+
+table tbody{
+	overflow-y: scroll;
+	height : 150px;
+
+}

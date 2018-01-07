@@ -123,10 +123,17 @@
 			WebEngine.startProgram();
 		}
 	</script>
+	<link rel = "stylesheet" href="../css/style.css">
 	<body onload = "console.log(WebEngine); starter();">
 		<canvas id = "glCanvas" width = "960" height = "640">
 			Your browser doesn't appear to support the <code>&lt;canvas&gt;</code> element.
 		</canvas>
 		<input type="range" min ="0" max = "360" value = "0" oninput = "setCameraValue(this.value);">
+		<div id = "gameObjectWindow">
+			<table id = "gameObjectTable">
+				<thead>GameObject Table</thead>
+			</table>
+			<button type = "button">Add GameObject</button>
+		</div>
 	</body>
 </html>
