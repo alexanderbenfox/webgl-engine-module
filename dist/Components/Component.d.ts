@@ -1,4 +1,4 @@
-import { Vector3 } from "../EngineUtility";
+import { Vector3, EditorString } from "../EngineUtility";
 import { Collider } from "./Collider";
 import { Camera } from "./CameraUtility";
 import { Texture2D } from "./Texture";
@@ -47,10 +47,11 @@ export declare class Component {
     RemoveComponent<T extends Component>(type: {
         new (): T;
     }): boolean;
-    protected getAttachedComponents(): Component[];
+    getAttachedComponents(): Component[];
     update(dt: number): void;
 }
 export declare class GameObject extends Component {
+    name: EditorString;
     transform: Transform;
     active: boolean;
     renderer: Renderer;

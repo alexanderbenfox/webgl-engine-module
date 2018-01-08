@@ -683,6 +683,7 @@ var GameObject = /** @class */ (function (_super) {
         _this.gameObject = _this;
         _this.transform = _this.AddComponent(Transform);
         _this.assignGameObject(_this);
+        _this.name = new EngineUtility_1.EditorString("Object Name", "GameObject");
         return _this;
         //this.renderer = this.AddComponent(Renderer);
     }
@@ -1782,6 +1783,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var gl_matrix_1 = require("gl-matrix");
 var Vector2 = /** @class */ (function () {
     function Vector2(x, y) {
+        this.elements = [];
         this._x = x;
         this._y = y;
     }
@@ -1858,6 +1860,38 @@ var Vector2 = /** @class */ (function () {
             maxIndex: maxDot
         };
     };
+    Vector2.prototype.showEditorProperty = function () {
+        var _this = this;
+        var xDiv = document.createElement("div");
+        var xLabel = document.createElement("p");
+        xLabel.innerHTML = "x";
+        xDiv.appendChild(xLabel);
+        var xProperty = document.createElement("input");
+        xProperty.type = "text";
+        xProperty.value = this._x.toString();
+        xProperty.addEventListener('input', function () {
+            _this._x = parseFloat(xProperty.value);
+        });
+        xDiv.appendChild(xProperty);
+        var yDiv = document.createElement("div");
+        var yLabel = document.createElement("p");
+        yLabel.innerHTML = "y";
+        yDiv.appendChild(yLabel);
+        var yProperty = document.createElement("input");
+        yProperty.type = "text";
+        yProperty.value = this._y.toString();
+        yProperty.addEventListener('input', function () {
+            _this._y = parseFloat(yProperty.value);
+        });
+        yDiv.appendChild(yProperty);
+        this.elements = [xDiv, yDiv];
+    };
+    Vector2.prototype.hideEditorProperty = function () {
+        for (var i = 0; i < this.elements.length; i++) {
+            var property = this.elements[i];
+            property.parentNode.removeChild(property);
+        }
+    };
     return Vector2;
 }());
 exports.Vector2 = Vector2;
@@ -1930,6 +1964,22 @@ var Vector3 = /** @class */ (function (_super) {
             return new Vector3(0, 0, 0);
         return new Vector3(this.x / mag, this.y / mag, this.z / mag);
     };
+    Vector3.prototype.showEditorProperty = function () {
+        var _this = this;
+        _super.prototype.showEditorProperty.call(this);
+        var div = document.createElement("div");
+        var label = document.createElement("p");
+        label.innerHTML = "z";
+        div.appendChild(label);
+        var zProperty = document.createElement("input");
+        zProperty.type = "text";
+        zProperty.value = this._z.toString();
+        zProperty.addEventListener('input', function () {
+            _this._z = parseFloat(zProperty.value);
+        });
+        div.appendChild(zProperty);
+        this.elements.push(div);
+    };
     return Vector3;
 }(Vector2));
 exports.Vector3 = Vector3;
@@ -1950,9 +2000,55 @@ var Vector4 = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Vector4.prototype.showEditorProperty = function () {
+        var _this = this;
+        _super.prototype.showEditorProperty.call(this);
+        var div = document.createElement("div");
+        var label = document.createElement("p");
+        label.innerHTML = "w";
+        div.appendChild(label);
+        var wProperty = document.createElement("input");
+        wProperty.type = "text";
+        wProperty.value = this._w.toString();
+        wProperty.addEventListener('input', function () {
+            _this._w = parseFloat(wProperty.value);
+        });
+        div.appendChild(wProperty);
+        this.elements.push(div);
+    };
     return Vector4;
 }(Vector3));
 exports.Vector4 = Vector4;
+var EditorString = /** @class */ (function () {
+    function EditorString(property, string) {
+        this.elements = [];
+        this.property = property;
+        this.string = string;
+    }
+    EditorString.prototype.showEditorProperty = function () {
+        var _this = this;
+        var div = document.createElement("div");
+        var label = document.createElement("p");
+        label.innerHTML = this.property;
+        var property = document.createElement("input");
+        property.type = "text";
+        property.value = this.string;
+        property.addEventListener('input', function () {
+            _this.string = property.value;
+        });
+        div.appendChild(label);
+        div.appendChild(property);
+        this.elements = [div];
+    };
+    EditorString.prototype.hideEditorProperty = function () {
+        for (var i = 0; i < this.elements.length; i++) {
+            var property = this.elements[i];
+            property.parentNode.removeChild(property);
+        }
+    };
+    return EditorString;
+}());
+exports.EditorString = EditorString;
 function inBounds2D(topLeft, bottomRight, boundSize) {
     if (boundSize.x > topLeft.x && boundSize.x < bottomRight.x) {
         if (boundSize.y > topLeft.y && boundSize.y < bottomRight.y)
@@ -2283,14 +2379,76 @@ var ObjectManager = /** @class */ (function () {
     };
     ObjectManager.populateInspector = function () {
         var table = document.getElementById('gameObjectTable');
-        for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
-            var tableString = 'gameObject';
+        var _loop_1 = function (i) {
             var row = document.createElement("tr");
-            row.innerHTML = tableString;
+            row.addEventListener("click", function () {
+                ObjectManager.hideSelectedObject();
+                ObjectManager.selectedObject = ObjectManager.gameObjects[i];
+                ObjectManager.showInInspector();
+            });
+            row.innerHTML = ObjectManager.gameObjects[i].name.string;
             table.appendChild(row);
+        };
+        for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
+            _loop_1(i);
+        }
+    };
+    ObjectManager.updateInspector = function () {
+        var table = document.getElementById('gameObjectTable');
+        var rows = table.children;
+        for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
+            rows[i + 1].innerHTML = ObjectManager.gameObjects[i].name.string;
+        }
+    };
+    ObjectManager.showInInspector = function () {
+        if (ObjectManager.selectedObject != null) {
+            var components = ObjectManager.selectedObject.getAttachedComponents();
+            for (var i = 0; i < components.length; i++) {
+                var componentDiv = document.createElement('div');
+                var componentTitle = document.createElement('p');
+                componentTitle.innerHTML = components[i].GetID();
+                componentDiv.appendChild(componentTitle);
+                for (var property in components[i]) {
+                    ObjectManager.showSelectedObject(components[i], property, componentDiv);
+                }
+                ObjectManager.inspectorItems.push(componentDiv);
+            }
+            var inspectorWindow = document.getElementById('inspectorWindow');
+            for (var i = 0; i < ObjectManager.inspectorItems.length; i++) {
+                var componentInspector = ObjectManager.inspectorItems[i];
+                inspectorWindow.appendChild(componentInspector);
+            }
+            ObjectManager.updateInspector();
+        }
+    };
+    ObjectManager.showSelectedObject = function (component, property, componentDiv) {
+        if (component.hasOwnProperty(property)) {
+            if (component[property] != null && typeof component[property] === 'object' && 'elements' in component[property]) {
+                var propertyDiv = document.createElement('div');
+                var propertyLabel = document.createElement('p');
+                propertyLabel.innerHTML = property;
+                propertyDiv.appendChild(propertyLabel);
+                var p = component[property];
+                p.showEditorProperty();
+                for (var i = 0; i < p.elements.length; i++) {
+                    var element = p.elements[i];
+                    propertyDiv.appendChild(element);
+                }
+                componentDiv.appendChild(propertyDiv);
+            }
+        }
+    };
+    ObjectManager.hideSelectedObject = function () {
+        if (ObjectManager.selectedObject != null) {
+            for (var i = 0; i < ObjectManager.inspectorItems.length; i++) {
+                var o = ObjectManager.inspectorItems[i];
+                o.parentNode.removeChild(o);
+            }
+            ObjectManager.inspectorItems = [];
         }
     };
     ObjectManager.gameObjects = [];
+    ObjectManager.inspectorItems = [];
     return ObjectManager;
 }());
 exports.ObjectManager = ObjectManager;

@@ -1,8 +1,16 @@
 import {mat4} from "gl-matrix"
 
-export class Vector2{
+export interface EditorProperty{
+	elements : HTMLElement[];
+	showEditorProperty() : void;
+	hideEditorProperty() : void;
+}
+
+export class Vector2 implements EditorProperty{
 	protected _x : number;
 	protected _y : number;
+	elements : HTMLElement[] = [];
+
 	constructor(x : number, y : number){
 		this._x = x;
 		this._y = y;
@@ -82,9 +90,46 @@ export class Vector2{
 			maxIndex : maxDot
 		}
 	}
+
+	showEditorProperty(){
+		let xDiv = document.createElement("div");
+		let xLabel = document.createElement("p");
+		xLabel.innerHTML = "x";
+		xDiv.appendChild(xLabel);
+		let xProperty = document.createElement("input");
+		xProperty.type = "text";
+		xProperty.value = this._x.toString();
+		xProperty.addEventListener('input', () =>{
+			this._x = parseFloat(xProperty.value);
+			
+		});
+		xDiv.appendChild(xProperty);
+
+		let yDiv = document.createElement("div");
+		let yLabel = document.createElement("p");
+		yLabel.innerHTML = "y";
+		yDiv.appendChild(yLabel);
+		let yProperty = document.createElement("input");
+		yProperty.type = "text";
+		yProperty.value = this._y.toString();
+		yProperty.addEventListener('input', () =>{
+			this._y = parseFloat(yProperty.value);
+			
+		});
+		yDiv.appendChild(yProperty);
+
+		this.elements = [xDiv, yDiv];
+	}
+
+	hideEditorProperty(){
+		for(let i = 0; i < this.elements.length; i++){
+			let property = this.elements[i];
+			property.parentNode.removeChild(property);
+		}
+	}
 }
 
-export class Vector3 extends Vector2{
+export class Vector3 extends Vector2 implements EditorProperty{
 	protected _z : number;
 	constructor(x: number, y : number, z : number){
 		super(x,y);
@@ -163,6 +208,23 @@ export class Vector3 extends Vector2{
 			return new Vector3(0,0,0);
 		return new Vector3(this.x/mag, this.y/mag, this.z/mag);
 	}
+
+	showEditorProperty(){
+		super.showEditorProperty();
+		let div = document.createElement("div");
+		let label = document.createElement("p");
+		label.innerHTML = "z";
+		div.appendChild(label);
+		let zProperty = document.createElement("input");
+		zProperty.type = "text";
+		zProperty.value = this._z.toString();
+		zProperty.addEventListener('input', () =>{
+			this._z = parseFloat(zProperty.value);
+		});
+		div.appendChild(zProperty);
+
+		this.elements.push(div);
+	}
 }
 
 export class Vector4 extends Vector3{
@@ -178,6 +240,59 @@ export class Vector4 extends Vector3{
 	set w(n : number){
 		this.w = n;
 	}
+
+	showEditorProperty(){
+		super.showEditorProperty();
+		let div = document.createElement("div");
+		let label = document.createElement("p");
+		label.innerHTML = "w";
+		div.appendChild(label);
+		let wProperty = document.createElement("input");
+		wProperty.type = "text";
+		wProperty.value = this._w.toString();
+		wProperty.addEventListener('input', () =>{
+			this._w = parseFloat(wProperty.value);
+		});
+		div.appendChild(wProperty);
+
+		this.elements.push(div);
+	}
+}
+
+export class EditorString implements EditorProperty{
+	elements : HTMLElement[] = [];
+	public property : string;
+	public string : string;
+
+	constructor(property : string, string : string){
+		this.property = property;
+		this.string = string;
+	}
+
+	showEditorProperty(){
+		let div = document.createElement("div");
+		let label = document.createElement("p");
+		label.innerHTML = this.property;
+		let property = document.createElement("input");
+		property.type = "text";
+		property.value = this.string;
+		property.addEventListener('input', () =>{
+			this.string = property.value;
+		});
+
+		div.appendChild(label);
+		div.appendChild(property);
+
+		this.elements = [div];
+	}
+
+	hideEditorProperty(){
+		for(let i = 0; i < this.elements.length; i++){
+			let property = this.elements[i];
+			property.parentNode.removeChild(property);
+		}
+	}
+
 }
 
 export function inBounds2D(topLeft : Vector2, bottomRight : Vector2, boundSize : Vector2) : boolean{

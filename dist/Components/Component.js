@@ -163,6 +163,7 @@ var GameObject = /** @class */ (function (_super) {
         _this.gameObject = _this;
         _this.transform = _this.AddComponent(Transform);
         _this.assignGameObject(_this);
+        _this.name = new EngineUtility_1.EditorString("Object Name", "GameObject");
         return _this;
         //this.renderer = this.AddComponent(Renderer);
     }

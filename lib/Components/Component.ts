@@ -1,4 +1,4 @@
-import {Vector3} from "../EngineUtility"
+import {Vector3, EditorString} from "../EngineUtility"
 import {Collider} from "./Collider"
 import {Camera} from "./CameraUtility"
 import {Texture2D} from "./Texture"
@@ -155,7 +155,7 @@ export class Component{
 		return false;
 	}
 
-	protected getAttachedComponents() : Component[]{
+	public getAttachedComponents() : Component[]{
 		return this._baseComponent.components.comp;
 	}
 
@@ -163,6 +163,7 @@ export class Component{
 }
 
 export class GameObject extends Component{
+	public name : EditorString;
 	public transform : Transform;
 	public active : boolean;
 	public renderer : Renderer;
@@ -173,6 +174,7 @@ export class GameObject extends Component{
 		this.gameObject = this;
 		this.transform = this.AddComponent(Transform);
 		this.assignGameObject(this);
+		this.name = new EditorString("Object Name", "GameObject");
 		//this.renderer = this.AddComponent(Renderer);
 	}
 

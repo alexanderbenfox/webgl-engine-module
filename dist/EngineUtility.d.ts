@@ -1,6 +1,12 @@
-export declare class Vector2 {
+export interface EditorProperty {
+    elements: HTMLElement[];
+    showEditorProperty(): void;
+    hideEditorProperty(): void;
+}
+export declare class Vector2 implements EditorProperty {
     protected _x: number;
     protected _y: number;
+    elements: HTMLElement[];
     constructor(x: number, y: number);
     x: number;
     y: number;
@@ -13,8 +19,10 @@ export declare class Vector2 {
     magnitude(): number;
     normalize(): Vector2;
     static getMinMaxProjections(vectors: Vector2[], axis: Vector2): any;
+    showEditorProperty(): void;
+    hideEditorProperty(): void;
 }
-export declare class Vector3 extends Vector2 {
+export declare class Vector3 extends Vector2 implements EditorProperty {
     protected _z: number;
     constructor(x: number, y: number, z: number);
     z: number;
@@ -31,11 +39,21 @@ export declare class Vector3 extends Vector2 {
     magnitude(): number;
     angleBetween(b: Vector3): number;
     normalize(): Vector3;
+    showEditorProperty(): void;
 }
 export declare class Vector4 extends Vector3 {
     protected _w: number;
     constructor(x: number, y: number, z: number, w: number);
     w: number;
+    showEditorProperty(): void;
+}
+export declare class EditorString implements EditorProperty {
+    elements: HTMLElement[];
+    property: string;
+    string: string;
+    constructor(property: string, string: string);
+    showEditorProperty(): void;
+    hideEditorProperty(): void;
 }
 export declare function inBounds2D(topLeft: Vector2, bottomRight: Vector2, boundSize: Vector2): boolean;
 export declare function computeMatrix(relativeToMatrix: any, outputMatrix: any, position: Vector3, rotation: Vector3): void;

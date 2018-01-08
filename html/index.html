@@ -129,11 +129,15 @@
 			Your browser doesn't appear to support the <code>&lt;canvas&gt;</code> element.
 		</canvas>
 		<input type="range" min ="0" max = "360" value = "0" oninput = "setCameraValue(this.value);">
-		<div id = "gameObjectWindow">
-			<table id = "gameObjectTable">
-				<thead>GameObject Table</thead>
-			</table>
-			<button type = "button">Add GameObject</button>
+		<div id = "editorWindows">
+			<div id = "gameObjectWindow">
+				<table id = "gameObjectTable">
+					<thead>GameObject Table</thead>
+				</table>
+				<button type = "button">Add GameObject</button>
+			</div>
+			<div id = "inspectorWindow">
+			</div>
 		</div>
 	</body>
 </html>
