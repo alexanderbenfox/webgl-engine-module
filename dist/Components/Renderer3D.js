@@ -14,11 +14,15 @@ var Component_1 = require("./Component");
 var EngineUtility_1 = require("../EngineUtility");
 var gl_matrix_1 = require("gl-matrix");
 var Texture_1 = require("./Texture");
+var Managers_1 = require("../Managers");
 var Renderer3D = /** @class */ (function (_super) {
     __extends(Renderer3D, _super);
     function Renderer3D() {
         return _super.call(this) || this;
     }
+    Renderer3D.prototype.create = function () {
+        this.init_renderer(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
     Renderer3D.prototype.init_renderer = function (surface, camera) {
         _super.prototype.init.call(this, surface);
         this.gameObject.renderer = this;
@@ -27,6 +31,12 @@ var Renderer3D = /** @class */ (function (_super) {
         this._colorBuffer = surface.gl.createBuffer();
         this._normalBuffer = surface.gl.createBuffer();
         this.camera = camera;
+    };
+    Renderer3D.prototype.changeSprite = function (url, width, height) {
+        if (url && width && height) {
+            this.surface = Managers_1.SurfaceManager.GetWorldSurface();
+            this.texture = new Texture_1.Texture2D(this.surface, url, width, height);
+        }
     };
     Renderer3D.prototype.blit = function () { };
     Renderer3D.prototype.update = function (dt) { };
@@ -38,6 +48,9 @@ var SpriteRenderer = /** @class */ (function (_super) {
     function SpriteRenderer() {
         return _super.call(this) || this;
     }
+    SpriteRenderer.prototype.create = function () {
+        this.init_sprite_renderer(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
     SpriteRenderer.prototype.initVertexBuffer = function (gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
         //1 verticies per side, 4 verticies in total
@@ -161,6 +174,9 @@ var CubeRenderer = /** @class */ (function (_super) {
     function CubeRenderer() {
         return _super.call(this) || this;
     }
+    CubeRenderer.prototype.create = function () {
+        this.init_cube_renderer(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
     CubeRenderer.prototype.initVertexBuffer = function (gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
         //4 verticies per side, 24 verticies in total

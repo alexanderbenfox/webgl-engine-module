@@ -153,6 +153,7 @@ var Component = /** @class */ (function () {
         return this._baseComponent.components.comp;
     };
     Component.prototype.update = function (dt) { };
+    Component.prototype.create = function () { };
     return Component;
 }());
 exports.Component = Component;

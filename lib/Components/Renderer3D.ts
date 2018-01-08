@@ -5,6 +5,7 @@ import {MatrixUtil} from "../Matrix"
 import {mat4} from "gl-matrix"
 import {Camera} from "./CameraUtility"
 import {Texture2D} from "./Texture"
+import {SurfaceManager, ObjectManager} from "../Managers"
 
 export interface Drawable{
 	blit() : void;
@@ -28,7 +29,11 @@ export abstract class Renderer3D extends Renderer implements Drawable{
 		super();
 	}
 
-	init_renderer(surface : DrawSurface, camera : Camera){
+	create(){
+		this.init_renderer(SurfaceManager.GetBlankWorldSurface(), ObjectManager.editorCamera);
+	}
+
+	protected init_renderer(surface : DrawSurface, camera : Camera){
 		super.init(surface);
 		this.gameObject.renderer = this;
 		this.surface = surface;
@@ -37,6 +42,13 @@ export abstract class Renderer3D extends Renderer implements Drawable{
 		this._normalBuffer = surface.gl.createBuffer();
 
 		this.camera = camera;
+	}
+
+	changeSprite(url, width, height){
+		if(url && width && height){
+			this.surface = SurfaceManager.GetWorldSurface();
+			this.texture = new Texture2D(this.surface, url, width, height);
+		}
 	}
 
 	blit(){}
@@ -48,6 +60,10 @@ export class SpriteRenderer extends Renderer3D{
 
 	constructor(){
 		super();
+	}
+
+	create(){
+		this.init_sprite_renderer(SurfaceManager.GetBlankWorldSurface(), ObjectManager.editorCamera);
 	}
 
 	initVertexBuffer(gl : WebGLRenderingContext){
@@ -117,9 +133,8 @@ export class SpriteRenderer extends Renderer3D{
 		gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
 	}
 
-	init_sprite_renderer(surface : DrawSurface, camera : Camera, url?, width?, height?){
+	protected init_sprite_renderer(surface : DrawSurface, camera : Camera, url?, width?, height?){
 		super.init_renderer(surface, camera);
-
 		let gl = this.surface.gl;
 		this.initVertexBuffer(gl);
 		this.initColorBuffer(gl);
@@ -231,6 +246,10 @@ export class SpriteRenderer extends Renderer3D{
 export class CubeRenderer extends Renderer3D{
 	constructor(){
 		super();
+	}
+
+	create(){
+		this.init_cube_renderer(SurfaceManager.GetBlankWorldSurface(), ObjectManager.editorCamera);
 	}
 
 	initVertexBuffer(gl : WebGLRenderingContext){
@@ -365,9 +384,8 @@ export class CubeRenderer extends Renderer3D{
 		gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
 	}
 
-	init_cube_renderer(surface : DrawSurface, camera : Camera, url?, width?, height?){
+	protected init_cube_renderer(surface : DrawSurface, camera : Camera, url?, width?, height?){
 		super.init_renderer(surface, camera);
-
 		let gl = this.surface.gl;
 		this.initVertexBuffer(gl);
 		this.initColorBuffer(gl);

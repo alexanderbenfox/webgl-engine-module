@@ -2,6 +2,51 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Component_1 = require("./Components/Component");
+var Renderer3D_1 = require("./Components/Renderer3D");
+var Surface_1 = require("./Surface");
+var GLUtility_1 = require("./GLUtility");
+var SurfaceManager = /** @class */ (function () {
+    function SurfaceManager() {
+    }
+    SurfaceManager.SetCanvas = function (canvas) {
+        this.canvas = canvas;
+    };
+    SurfaceManager.GetUISurface = function () {
+        if (typeof this.surface_ui === 'undefined') {
+            this.surface_ui = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader2d);
+        }
+        return this.surface_ui;
+    };
+    SurfaceManager.GetWorldSurface = function () {
+        if (typeof this.surface_world === 'undefined') {
+            this.surface_world = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d);
+        }
+        return this.surface_world;
+    };
+    SurfaceManager.GetBlankWorldSurface = function () {
+        if (typeof this.surface_world_notex === 'undefined') {
+            this.surface_world_notex = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d_notexture);
+        }
+        return this.surface_world_notex;
+    };
+    SurfaceManager.pop = function () {
+        this.surface_ui.pop();
+        this.surface_world.pop();
+        this.surface_world_notex.pop();
+    };
+    SurfaceManager.push = function () {
+        this.surface_ui.push();
+        this.surface_world.push();
+        this.surface_world_notex.push();
+    };
+    SurfaceManager.clear = function () {
+        this.surface_ui.push();
+        this.surface_world.push();
+        this.surface_world_notex.push();
+    };
+    return SurfaceManager;
+}());
+exports.SurfaceManager = SurfaceManager;
 var EditorControl = /** @class */ (function () {
     function EditorControl() {
     }
@@ -106,7 +151,42 @@ var ObjectManager = /** @class */ (function () {
                 var componentInspector = ObjectManager.inspectorItems[i];
                 inspectorWindow.appendChild(componentInspector);
             }
+            var componentButton = this.addComponentButton(ObjectManager.selectedObject);
+            this.inspectorItems.push(componentButton);
+            inspectorWindow.appendChild(componentButton);
             ObjectManager.updateInspector();
+        }
+    };
+    ObjectManager.addComponentButton = function (gameObject) {
+        var _this = this;
+        //create add component button
+        var addComponentDiv = document.createElement("div");
+        var addComponentDropDown = document.createElement("select");
+        this.assignAllComponentOptions(addComponentDropDown);
+        var addComponentButton = document.createElement("button");
+        addComponentButton.addEventListener('click', function () {
+            var selectedOption = addComponentDropDown.value;
+            for (var i = 0; i < _this.componentOptions.length; i++) {
+                if (_this.componentOptions[i].name == selectedOption) {
+                    _this.hideSelectedObject();
+                    var comp = gameObject.AddComponent(_this.componentOptions[i].type);
+                    comp.create();
+                    _this.showInInspector();
+                    break;
+                }
+            }
+        });
+        addComponentButton.innerHTML = "Add Component";
+        addComponentDiv.appendChild(addComponentDropDown);
+        addComponentDiv.appendChild(addComponentButton);
+        return addComponentDiv;
+    };
+    ObjectManager.assignAllComponentOptions = function (select) {
+        for (var i = 0; i < this.componentOptions.length; i++) {
+            var option = document.createElement('option');
+            option.innerHTML = this.componentOptions[i].name;
+            option.value = this.componentOptions[i].name;
+            select.appendChild(option);
         }
     };
     ObjectManager.showSelectedObject = function (component, property, componentDiv) {
@@ -138,6 +218,7 @@ var ObjectManager = /** @class */ (function () {
     ObjectManager.gameObjects = [];
     ObjectManager.gameObjectHierarchy = [];
     ObjectManager.inspectorItems = [];
+    ObjectManager.componentOptions = [{ name: 'SpriteRenderer', type: Renderer3D_1.SpriteRenderer }, { name: 'CubeRenderer', type: Renderer3D_1.CubeRenderer }];
     return ObjectManager;
 }());
 exports.ObjectManager = ObjectManager;

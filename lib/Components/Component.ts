@@ -160,6 +160,7 @@ export class Component{
 	}
 
 	update(dt : number){}
+	create(){}
 }
 
 export class GameObject extends Component{

@@ -49,6 +49,7 @@ export declare class Component {
     }): boolean;
     getAttachedComponents(): Component[];
     update(dt: number): void;
+    create(): void;
 }
 export declare class GameObject extends Component {
     name: EditorString;

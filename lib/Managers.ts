@@ -3,6 +3,62 @@ import {EditorProperty, Vector2} from "./EngineUtility"
 import {LineRenderer} from "./Components/Renderer2D"
 import {DraggableUI, Draggable} from "./Components/EditorObject"
 import {GameObject, Component, Transform} from "./Components/Component"
+import {CubeRenderer, SpriteRenderer} from "./Components/Renderer3D";
+import {UIImage} from "./Components/UIImage";
+import {DrawSurface} from "./Surface"
+import {ShaderType} from "./GLUtility"
+import {Camera} from "./Components/CameraUtility"
+
+export class SurfaceManager{
+	private static surface_ui : DrawSurface;
+	private static surface_world : DrawSurface;
+	private static surface_world_notex : DrawSurface;
+	private static canvas : HTMLCanvasElement;
+
+	public static SetCanvas(canvas : HTMLCanvasElement){
+		this.canvas = canvas;
+	}
+
+	public static GetUISurface() : DrawSurface{
+		if(typeof this.surface_ui === 'undefined'){
+			this.surface_ui = new DrawSurface(this.canvas, ShaderType.shader2d);
+		}
+		return this.surface_ui;
+	}
+
+	public static GetWorldSurface() : DrawSurface{
+		if(typeof this.surface_world === 'undefined'){
+			this.surface_world = new DrawSurface(this.canvas, ShaderType.shader3d);
+		}
+		return this.surface_world;
+	}
+
+	public static GetBlankWorldSurface() : DrawSurface{
+		if(typeof this.surface_world_notex === 'undefined'){
+			this.surface_world_notex = new DrawSurface(this.canvas, ShaderType.shader3d_notexture);
+		}
+		return this.surface_world_notex;
+	}
+
+	public static pop(){
+		this.surface_ui.pop();
+		this.surface_world.pop();
+		this.surface_world_notex.pop();
+	}
+
+	public static push(){
+		this.surface_ui.push();
+		this.surface_world.push();
+		this.surface_world_notex.push();
+	}
+
+	public static clear(){
+		this.surface_ui.push();
+		this.surface_world.push();
+		this.surface_world_notex.push();
+	}
+
+}
 
 export class EditorControl{
 	public static draggingObject : Draggable = null;
@@ -37,10 +93,13 @@ export class EditorControl{
 }
 
 export class ObjectManager{
+	public static editorCamera : Camera;
 	public static gameObjects : GameObject[] = [];
 	public static gameObjectHierarchy : HTMLElement[] = [];
 	public static selectedObject : GameObject;
 	public static inspectorItems : HTMLElement[] = [];
+
+	public static componentOptions : {name : string, type : {new():Component;}}[] = [{name : 'SpriteRenderer', type : SpriteRenderer}, {name : 'CubeRenderer', type : CubeRenderer}];
 
 	static update(dt : number){
 		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
@@ -52,10 +111,6 @@ export class ObjectManager{
 		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
 			ObjectManager.gameObjects[i].render();
 		}
-	}
-
-	static addComponent(){
-		
 	}
 
 	static addObject(){
@@ -126,7 +181,47 @@ export class ObjectManager{
 				let componentInspector = ObjectManager.inspectorItems[i];
 				inspectorWindow.appendChild(componentInspector);
 			}
+			let componentButton = this.addComponentButton(ObjectManager.selectedObject);
+			this.inspectorItems.push(componentButton);
+			inspectorWindow.appendChild(componentButton);
+
 			ObjectManager.updateInspector();
+		}
+	}
+
+	static addComponentButton(gameObject : GameObject) : HTMLElement{
+		//create add component button
+			let addComponentDiv = document.createElement("div");
+			let addComponentDropDown = document.createElement("select");
+			this.assignAllComponentOptions(addComponentDropDown);
+			let addComponentButton = document.createElement("button");
+
+			addComponentButton.addEventListener('click', () =>{
+				let selectedOption = addComponentDropDown.value;
+				for(let i = 0; i < this.componentOptions.length; i++){
+					if(this.componentOptions[i].name == selectedOption){
+						this.hideSelectedObject();
+						let comp = gameObject.AddComponent(this.componentOptions[i].type);
+						comp.create();
+						this.showInInspector();
+						break;
+					}
+				}
+			});
+
+			addComponentButton.innerHTML = "Add Component";
+
+			addComponentDiv.appendChild(addComponentDropDown);
+			addComponentDiv.appendChild(addComponentButton);
+			return addComponentDiv;
+	}
+
+	static assignAllComponentOptions(select : HTMLSelectElement) : void {
+		for(let i = 0; i < this.componentOptions.length; i++){
+			let option = document.createElement('option');
+			option.innerHTML = this.componentOptions[i].name;
+			option.value = this.componentOptions[i].name;
+			select.appendChild(option);
 		}
 	}
 

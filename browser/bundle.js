@@ -673,6 +673,7 @@ var Component = /** @class */ (function () {
         return this._baseComponent.components.comp;
     };
     Component.prototype.update = function (dt) { };
+    Component.prototype.create = function () { };
     return Component;
 }());
 exports.Component = Component;
@@ -865,11 +866,15 @@ var Component_1 = require("./Component");
 var EngineUtility_1 = require("../EngineUtility");
 var gl_matrix_1 = require("gl-matrix");
 var Texture_1 = require("./Texture");
+var Managers_1 = require("../Managers");
 var Renderer3D = /** @class */ (function (_super) {
     __extends(Renderer3D, _super);
     function Renderer3D() {
         return _super.call(this) || this;
     }
+    Renderer3D.prototype.create = function () {
+        this.init_renderer(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
     Renderer3D.prototype.init_renderer = function (surface, camera) {
         _super.prototype.init.call(this, surface);
         this.gameObject.renderer = this;
@@ -878,6 +883,12 @@ var Renderer3D = /** @class */ (function (_super) {
         this._colorBuffer = surface.gl.createBuffer();
         this._normalBuffer = surface.gl.createBuffer();
         this.camera = camera;
+    };
+    Renderer3D.prototype.changeSprite = function (url, width, height) {
+        if (url && width && height) {
+            this.surface = Managers_1.SurfaceManager.GetWorldSurface();
+            this.texture = new Texture_1.Texture2D(this.surface, url, width, height);
+        }
     };
     Renderer3D.prototype.blit = function () { };
     Renderer3D.prototype.update = function (dt) { };
@@ -889,6 +900,9 @@ var SpriteRenderer = /** @class */ (function (_super) {
     function SpriteRenderer() {
         return _super.call(this) || this;
     }
+    SpriteRenderer.prototype.create = function () {
+        this.init_sprite_renderer(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
     SpriteRenderer.prototype.initVertexBuffer = function (gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
         //1 verticies per side, 4 verticies in total
@@ -1012,6 +1026,9 @@ var CubeRenderer = /** @class */ (function (_super) {
     function CubeRenderer() {
         return _super.call(this) || this;
     }
+    CubeRenderer.prototype.create = function () {
+        this.init_cube_renderer(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
     CubeRenderer.prototype.initVertexBuffer = function (gl) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
         //4 verticies per side, 24 verticies in total
@@ -1188,7 +1205,7 @@ var CubeRenderer = /** @class */ (function (_super) {
 }(Renderer3D));
 exports.CubeRenderer = CubeRenderer;
 
-},{"../EngineUtility":13,"./Component":5,"./Texture":9,"gl-matrix":23}],9:[function(require,module,exports){
+},{"../EngineUtility":13,"../Managers":16,"./Component":5,"./Texture":9,"gl-matrix":23}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -2341,6 +2358,51 @@ exports.GameObject = GameObject;
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Component_1 = require("./Components/Component");
+var Renderer3D_1 = require("./Components/Renderer3D");
+var Surface_1 = require("./Surface");
+var GLUtility_1 = require("./GLUtility");
+var SurfaceManager = /** @class */ (function () {
+    function SurfaceManager() {
+    }
+    SurfaceManager.SetCanvas = function (canvas) {
+        this.canvas = canvas;
+    };
+    SurfaceManager.GetUISurface = function () {
+        if (typeof this.surface_ui === 'undefined') {
+            this.surface_ui = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader2d);
+        }
+        return this.surface_ui;
+    };
+    SurfaceManager.GetWorldSurface = function () {
+        if (typeof this.surface_world === 'undefined') {
+            this.surface_world = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d);
+        }
+        return this.surface_world;
+    };
+    SurfaceManager.GetBlankWorldSurface = function () {
+        if (typeof this.surface_world_notex === 'undefined') {
+            this.surface_world_notex = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d_notexture);
+        }
+        return this.surface_world_notex;
+    };
+    SurfaceManager.pop = function () {
+        this.surface_ui.pop();
+        this.surface_world.pop();
+        this.surface_world_notex.pop();
+    };
+    SurfaceManager.push = function () {
+        this.surface_ui.push();
+        this.surface_world.push();
+        this.surface_world_notex.push();
+    };
+    SurfaceManager.clear = function () {
+        this.surface_ui.push();
+        this.surface_world.push();
+        this.surface_world_notex.push();
+    };
+    return SurfaceManager;
+}());
+exports.SurfaceManager = SurfaceManager;
 var EditorControl = /** @class */ (function () {
     function EditorControl() {
     }
@@ -2445,7 +2507,42 @@ var ObjectManager = /** @class */ (function () {
                 var componentInspector = ObjectManager.inspectorItems[i];
                 inspectorWindow.appendChild(componentInspector);
             }
+            var componentButton = this.addComponentButton(ObjectManager.selectedObject);
+            this.inspectorItems.push(componentButton);
+            inspectorWindow.appendChild(componentButton);
             ObjectManager.updateInspector();
+        }
+    };
+    ObjectManager.addComponentButton = function (gameObject) {
+        var _this = this;
+        //create add component button
+        var addComponentDiv = document.createElement("div");
+        var addComponentDropDown = document.createElement("select");
+        this.assignAllComponentOptions(addComponentDropDown);
+        var addComponentButton = document.createElement("button");
+        addComponentButton.addEventListener('click', function () {
+            var selectedOption = addComponentDropDown.value;
+            for (var i = 0; i < _this.componentOptions.length; i++) {
+                if (_this.componentOptions[i].name == selectedOption) {
+                    _this.hideSelectedObject();
+                    var comp = gameObject.AddComponent(_this.componentOptions[i].type);
+                    comp.create();
+                    _this.showInInspector();
+                    break;
+                }
+            }
+        });
+        addComponentButton.innerHTML = "Add Component";
+        addComponentDiv.appendChild(addComponentDropDown);
+        addComponentDiv.appendChild(addComponentButton);
+        return addComponentDiv;
+    };
+    ObjectManager.assignAllComponentOptions = function (select) {
+        for (var i = 0; i < this.componentOptions.length; i++) {
+            var option = document.createElement('option');
+            option.innerHTML = this.componentOptions[i].name;
+            option.value = this.componentOptions[i].name;
+            select.appendChild(option);
         }
     };
     ObjectManager.showSelectedObject = function (component, property, componentDiv) {
@@ -2477,11 +2574,12 @@ var ObjectManager = /** @class */ (function () {
     ObjectManager.gameObjects = [];
     ObjectManager.gameObjectHierarchy = [];
     ObjectManager.inspectorItems = [];
+    ObjectManager.componentOptions = [{ name: 'SpriteRenderer', type: Renderer3D_1.SpriteRenderer }, { name: 'CubeRenderer', type: Renderer3D_1.CubeRenderer }];
     return ObjectManager;
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./Components/Component":5,"./EngineUtility":13}],17:[function(require,module,exports){
+},{"./Components/Component":5,"./Components/Renderer3D":8,"./EngineUtility":13,"./GLUtility":14,"./Surface":20}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -2642,15 +2740,12 @@ exports.MatrixUtil = MatrixUtil;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
-var Surface_1 = require("./Surface");
 var Component_1 = require("./Components/Component");
-var UIImage_1 = require("./Components/UIImage");
 var Renderer3D_1 = require("./Components/Renderer3D");
 var Managers_1 = require("./Managers");
-var GLUtility_1 = require("./GLUtility");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
-var GLUtility_2 = require("./GLUtility");
+var GLUtility_1 = require("./GLUtility");
 var Lighting_1 = require("./Components/Lighting");
 var MouseData = /** @class */ (function () {
     function MouseData() {
@@ -2665,15 +2760,14 @@ var MouseData = /** @class */ (function () {
 var Program = /** @class */ (function () {
     function Program() {
         this.canvas = document.getElementById('glCanvas');
-        this.gl = GLUtility_2.GLUtility.getGLContext(this.canvas, { alpha: false, premultipliedAlpha: false });
+        this.gl = GLUtility_1.GLUtility.getGLContext(this.canvas, { alpha: false, premultipliedAlpha: false });
         this.assignPageEvents();
         console.log("Initializing...");
         console.log('CANVAS ' + this.canvas);
         var offset = new EngineUtility_1.Vector2(this.canvas.getBoundingClientRect().left, this.canvas.getBoundingClientRect().top);
         MouseData.offset = offset;
-        this.surface_ui = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader2d);
-        this.surface_world = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d);
-        this.surface_world_notex = new Surface_1.DrawSurface(this.canvas, GLUtility_1.ShaderType.shader3d_notexture);
+        //init surface manager
+        Managers_1.SurfaceManager.SetCanvas(this.canvas);
         this.createGameObjects();
         //this.setupGrid();
         //line = new Line(surface_lines, 100,256,100,256,2);
@@ -2694,41 +2788,44 @@ var Program = /** @class */ (function () {
         this.uiCamera = uiCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.uiCamera.init(this.gl);
         this.uiCamera.AddComponent(Component_1.GameObject);
+        Managers_1.ObjectManager.editorCamera = this.worldCamera;
     };
     Program.prototype.createGameObjects = function () {
         this.createCameras();
-        var uiBox1 = new Component_1.GameObject();
-        var uiBox1_sprite = uiBox1.AddComponent(UIImage_1.UIImage);
+        /*let uiBox1 = new GameObject();
+        let uiBox1_sprite : UIImage = <UIImage>uiBox1.AddComponent(UIImage);
         uiBox1_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
-        uiBox1.transform.position = new EngineUtility_1.Vector3(0, 0, 0);
-        var uiBox2 = new Component_1.GameObject();
-        var uiBox2_sprite = uiBox2.AddComponent(UIImage_1.UIImage);
+        uiBox1.transform.position = new Vector3(0,0,0);
+
+        let uiBox2 = new GameObject();
+        let uiBox2_sprite : UIImage = <UIImage>uiBox2.AddComponent(UIImage);
         uiBox2_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
-        uiBox1.transform.position = new EngineUtility_1.Vector3(256, 0, 0);
+        uiBox1.transform.position = new Vector3(256,0,0);*/
         var worldCube1 = new Component_1.GameObject();
         var worldCube1_renderer = worldCube1.AddComponent(Renderer3D_1.CubeRenderer);
-        worldCube1_renderer.init_cube_renderer(this.surface_world_notex, this.worldCamera);
+        worldCube1_renderer.create();
         worldCube1.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         worldCube1.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
         var worldCube2 = new Component_1.GameObject();
         var worldCube2_renderer = worldCube2.AddComponent(Renderer3D_1.CubeRenderer);
-        worldCube2_renderer.init_cube_renderer(this.surface_world_notex, this.worldCamera);
+        worldCube2_renderer.create();
         worldCube2.transform.position = new EngineUtility_1.Vector3(3, 0, -12);
         worldCube2.transform.rotation = new EngineUtility_1.Vector3(10, 80, 0);
         var worldSprite = new Component_1.GameObject();
         var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
-        worldSprite_renderer.init_sprite_renderer(this.surface_world, this.worldCamera, '../img/tile.png', 256, 256);
+        worldSprite_renderer.create();
+        worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
         worldSprite.transform.position = new EngineUtility_1.Vector3(-6, 0, -6);
         worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
         this.storedObject = worldSprite;
         var editorBox = new Component_1.GameObject();
         var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
-        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', this.surface_ui, 256, 256);
-        Managers_1.ObjectManager.gameObjects = [uiBox1, uiBox2, worldCube1, worldCube2, worldSprite, editorBox];
+        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', Managers_1.SurfaceManager.GetUISurface(), 256, 256);
+        Managers_1.ObjectManager.gameObjects = [worldCube1, worldCube2, worldSprite, editorBox];
         //EditorControl.clickables = [];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
-        var dirLight = new Lighting_1.DirectionalLight(this.surface_world_notex, new EngineUtility_1.Vector3(100, 20, 30));
-        var dirLight2 = new Lighting_1.DirectionalLight(this.surface_world, new EngineUtility_1.Vector3(100, 20, 30));
+        var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
+        var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
     };
     /*setupGrid() : void{
         let lines : Stroke[] = [];
@@ -2819,21 +2916,15 @@ var Program = /** @class */ (function () {
     Program.prototype.drawScene = function () {
         setInterval(function () {
             //define update loop
-            this.surface_ui.clear();
-            this.surface_world.clear();
-            this.surface_world_notex.clear();
-            this.surface_ui.push();
-            this.surface_world.push();
-            this.surface_world_notex.push();
+            Managers_1.SurfaceManager.clear();
+            Managers_1.SurfaceManager.push();
             //this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
             //this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
             //this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
             //this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
             this.updateLoop();
             this.render();
-            this.surface_ui.pop();
-            this.surface_world.pop();
-            this.surface_world_notex.pop();
+            Managers_1.SurfaceManager.pop();
         }.bind(this), 15);
     };
     Program.prototype.addGameObject = function () {
@@ -2871,7 +2962,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/Renderer3D":8,"./Components/UIImage":10,"./EngineUtility":13,"./GLUtility":14,"./Managers":16,"./Surface":20}],19:[function(require,module,exports){
+},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/Renderer3D":8,"./EngineUtility":13,"./GLUtility":14,"./Managers":16}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
