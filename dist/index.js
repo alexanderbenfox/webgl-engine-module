@@ -15,3 +15,6 @@ window.starter = function () {
 window.setCameraValue = function (value) {
     gameProgram.setCameraValue(value);
 };
+window.addGameObject = function () {
+    gameProgram.addGameObject();
+};

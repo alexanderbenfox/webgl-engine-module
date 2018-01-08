@@ -287,11 +287,17 @@ function inBounds2D(topLeft, bottomRight, boundSize) {
     return false;
 }
 exports.inBounds2D = inBounds2D;
+function degreeToRadians(degree) {
+    var radians = (Math.PI / 180) * degree;
+    return radians;
+}
+exports.degreeToRadians = degreeToRadians;
 function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
     //setup projection stuff later (camera??)
     var xAxis = new Vector3(1, 0, 0);
     var yAxis = new Vector3(0, 1, 0);
     var zAxis = new Vector3(0, 0, 1);
+    rotation = new Vector3(degreeToRadians(rotation.x), degreeToRadians(rotation.y), degreeToRadians(rotation.z));
     gl_matrix_1.mat4.translate(outputMatrix, // destination matrix
     relativeToMatrix, // matrix to translate (usually origin)
     position.toArray()); // amount to translate

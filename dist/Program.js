@@ -195,6 +195,9 @@ var Program = /** @class */ (function () {
             this.surface_world_notex.pop();
         }.bind(this), 15);
     };
+    Program.prototype.addGameObject = function () {
+        Managers_1.ObjectManager.addObject();
+    };
     return Program;
 }());
 exports.Program = Program;

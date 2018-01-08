@@ -2057,11 +2057,17 @@ function inBounds2D(topLeft, bottomRight, boundSize) {
     return false;
 }
 exports.inBounds2D = inBounds2D;
+function degreeToRadians(degree) {
+    var radians = (Math.PI / 180) * degree;
+    return radians;
+}
+exports.degreeToRadians = degreeToRadians;
 function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
     //setup projection stuff later (camera??)
     var xAxis = new Vector3(1, 0, 0);
     var yAxis = new Vector3(0, 1, 0);
     var zAxis = new Vector3(0, 0, 1);
+    rotation = new Vector3(degreeToRadians(rotation.x), degreeToRadians(rotation.y), degreeToRadians(rotation.z));
     gl_matrix_1.mat4.translate(outputMatrix, // destination matrix
     relativeToMatrix, // matrix to translate (usually origin)
     position.toArray()); // amount to translate
@@ -2334,6 +2340,7 @@ exports.GameObject = GameObject;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
+var Component_1 = require("./Components/Component");
 var EditorControl = /** @class */ (function () {
     function EditorControl() {
     }
@@ -2377,6 +2384,27 @@ var ObjectManager = /** @class */ (function () {
             ObjectManager.gameObjects[i].render();
         }
     };
+    ObjectManager.addObject = function () {
+        var newObject = new Component_1.GameObject();
+        newObject.AddComponent(Component_1.Transform);
+        ObjectManager.gameObjects.push(newObject);
+        var table = document.getElementById('gameObjectTable');
+        var row = document.createElement("tr");
+        row.addEventListener("click", function () {
+            ObjectManager.hideSelectedObject();
+            ObjectManager.selectedObject = newObject;
+            ObjectManager.showInInspector();
+        });
+        row.innerHTML = newObject.name.string;
+        table.appendChild(row);
+        ObjectManager.gameObjectHierarchy.push(row);
+    };
+    ObjectManager.removeObject = function (rowIndex) {
+        ObjectManager.gameObjects = ObjectManager.gameObjects.splice(rowIndex - 1, 1);
+        var row = ObjectManager.gameObjectHierarchy[rowIndex - 1];
+        row.parentNode.removeChild(row);
+        ObjectManager.gameObjectHierarchy = ObjectManager.gameObjectHierarchy.splice(rowIndex - 1, 1);
+    };
     ObjectManager.populateInspector = function () {
         var table = document.getElementById('gameObjectTable');
         var _loop_1 = function (i) {
@@ -2388,16 +2416,15 @@ var ObjectManager = /** @class */ (function () {
             });
             row.innerHTML = ObjectManager.gameObjects[i].name.string;
             table.appendChild(row);
+            ObjectManager.gameObjectHierarchy.push(row);
         };
         for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
             _loop_1(i);
         }
     };
     ObjectManager.updateInspector = function () {
-        var table = document.getElementById('gameObjectTable');
-        var rows = table.children;
-        for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
-            rows[i + 1].innerHTML = ObjectManager.gameObjects[i].name.string;
+        for (var i = 0; i < ObjectManager.gameObjectHierarchy.length; i++) {
+            ObjectManager.gameObjectHierarchy[i].innerHTML = ObjectManager.gameObjects[i].name.string;
         }
     };
     ObjectManager.showInInspector = function () {
@@ -2448,12 +2475,13 @@ var ObjectManager = /** @class */ (function () {
         }
     };
     ObjectManager.gameObjects = [];
+    ObjectManager.gameObjectHierarchy = [];
     ObjectManager.inspectorItems = [];
     return ObjectManager;
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./EngineUtility":13}],17:[function(require,module,exports){
+},{"./Components/Component":5,"./EngineUtility":13}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -2808,6 +2836,9 @@ var Program = /** @class */ (function () {
             this.surface_world_notex.pop();
         }.bind(this), 15);
     };
+    Program.prototype.addGameObject = function () {
+        Managers_1.ObjectManager.addObject();
+    };
     return Program;
 }());
 exports.Program = Program;
@@ -3054,6 +3085,9 @@ window.starter = function () {
 };
 window.setCameraValue = function (value) {
     gameProgram.setCameraValue(value);
+};
+window.addGameObject = function () {
+    gameProgram.addGameObject();
 };
 
 },{"./Components/Component":5,"./Program":18}],22:[function(require,module,exports){

@@ -303,11 +303,19 @@ export function inBounds2D(topLeft : Vector2, bottomRight : Vector2, boundSize :
 	return false;
 }
 
+export function degreeToRadians(degree : number) : number{
+	let radians = (Math.PI/180) * degree;
+	return radians;
+}
+
 export function computeMatrix(relativeToMatrix, outputMatrix, position : Vector3, rotation : Vector3){
 	//setup projection stuff later (camera??)
 	let xAxis = new Vector3(1,0,0);
 	let yAxis = new Vector3(0,1,0);
 	let zAxis = new Vector3(0,0,1);
+
+	rotation = new Vector3(degreeToRadians(rotation.x), degreeToRadians(rotation.y), degreeToRadians(rotation.z));
+
 	mat4.translate(outputMatrix,     // destination matrix
 				relativeToMatrix,     // matrix to translate (usually origin)
 				position.toArray());  // amount to translate

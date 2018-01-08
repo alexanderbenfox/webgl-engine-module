@@ -56,4 +56,5 @@ export declare class EditorString implements EditorProperty {
     hideEditorProperty(): void;
 }
 export declare function inBounds2D(topLeft: Vector2, bottomRight: Vector2, boundSize: Vector2): boolean;
+export declare function degreeToRadians(degree: number): number;
 export declare function computeMatrix(relativeToMatrix: any, outputMatrix: any, position: Vector3, rotation: Vector3): void;

@@ -16,3 +16,7 @@ export function startProgram(){
 (<any>window).setCameraValue = function(value : number){
 	gameProgram.setCameraValue(value);
 };
+
+(<any>window).addGameObject = () =>{
+	gameProgram.addGameObject();
+};

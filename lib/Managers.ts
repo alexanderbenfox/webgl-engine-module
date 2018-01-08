@@ -2,7 +2,7 @@ declare function require(name:string);
 import {EditorProperty, Vector2} from "./EngineUtility"
 import {LineRenderer} from "./Components/Renderer2D"
 import {DraggableUI, Draggable} from "./Components/EditorObject"
-import {GameObject, Component} from "./Components/Component"
+import {GameObject, Component, Transform} from "./Components/Component"
 
 export class EditorControl{
 	public static draggingObject : Draggable = null;
@@ -38,6 +38,7 @@ export class EditorControl{
 
 export class ObjectManager{
 	public static gameObjects : GameObject[] = [];
+	public static gameObjectHierarchy : HTMLElement[] = [];
 	public static selectedObject : GameObject;
 	public static inspectorItems : HTMLElement[] = [];
 
@@ -53,6 +54,36 @@ export class ObjectManager{
 		}
 	}
 
+	static addComponent(){
+		
+	}
+
+	static addObject(){
+		let newObject = new GameObject();
+		newObject.AddComponent(Transform);
+
+		ObjectManager.gameObjects.push(newObject);
+
+		let table = document.getElementById('gameObjectTable');
+		let row = document.createElement("tr");
+
+		row.addEventListener("click", function(){
+			ObjectManager.hideSelectedObject();
+			ObjectManager.selectedObject = newObject;
+			ObjectManager.showInInspector();
+		});
+		row.innerHTML = newObject.name.string;
+		table.appendChild(row);
+		ObjectManager.gameObjectHierarchy.push(row);
+	}
+
+	static removeObject(rowIndex : number){
+		ObjectManager.gameObjects = ObjectManager.gameObjects.splice(rowIndex - 1, 1);
+		let row = ObjectManager.gameObjectHierarchy[rowIndex-1];
+		row.parentNode.removeChild(row);
+		ObjectManager.gameObjectHierarchy = ObjectManager.gameObjectHierarchy.splice(rowIndex - 1,1); 
+	}
+
 	static populateInspector() : void{
 		let table = document.getElementById('gameObjectTable');
 		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
@@ -64,14 +95,13 @@ export class ObjectManager{
 			});
 			row.innerHTML = ObjectManager.gameObjects[i].name.string;
 			table.appendChild(row);
+			ObjectManager.gameObjectHierarchy.push(row);
 		}
 	}
 
 	static updateInspector() : void{
-		let table = document.getElementById('gameObjectTable');
-		let rows = table.children;
-		for(let i = 0; i < ObjectManager.gameObjects.length; i++){
-			rows[i+1].innerHTML = ObjectManager.gameObjects[i].name.string;
+		for(let i = 0; i < ObjectManager.gameObjectHierarchy.length; i++){
+			ObjectManager.gameObjectHierarchy[i].innerHTML = ObjectManager.gameObjects[i].name.string;
 		}
 	}
 

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
+var Component_1 = require("./Components/Component");
 var EditorControl = /** @class */ (function () {
     function EditorControl() {
     }
@@ -44,6 +45,27 @@ var ObjectManager = /** @class */ (function () {
             ObjectManager.gameObjects[i].render();
         }
     };
+    ObjectManager.addObject = function () {
+        var newObject = new Component_1.GameObject();
+        newObject.AddComponent(Component_1.Transform);
+        ObjectManager.gameObjects.push(newObject);
+        var table = document.getElementById('gameObjectTable');
+        var row = document.createElement("tr");
+        row.addEventListener("click", function () {
+            ObjectManager.hideSelectedObject();
+            ObjectManager.selectedObject = newObject;
+            ObjectManager.showInInspector();
+        });
+        row.innerHTML = newObject.name.string;
+        table.appendChild(row);
+        ObjectManager.gameObjectHierarchy.push(row);
+    };
+    ObjectManager.removeObject = function (rowIndex) {
+        ObjectManager.gameObjects = ObjectManager.gameObjects.splice(rowIndex - 1, 1);
+        var row = ObjectManager.gameObjectHierarchy[rowIndex - 1];
+        row.parentNode.removeChild(row);
+        ObjectManager.gameObjectHierarchy = ObjectManager.gameObjectHierarchy.splice(rowIndex - 1, 1);
+    };
     ObjectManager.populateInspector = function () {
         var table = document.getElementById('gameObjectTable');
         var _loop_1 = function (i) {
@@ -55,16 +77,15 @@ var ObjectManager = /** @class */ (function () {
             });
             row.innerHTML = ObjectManager.gameObjects[i].name.string;
             table.appendChild(row);
+            ObjectManager.gameObjectHierarchy.push(row);
         };
         for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
             _loop_1(i);
         }
     };
     ObjectManager.updateInspector = function () {
-        var table = document.getElementById('gameObjectTable');
-        var rows = table.children;
-        for (var i = 0; i < ObjectManager.gameObjects.length; i++) {
-            rows[i + 1].innerHTML = ObjectManager.gameObjects[i].name.string;
+        for (var i = 0; i < ObjectManager.gameObjectHierarchy.length; i++) {
+            ObjectManager.gameObjectHierarchy[i].innerHTML = ObjectManager.gameObjects[i].name.string;
         }
     };
     ObjectManager.showInInspector = function () {
@@ -115,6 +136,7 @@ var ObjectManager = /** @class */ (function () {
         }
     };
     ObjectManager.gameObjects = [];
+    ObjectManager.gameObjectHierarchy = [];
     ObjectManager.inspectorItems = [];
     return ObjectManager;
 }());

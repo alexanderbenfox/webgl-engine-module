@@ -11,10 +11,13 @@ export declare class EditorControl {
 }
 export declare class ObjectManager {
     static gameObjects: GameObject[];
+    static gameObjectHierarchy: HTMLElement[];
     static selectedObject: GameObject;
     static inspectorItems: HTMLElement[];
     static update(dt: number): void;
     static render(): void;
+    static addObject(): void;
+    static removeObject(rowIndex: number): void;
     static populateInspector(): void;
     static updateInspector(): void;
     static showInInspector(): void;

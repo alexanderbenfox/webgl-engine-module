@@ -259,6 +259,10 @@ export class Program{
 
 		}.bind(this), 15);
 	}
+
+	addGameObject(){
+		ObjectManager.addObject();
+	}
 }
 
 

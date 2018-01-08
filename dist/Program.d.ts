@@ -22,4 +22,5 @@ export declare class Program {
     render(): void;
     setCameraValue(value: number): void;
     drawScene(): void;
+    addGameObject(): void;
 }
