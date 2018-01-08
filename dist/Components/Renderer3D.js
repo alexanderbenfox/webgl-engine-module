@@ -35,7 +35,7 @@ var Renderer3D = /** @class */ (function (_super) {
     Renderer3D.prototype.changeSprite = function (url, width, height) {
         if (url && width && height) {
             this.surface = Managers_1.SurfaceManager.GetWorldSurface();
-            this.texture = new Texture_1.Texture2D(this.surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(this.surface, this, url, width, height);
         }
     };
     Renderer3D.prototype.blit = function () { };
@@ -109,7 +109,7 @@ var SpriteRenderer = /** @class */ (function (_super) {
         this.initIndexBuffer(gl);
         this.initNormalBuffer(gl);
         if (url && width && height)
-            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(surface, this, url, width, height);
     };
     SpriteRenderer.prototype.blit = function () {
         var surface = this.surface;
@@ -290,7 +290,7 @@ var CubeRenderer = /** @class */ (function (_super) {
         this.initIndexBuffer(gl);
         this.initNormalBuffer(gl);
         if (url && width && height)
-            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(surface, this, url, width, height);
     };
     CubeRenderer.prototype.blit = function () {
         var surface = this.surface;

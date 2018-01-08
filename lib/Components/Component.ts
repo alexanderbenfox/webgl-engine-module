@@ -2,6 +2,7 @@ import {Vector3, EditorString} from "../EngineUtility"
 import {Collider} from "./Collider"
 import {Camera} from "./CameraUtility"
 import {Texture2D} from "./Texture"
+import {DrawSurface} from "../Surface"
 
 export class ComponentFactory{
 	static CreateComponent<IComponent extends Component>(type:{new():Component;}) : Component{
@@ -219,6 +220,7 @@ export class Transform extends Component{
 
 export class Renderer extends Component{
 	public camera : Camera;
+	public surface : DrawSurface;
 	public renderPoint : Vector3;
 	public size : Vector3;
 	public texture : Texture2D;

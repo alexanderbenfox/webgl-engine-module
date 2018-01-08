@@ -12,7 +12,6 @@ export interface Drawable{
 }
 
 export abstract class Renderer3D extends Renderer implements Drawable{
-	public surface : DrawSurface;
 	protected positions : Float32Array;
 	protected colors : Float32Array;
 	protected indicies : Uint16Array;
@@ -47,7 +46,7 @@ export abstract class Renderer3D extends Renderer implements Drawable{
 	changeSprite(url, width, height){
 		if(url && width && height){
 			this.surface = SurfaceManager.GetWorldSurface();
-			this.texture = new Texture2D(this.surface, url, width, height);
+			this.texture = new Texture2D(this.surface, this, url, width, height);
 		}
 	}
 
@@ -142,7 +141,7 @@ export class SpriteRenderer extends Renderer3D{
 		this.initNormalBuffer(gl);
 
 		if(url && width && height)
-			this.texture = new Texture2D(surface, url, width, height);
+			this.texture = new Texture2D(surface, this, url, width, height);
 	}
 
 	blit() : void{
@@ -393,7 +392,7 @@ export class CubeRenderer extends Renderer3D{
 		this.initNormalBuffer(gl);
 
 		if(url && width && height)
-			this.texture = new Texture2D(surface, url, width,height);
+			this.texture = new Texture2D(surface, this, url, width,height);
 	}
 
 	blit() : void{

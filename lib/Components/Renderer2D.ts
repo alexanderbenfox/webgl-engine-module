@@ -13,7 +13,6 @@ export interface Drawable{
 }
 
 export abstract class Renderer2D extends Renderer{
-	protected _surface : DrawSurface;
 	protected _vertexBuffer : any;
 	protected _colorBuffer : any;
 
@@ -31,7 +30,7 @@ export abstract class Renderer2D extends Renderer{
 	init_renderer(surface : DrawSurface, camera : Camera){
 		this.init(surface);
 		this.gameObject.renderer = this;
-		this._surface = surface;
+		this.surface = surface;
 		this._vertexBuffer = surface.gl.createBuffer();
 		this._colorBuffer = surface.gl.createBuffer();
 		this.camera = camera;
@@ -71,10 +70,10 @@ export class LineRenderer extends Renderer2D implements Drawable{
 	}
 
 	blit() : void{
-		let surface = this._surface;
+		let surface = this.surface;
 		//rendering context
-		let gl = this._surface.gl;
-		let program = this._surface.locations.program;
+		let gl = this.surface.gl;
+		let program = this.surface.locations.program;
 
 		gl.useProgram(program);
 
@@ -139,9 +138,9 @@ export class SquareRenderer extends Renderer2D implements Drawable{
 	}
 
 	blit() : void{
-		var surface = this._surface;
-		var gl = this._surface.gl;
-		var program = this._surface.locations.program;
+		var surface = this.surface;
+		var gl = this.surface.gl;
+		var program = this.surface.locations.program;
 
 		gl.useProgram(program);
 

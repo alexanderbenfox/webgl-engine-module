@@ -1,7 +1,5 @@
-import { DrawSurface } from "../Surface";
 import { Renderer } from "./Component";
 export declare class UIImage extends Renderer {
-    surface: DrawSurface;
     vertexBuffer: WebGLBuffer;
     textureCoords: Float32Array;
     colorBuffer: WebGLBuffer;

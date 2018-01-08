@@ -28,7 +28,7 @@ var UIImage = /** @class */ (function (_super) {
         this.size = new EngineUtility_1.Vector3(width, height, 0);
         //this.size = new Vector2(this.image.width, this.image.height);
         if (url && width && height)
-            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(surface, this, url, width, height);
         this.vertexBuffer = this.surface.gl.createBuffer();
         this.colorBuffer = this.surface.gl.createBuffer();
         this._initialized = true;

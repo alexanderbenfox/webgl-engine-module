@@ -25,7 +25,7 @@ var Renderer2D = /** @class */ (function (_super) {
     Renderer2D.prototype.init_renderer = function (surface, camera) {
         this.init(surface);
         this.gameObject.renderer = this;
-        this._surface = surface;
+        this.surface = surface;
         this._vertexBuffer = surface.gl.createBuffer();
         this._colorBuffer = surface.gl.createBuffer();
         this.camera = camera;
@@ -57,10 +57,10 @@ var LineRenderer = /** @class */ (function (_super) {
         this._width = width;
     };
     LineRenderer.prototype.blit = function () {
-        var surface = this._surface;
+        var surface = this.surface;
         //rendering context
-        var gl = this._surface.gl;
-        var program = this._surface.locations.program;
+        var gl = this.surface.gl;
+        var program = this.surface.locations.program;
         gl.useProgram(program);
         var vertexPosition = surface.locations.attributes.position;
         var vertexTexture = surface.locations.attributes.texture;
@@ -111,9 +111,9 @@ var SquareRenderer = /** @class */ (function (_super) {
         this._width = width;
     };
     SquareRenderer.prototype.blit = function () {
-        var surface = this._surface;
-        var gl = this._surface.gl;
-        var program = this._surface.locations.program;
+        var surface = this.surface;
+        var gl = this.surface.gl;
+        var program = this.surface.locations.program;
         gl.useProgram(program);
         var vertexPosition = surface.locations.attributes.position;
         var vertexColor = surface.locations.attributes.color;

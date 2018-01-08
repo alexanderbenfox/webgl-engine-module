@@ -1,9 +1,12 @@
 //Texture class
 import {DrawSurface} from "../Surface"
 import {GLUtility} from "../GLUtility"
-import {Vector2} from "../EngineUtility"
+import {Vector2, EditorProperty, EditorString} from "../EngineUtility"
+import {Renderer} from "./Component"
+import {SurfaceManager} from "../Managers"
 
-export class Texture2D{
+export class Texture2D implements EditorProperty{
+	renderer : Renderer;
 	size : Vector2;
 	surface : DrawSurface;
 
@@ -13,7 +16,53 @@ export class Texture2D{
 	image : HTMLImageElement;
 	texture : WebGLTexture;
 
-	constructor(surface, url?, width?, height?){
+	url : EditorString;
+
+	elements : HTMLElement[] = [];
+
+	showEditorProperty(){
+		let div = document.createElement('p');
+		let label = document.createElement('p');
+		this.size.showEditorProperty();
+		let sizeElements = this.size.elements;
+		this.url.showEditorProperty();
+		let urlElements = this.url.elements;
+		let button = document.createElement('button');
+		button.innerHTML = "Change Texture";
+		button.addEventListener('click', () => {
+			let url = this.url.string;
+			let height = this.size.y;
+			let width = this.size.x;
+			this.changeTexture(url, width, height);
+		});
+
+		div.appendChild(label);
+		for(let i = 0; i < urlElements.length; i++){
+			div.appendChild(urlElements[i]);
+		}
+		for(let i = 0; i < sizeElements.length; i++){
+			div.appendChild(sizeElements[i]);
+		}
+		div.appendChild(button);
+
+		this.elements = [div];
+	}
+
+	changeTexture(url, width, height){
+		this.renderer.surface = SurfaceManager.GetWorldSurface();
+		this.init(this.renderer.surface, this.renderer, url, width, height);
+	}
+
+	hideEditorProperty(){
+
+	}
+
+	constructor(surface, renderer, url?, width?, height?){
+		this.init(surface, renderer, url, width, height);
+	}
+
+	init(surface, renderer, url, width, height){
+		this.renderer = renderer;
 		this.image = new Image();
 		this.surface = surface;
 		this.buffer = this.surface.gl.createBuffer();
@@ -28,7 +77,11 @@ export class Texture2D{
 		
 		this.image.onload = this.onLoad.bind(this);
 		if(url){ 
+			this.url = new EditorString('URL', url);
 			this.loadUrl(url);
+		}
+		else{
+			this.url = new EditorString('URL', '');
 		}
 	}
 
@@ -107,12 +160,25 @@ export class AnimatedTexture2D extends Texture2D{
 	public textures : {texture : WebGLTexture, frameTime : number}[];
 	protected _currentFrameTime = 0;
 
-	constructor(surface, url, width, height){
-		super(surface,url,width,height);
+	constructor(surface, renderer, url, width, height){
+		super(surface,renderer,url,width,height);
 		this.currentFrame = 0;
 		this.textures = [];
 		this.size = new Vector2(width, height);
 		this._currentFrameTime = 0;
+	}
+
+	init(surface, renderer, url, width, height){
+		super.init(surface,renderer,url,width,height);
+		this.currentFrame = 0;
+		this.textures = [];
+		this.size = new Vector2(width, height);
+		this._currentFrameTime = 0;
+	}
+
+	changeTexture(url, width, height){
+		this.renderer.surface = SurfaceManager.GetWorldSurface();
+		this.init(this.renderer.surface, this.renderer, url, width, height);
 	}
 
 	createTexture(canvas, index : any = false) : void {

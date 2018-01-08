@@ -6,7 +6,6 @@ export interface Drawable {
     blit(): void;
 }
 export declare abstract class Renderer3D extends Renderer implements Drawable {
-    surface: DrawSurface;
     protected positions: Float32Array;
     protected colors: Float32Array;
     protected indicies: Uint16Array;

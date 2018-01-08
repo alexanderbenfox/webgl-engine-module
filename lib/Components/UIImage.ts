@@ -6,7 +6,6 @@ import {Component, Renderer} from "./Component"
 import {Texture2D} from "./Texture"
 
 export class UIImage extends Renderer{
-	public surface : DrawSurface;
 	public vertexBuffer : WebGLBuffer;
 	public textureCoords : Float32Array;
 	public colorBuffer : WebGLBuffer;
@@ -25,7 +24,7 @@ export class UIImage extends Renderer{
 		//this.size = new Vector2(this.image.width, this.image.height);
 
 		if(url && width && height)
-			this.texture = new Texture2D(surface, url, width, height);
+			this.texture = new Texture2D(surface, this, url, width, height);
 
 		this.vertexBuffer = this.surface.gl.createBuffer();
 		this.colorBuffer = this.surface.gl.createBuffer();

@@ -6,7 +6,6 @@ export interface Drawable {
     blit(): void;
 }
 export declare abstract class Renderer2D extends Renderer {
-    protected _surface: DrawSurface;
     protected _vertexBuffer: any;
     protected _colorBuffer: any;
     protected _topLeft: Vector2;

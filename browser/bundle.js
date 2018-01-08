@@ -887,7 +887,7 @@ var Renderer3D = /** @class */ (function (_super) {
     Renderer3D.prototype.changeSprite = function (url, width, height) {
         if (url && width && height) {
             this.surface = Managers_1.SurfaceManager.GetWorldSurface();
-            this.texture = new Texture_1.Texture2D(this.surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(this.surface, this, url, width, height);
         }
     };
     Renderer3D.prototype.blit = function () { };
@@ -961,7 +961,7 @@ var SpriteRenderer = /** @class */ (function (_super) {
         this.initIndexBuffer(gl);
         this.initNormalBuffer(gl);
         if (url && width && height)
-            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(surface, this, url, width, height);
     };
     SpriteRenderer.prototype.blit = function () {
         var surface = this.surface;
@@ -1142,7 +1142,7 @@ var CubeRenderer = /** @class */ (function (_super) {
         this.initIndexBuffer(gl);
         this.initNormalBuffer(gl);
         if (url && width && height)
-            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(surface, this, url, width, height);
     };
     CubeRenderer.prototype.blit = function () {
         var surface = this.surface;
@@ -1220,8 +1220,46 @@ var __extends = (this && this.__extends) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 var GLUtility_1 = require("../GLUtility");
 var EngineUtility_1 = require("../EngineUtility");
+var Managers_1 = require("../Managers");
 var Texture2D = /** @class */ (function () {
-    function Texture2D(surface, url, width, height) {
+    function Texture2D(surface, renderer, url, width, height) {
+        this.elements = [];
+        this.init(surface, renderer, url, width, height);
+    }
+    Texture2D.prototype.showEditorProperty = function () {
+        var _this = this;
+        var div = document.createElement('p');
+        var label = document.createElement('p');
+        this.size.showEditorProperty();
+        var sizeElements = this.size.elements;
+        this.url.showEditorProperty();
+        var urlElements = this.url.elements;
+        var button = document.createElement('button');
+        button.innerHTML = "Change Texture";
+        button.addEventListener('click', function () {
+            var url = _this.url.string;
+            var height = _this.size.y;
+            var width = _this.size.x;
+            _this.changeTexture(url, width, height);
+        });
+        div.appendChild(label);
+        for (var i = 0; i < urlElements.length; i++) {
+            div.appendChild(urlElements[i]);
+        }
+        for (var i = 0; i < sizeElements.length; i++) {
+            div.appendChild(sizeElements[i]);
+        }
+        div.appendChild(button);
+        this.elements = [div];
+    };
+    Texture2D.prototype.changeTexture = function (url, width, height) {
+        this.renderer.surface = Managers_1.SurfaceManager.GetWorldSurface();
+        this.init(this.renderer.surface, this.renderer, url, width, height);
+    };
+    Texture2D.prototype.hideEditorProperty = function () {
+    };
+    Texture2D.prototype.init = function (surface, renderer, url, width, height) {
+        this.renderer = renderer;
         this.image = new Image();
         this.surface = surface;
         this.buffer = this.surface.gl.createBuffer();
@@ -1233,9 +1271,13 @@ var Texture2D = /** @class */ (function () {
         ]);
         this.image.onload = this.onLoad.bind(this);
         if (url) {
+            this.url = new EngineUtility_1.EditorString('URL', url);
             this.loadUrl(url);
         }
-    }
+        else {
+            this.url = new EngineUtility_1.EditorString('URL', '');
+        }
+    };
     Texture2D.prototype.createPlaceholderTex = function () {
         this.texture = this.surface.gl.createTexture();
         ;
@@ -1296,8 +1338,8 @@ var Texture2D = /** @class */ (function () {
 exports.Texture2D = Texture2D;
 var AnimatedTexture2D = /** @class */ (function (_super) {
     __extends(AnimatedTexture2D, _super);
-    function AnimatedTexture2D(surface, url, width, height) {
-        var _this = _super.call(this, surface, url, width, height) || this;
+    function AnimatedTexture2D(surface, renderer, url, width, height) {
+        var _this = _super.call(this, surface, renderer, url, width, height) || this;
         _this._currentFrameTime = 0;
         _this.currentFrame = 0;
         _this.textures = [];
@@ -1305,6 +1347,17 @@ var AnimatedTexture2D = /** @class */ (function (_super) {
         _this._currentFrameTime = 0;
         return _this;
     }
+    AnimatedTexture2D.prototype.init = function (surface, renderer, url, width, height) {
+        _super.prototype.init.call(this, surface, renderer, url, width, height);
+        this.currentFrame = 0;
+        this.textures = [];
+        this.size = new EngineUtility_1.Vector2(width, height);
+        this._currentFrameTime = 0;
+    };
+    AnimatedTexture2D.prototype.changeTexture = function (url, width, height) {
+        this.renderer.surface = Managers_1.SurfaceManager.GetWorldSurface();
+        this.init(this.renderer.surface, this.renderer, url, width, height);
+    };
     AnimatedTexture2D.prototype.createTexture = function (canvas, index) {
         if (index === void 0) { index = false; }
         var texture = this.surface.gl.createTexture();
@@ -1358,7 +1411,7 @@ var AnimatedTexture2D = /** @class */ (function (_super) {
 }(Texture2D));
 exports.AnimatedTexture2D = AnimatedTexture2D;
 
-},{"../EngineUtility":13,"../GLUtility":14}],10:[function(require,module,exports){
+},{"../EngineUtility":13,"../GLUtility":14,"../Managers":16}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1389,7 +1442,7 @@ var UIImage = /** @class */ (function (_super) {
         this.size = new EngineUtility_1.Vector3(width, height, 0);
         //this.size = new Vector2(this.image.width, this.image.height);
         if (url && width && height)
-            this.texture = new Texture_1.Texture2D(surface, url, width, height);
+            this.texture = new Texture_1.Texture2D(surface, this, url, width, height);
         this.vertexBuffer = this.surface.gl.createBuffer();
         this.colorBuffer = this.surface.gl.createBuffer();
         this._initialized = true;
@@ -2769,11 +2822,6 @@ var Program = /** @class */ (function () {
         //init surface manager
         Managers_1.SurfaceManager.SetCanvas(this.canvas);
         this.createGameObjects();
-        //this.setupGrid();
-        //line = new Line(surface_lines, 100,256,100,256,2);
-        //obj_1.move(5,5);
-        //obj_2.move(-5,5);
-        //camera.move(5,3);
         this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         Managers_1.ObjectManager.populateInspector();
         this.drawScene();
@@ -2827,25 +2875,6 @@ var Program = /** @class */ (function () {
         var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
         var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
     };
-    /*setupGrid() : void{
-        let lines : Stroke[] = [];
-        let screen_width = this.surface_shapes_2d.size.x;
-        let screen_height = this.surface_shapes_2d.size.y;
-
-        let square = new Square(this.surface_shapes_2d, new Vector2(screen_width-3*32, 0), new Vector2(screen_width, screen_height), 0);
-        EditorControl.editorShapes = [square];
-
-        for(var x = 0; x < screen_width; x+=32){
-            var line = new Stroke(this.surface_shapes_2d, new Vector2(x,0), new Vector2(x,screen_height), 2);
-            lines.push(line);
-        }
-
-        for(var y = 0; y < screen_height; y+=32){
-            var line = new Stroke(this.surface_shapes_2d, new Vector2(0, y), new Vector2(screen_width,y),2);
-            lines.push(line);
-        }
-        EditorControl.grid = lines;
-    }*/
     Program.prototype.assignPageEvents = function () {
         document.onmousemove = function (ev) {
             ev = ev || window.event;
@@ -2918,10 +2947,6 @@ var Program = /** @class */ (function () {
             //define update loop
             Managers_1.SurfaceManager.clear();
             Managers_1.SurfaceManager.push();
-            //this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
-            //this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
-            //this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
-            //this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
             this.updateLoop();
             this.render();
             Managers_1.SurfaceManager.pop();

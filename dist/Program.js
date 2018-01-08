@@ -30,11 +30,6 @@ var Program = /** @class */ (function () {
         //init surface manager
         Managers_1.SurfaceManager.SetCanvas(this.canvas);
         this.createGameObjects();
-        //this.setupGrid();
-        //line = new Line(surface_lines, 100,256,100,256,2);
-        //obj_1.move(5,5);
-        //obj_2.move(-5,5);
-        //camera.move(5,3);
         this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         Managers_1.ObjectManager.populateInspector();
         this.drawScene();
@@ -88,25 +83,6 @@ var Program = /** @class */ (function () {
         var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
         var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
     };
-    /*setupGrid() : void{
-        let lines : Stroke[] = [];
-        let screen_width = this.surface_shapes_2d.size.x;
-        let screen_height = this.surface_shapes_2d.size.y;
-
-        let square = new Square(this.surface_shapes_2d, new Vector2(screen_width-3*32, 0), new Vector2(screen_width, screen_height), 0);
-        EditorControl.editorShapes = [square];
-
-        for(var x = 0; x < screen_width; x+=32){
-            var line = new Stroke(this.surface_shapes_2d, new Vector2(x,0), new Vector2(x,screen_height), 2);
-            lines.push(line);
-        }
-
-        for(var y = 0; y < screen_height; y+=32){
-            var line = new Stroke(this.surface_shapes_2d, new Vector2(0, y), new Vector2(screen_width,y),2);
-            lines.push(line);
-        }
-        EditorControl.grid = lines;
-    }*/
     Program.prototype.assignPageEvents = function () {
         document.onmousemove = function (ev) {
             ev = ev || window.event;
@@ -179,10 +155,6 @@ var Program = /** @class */ (function () {
             //define update loop
             Managers_1.SurfaceManager.clear();
             Managers_1.SurfaceManager.push();
-            //this.surface_sprites.translate(this.surface_sprites.size.x/2, this.surface_sprites.size.y/2);
-            //this.surface_lines.translate(this.surface_lines.size.x/2, this.surface_lines.size.y/2);
-            //this.surface_sprites.rotate(Date.now()/1000 * Math.PI * .1);
-            //this.surface_lines.rotate(Date.now()/1000 * Math.PI * .1);
             this.updateLoop();
             this.render();
             Managers_1.SurfaceManager.pop();
