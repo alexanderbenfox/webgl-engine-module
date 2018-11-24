@@ -209,6 +209,12 @@ export class Vector3 extends Vector2 implements EditorProperty{
 		return new Vector3(this.x/mag, this.y/mag, this.z/mag);
 	}
 
+	dist(other : Vector3) : number {
+		return Math.sqrt((this._x - other.x) * (this._x - other.x) +
+				(this._y - other.y) * (this._y - other.y) +
+				(this._z - other.z) * (this._z - other.z));
+	}
+
 	showEditorProperty(){
 		super.showEditorProperty();
 		let div = document.createElement("div");
@@ -332,4 +338,39 @@ export function computeMatrix(relativeToMatrix, outputMatrix, position : Vector3
 	            rotation.z,// amount to rotate in radians
 	            zAxis.toArray());       // axis to rotate around (z)
 }
+
+//utility function to find cost of triangle 
+//sum of lengths of all edges
+function cost(p1 : Vector3, p2 : Vector3, p3 : Vector3){
+	return p1.dist(p2) + p2.dist(p3) + p3.dist(p1);
+}
+
+//finds min cost for convex polygon triangulation
+export function polygonTriangulate(points : Vector3[]) : Vector3[]{
+	let pts : Vector3[][][];
+	if(points.length < 3)
+		pts[0][0];
+	let table : number[][];
+	for(let gap = 0; gap < points.length; gap++){
+		let j = gap;
+		for(let i = 0; j < points.length; i++, j++){
+			if(j < i+2)
+				table[i][j] = 0.0;
+			else{
+				table[i][j] = Infinity;
+				for(let k = i + 1; k < j; k++){
+					let val = table[i][k] + table[k][j] + cost(points[i], points[j], points[k]);
+					if(table[i][j] > val){
+						table[i][j] = val;
+						let sequence = pts[i][k].concat(pts[k][j]).concat([points[i], points[j], points[k]]);
+						pts[i][j] = sequence;
+					}
+				}
+			}
+		}
+	}
+	return pts[0][points.length - 1];
+}
+
+
 
