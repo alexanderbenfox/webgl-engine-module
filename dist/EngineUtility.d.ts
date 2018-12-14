@@ -39,6 +39,7 @@ export declare class Vector3 extends Vector2 implements EditorProperty {
     magnitude(): number;
     angleBetween(b: Vector3): number;
     normalize(): Vector3;
+    dist(other: Vector3): number;
     showEditorProperty(): void;
 }
 export declare class Vector4 extends Vector3 {
@@ -58,3 +59,4 @@ export declare class EditorString implements EditorProperty {
 export declare function inBounds2D(topLeft: Vector2, bottomRight: Vector2, boundSize: Vector2): boolean;
 export declare function degreeToRadians(degree: number): number;
 export declare function computeMatrix(relativeToMatrix: any, outputMatrix: any, position: Vector3, rotation: Vector3): void;
+export declare function polygonDecompose(points: Vector3[]): Vector3[];

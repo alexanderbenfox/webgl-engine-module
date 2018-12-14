@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Component_1 = require("./Components/Component");
 var Renderer3D_1 = require("./Components/Renderer3D");
+var _3DObjectRenderer_1 = require("./Components/3DObjectRenderer");
 var Managers_1 = require("./Managers");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
@@ -29,7 +30,8 @@ var Program = /** @class */ (function () {
         MouseData.offset = offset;
         //init surface manager
         Managers_1.SurfaceManager.SetCanvas(this.canvas);
-        this.createGameObjects();
+        //this.createGameObjects();
+        this.createTestGameObjects();
         this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         Managers_1.ObjectManager.populateInspector();
         this.drawScene();
@@ -45,6 +47,29 @@ var Program = /** @class */ (function () {
         this.uiCamera.init(this.gl);
         this.uiCamera.AddComponent(Component_1.GameObject);
         Managers_1.ObjectManager.editorCamera = this.worldCamera;
+    };
+    Program.prototype.createTestGameObjects = function () {
+        this.createCameras();
+        var testCube = new Component_1.GameObject();
+        var testCubeRenderer = testCube.AddComponent(_3DObjectRenderer_1.ObjectRenderer);
+        testCubeRenderer.createBuffers(_3DObjectRenderer_1.ObjectType.CUBE, EngineUtility_1.Vector3.zero(), 1);
+        testCubeRenderer.create();
+        testCube.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
+        testCube.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var worldSprite = new Component_1.GameObject();
+        var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
+        worldSprite_renderer.create();
+        worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
+        worldSprite.transform.position = new EngineUtility_1.Vector3(-6, 0, -6);
+        worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
+        this.storedObject = worldSprite;
+        var editorBox = new Component_1.GameObject();
+        var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
+        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', Managers_1.SurfaceManager.GetUISurface(), 256, 256);
+        Managers_1.ObjectManager.gameObjects = [testCube, worldSprite];
+        Managers_1.EditorControl.clickables = [editorBox_draggableObject];
+        var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
+        var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
     };
     Program.prototype.createGameObjects = function () {
         this.createCameras();

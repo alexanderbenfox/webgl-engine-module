@@ -11,6 +11,7 @@ export declare class Program {
     storedObject: GameObject;
     constructor();
     createCameras(): void;
+    createTestGameObjects(): void;
     createGameObjects(): void;
     assignPageEvents(): void;
     updateLoop(): void;

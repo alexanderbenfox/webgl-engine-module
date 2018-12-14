@@ -346,7 +346,7 @@ function cost(p1 : Vector3, p2 : Vector3, p3 : Vector3){
 }
 
 //finds min cost for convex polygon triangulation
-export function polygonTriangulate(points : Vector3[]) : Vector3[]{
+export function polygonDecompose(points : Vector3[]) : Vector3[]{
 	let pts : Vector3[][][];
 	if(points.length < 3)
 		pts[0][0];

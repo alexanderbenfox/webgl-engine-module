@@ -99,7 +99,7 @@ var Camera = /** @class */ (function () {
 }());
 exports.Camera = Camera;
 
-},{"./EngineUtility":13,"gl-matrix":23,"sylvester":24}],2:[function(require,module,exports){
+},{"./EngineUtility":15,"gl-matrix":25,"sylvester":26}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -234,6 +234,179 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+var Renderer3D_1 = require("../Components/Renderer3D");
+var Managers_1 = require("../Managers");
+var gl_matrix_1 = require("gl-matrix");
+var Triangulator_1 = require("../Components/Triangulator");
+var EngineUtility_1 = require("../EngineUtility");
+var ObjectType;
+(function (ObjectType) {
+    ObjectType[ObjectType["SPHERE"] = 0] = "SPHERE";
+    ObjectType[ObjectType["CYLINDER"] = 1] = "CYLINDER";
+    ObjectType[ObjectType["CUBE"] = 2] = "CUBE";
+    ObjectType[ObjectType["CONE"] = 3] = "CONE";
+    ObjectType[ObjectType["DOME"] = 4] = "DOME";
+})(ObjectType = exports.ObjectType || (exports.ObjectType = {}));
+var ObjectRenderer = /** @class */ (function (_super) {
+    __extends(ObjectRenderer, _super);
+    function ObjectRenderer() {
+        var _this = _super.call(this) || this;
+        _this.buffer = new Triangulator_1.buffers();
+        return _this;
+    }
+    ObjectRenderer.prototype.create = function () {
+        //call create buffers beforehand??
+        this.init_un(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
+    ObjectRenderer.prototype.createBuffers = function (type, offset, size) {
+        switch (type) {
+            case ObjectType.SPHERE:
+                Triangulator_1.Triangulator.MakeSphere(this.buffer, offset, size / 2, size, [1, 1, 1]);
+                break;
+            case ObjectType.CYLINDER:
+                Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, size / 2, size, [1, 1, 1]);
+                break;
+            case ObjectType.CONE:
+                Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, 0, size, [1, 1, 1]);
+                break;
+            case ObjectType.DOME:
+                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, false, [1, 1, 1]);
+                break;
+            case ObjectType.CUBE:
+            default:
+                Triangulator_1.Triangulator.MakeCube(this.buffer, new EngineUtility_1.Vector3(size, size, size), offset, [1, 1, 1]);
+        }
+        console.log("VERTS = " + this.buffer.verts.length);
+        console.log("INDICIES = " + this.buffer.indicies.length);
+    };
+    ObjectRenderer.prototype.initVertexBuffer = function (gl) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
+        this.positions = new Float32Array(this.buffer.verts);
+        console.log("POSITIONS:");
+        console.log(this.positions);
+        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+    };
+    ObjectRenderer.prototype.initColorBuffer = function (gl) {
+        //colors each face white - for now
+        var alpha = 1;
+        var colors = [];
+        for (var i = 0; i < this.buffer.indicies.length; i++) {
+            var white = [1, 1, 1, 1];
+            colors = colors.concat(white, white, white, white);
+        }
+        /*for (let i = 0; i < this.buffer.colors.length; ++i){
+            const c = this.buffer.colors[i];
+            //face colors contains an array of 3 colors
+            colors = colors.concat(c);
+            colors.push(alpha);
+        }*/
+        this.colors = new Float32Array(colors);
+        console.log("COLORS:");
+        console.log(this.colors);
+        this._colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    };
+    ObjectRenderer.prototype.initIndexBuffer = function (gl) {
+        this._indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+        this.indicies = new Uint16Array(this.buffer.indicies);
+        console.log("INDICIES:");
+        console.log(this.indicies);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
+    };
+    ObjectRenderer.prototype.initNormalBuffer = function (gl) {
+        this._normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
+        this.normals = new Float32Array(this.buffer.normals);
+        console.log("NORMALS:");
+        console.log(this.normals);
+        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+    };
+    ObjectRenderer.prototype.init_un = function (surface, camera, url, width, height) {
+        _super.prototype.init_renderer.call(this, surface, camera);
+        var gl = this.surface.gl;
+        this.initVertexBuffer(gl);
+        this.initColorBuffer(gl);
+        this.initIndexBuffer(gl);
+        this.initNormalBuffer(gl);
+        //if(url && width && height)
+        //	this.texture = new Texture2D(surface, this, url, width,height);
+    };
+    ObjectRenderer.prototype.blit = function () {
+        var surface = this.surface;
+        var gl = this.surface.gl;
+        var program = this.surface.locations.program;
+        //drawing position
+        var modelViewMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
+        this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
+        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.color, 4);
+        this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
+        this.bindIndexToVerts();
+        gl.useProgram(program);
+        if (this.texture != null)
+            this.texture.bindTexture();
+        else
+            gl.disableVertexAttribArray(this.surface.locations.attributes.texture);
+        gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
+        var normalMatrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
+        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
+        var vertexCount = this.indicies.length;
+        var type = gl.UNSIGNED_SHORT;
+        var offset = 0;
+        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    };
+    ObjectRenderer.prototype.assignAttrib = function (buffer, attribLocation, components) {
+        var gl = this.surface.gl;
+        var numComponents = components;
+        var type = this.surface.gl.FLOAT;
+        var normalize = false;
+        var stride = 0;
+        var offset = 0;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.vertexAttribPointer(attribLocation, numComponents, type, normalize, stride, offset);
+        gl.enableVertexAttribArray(attribLocation);
+    };
+    ObjectRenderer.prototype.bindIndexToVerts = function () {
+        var gl = this.surface.gl;
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+    };
+    ObjectRenderer.prototype.update = function (dt) {
+    };
+    ObjectRenderer.prototype.cartesianToHomogeneous = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        return new EngineUtility_1.Vector4(x, y, z, 1);
+    };
+    ObjectRenderer.prototype.homogeneousToCartesian = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        var w = point.w;
+        return new EngineUtility_1.Vector3(x / w, y / w, z / w);
+    };
+    return ObjectRenderer;
+}(Renderer3D_1.Renderer3D));
+exports.ObjectRenderer = ObjectRenderer;
+
+},{"../Components/Renderer3D":9,"../Components/Triangulator":11,"../EngineUtility":15,"../Managers":18,"gl-matrix":25}],4:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 require("sylvester");
 var EngineUtility_1 = require("../EngineUtility");
 var gl_matrix_1 = require("gl-matrix");
@@ -338,7 +511,7 @@ var Camera = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.Camera = Camera;
 
-},{"../EngineUtility":13,"./Component":5,"gl-matrix":23,"sylvester":24}],4:[function(require,module,exports){
+},{"../EngineUtility":15,"./Component":6,"gl-matrix":25,"sylvester":26}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -517,7 +690,7 @@ var CircleCollider = /** @class */ (function (_super) {
 }(Collider2D));
 exports.CircleCollider = CircleCollider;
 
-},{"../EngineUtility":13,"./Component":5}],5:[function(require,module,exports){
+},{"../EngineUtility":15,"./Component":6}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -743,7 +916,7 @@ function testFunction() {
 }
 exports.testFunction = testFunction;
 
-},{"../EngineUtility":13}],6:[function(require,module,exports){
+},{"../EngineUtility":15}],7:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -812,7 +985,7 @@ var DraggableUI = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.DraggableUI = DraggableUI;
 
-},{"../EngineUtility":13,"./Collider":4,"./Component":5,"./UIImage":10}],7:[function(require,module,exports){
+},{"../EngineUtility":15,"./Collider":5,"./Component":6,"./UIImage":12}],8:[function(require,module,exports){
 "use strict";
 //references: Phong Shading
 var __extends = (this && this.__extends) || (function () {
@@ -849,7 +1022,7 @@ var DirectionalLight = /** @class */ (function (_super) {
 }(Light));
 exports.DirectionalLight = DirectionalLight;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1205,7 +1378,7 @@ var CubeRenderer = /** @class */ (function (_super) {
 }(Renderer3D));
 exports.CubeRenderer = CubeRenderer;
 
-},{"../EngineUtility":13,"../Managers":16,"./Component":5,"./Texture":9,"gl-matrix":23}],9:[function(require,module,exports){
+},{"../EngineUtility":15,"../Managers":18,"./Component":6,"./Texture":10,"gl-matrix":25}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1411,7 +1584,139 @@ var AnimatedTexture2D = /** @class */ (function (_super) {
 }(Texture2D));
 exports.AnimatedTexture2D = AnimatedTexture2D;
 
-},{"../EngineUtility":13,"../GLUtility":14,"../Managers":16}],10:[function(require,module,exports){
+},{"../EngineUtility":15,"../GLUtility":16,"../Managers":18}],11:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+//class for building out vertex, normal, and color buffers for generic primitives
+var EngineUtility_1 = require("../EngineUtility");
+var buffers = /** @class */ (function () {
+    function buffers() {
+        this.normals = [];
+        this.indicies = [];
+        this.verts = [];
+        this.colors = [];
+        this.texCoords = [];
+    }
+    return buffers;
+}());
+exports.buffers = buffers;
+var Triangulator = /** @class */ (function () {
+    function Triangulator() {
+    }
+    Triangulator.MakeTriangle = function (buffer, a, b, c, color) {
+        var normal;
+        var d1 = a.sub(b);
+        var d2 = b.sub(c);
+        normal = d1.cross(d2);
+        normal = normal.normalize();
+        //add vertex in order
+        buffer.verts = buffer.verts.concat(a.toArray(), b.toArray(), c.toArray());
+        buffer.indicies.push(buffer.indicies.length);
+        buffer.indicies.push(buffer.indicies.length);
+        buffer.indicies.push(buffer.indicies.length);
+        buffer.normals = buffer.normals.concat(normal.toArray(), normal.toArray(), normal.toArray());
+        buffer.colors = buffer.colors.concat(color);
+        buffer.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        console.log("Making triangle");
+    };
+    Triangulator.MakeQuad = function (buffer, a, b, c, d, color) {
+        this.MakeTriangle(buffer, a, b, c, color);
+        this.MakeTriangle(buffer, c, d, a, color);
+    };
+    Triangulator.MakeCube = function (buffer, size, position, color) {
+        //cube position is defined by the center of the cube
+        //make the corners of the cube from there
+        //here z is depth, y is up
+        var x1 = position.x - size.x / 2;
+        var x2 = position.x + size.x / 2;
+        var y1 = position.y - size.y / 2;
+        var y2 = position.y + size.y / 2;
+        var z1 = position.z - size.z / 2;
+        var z2 = position.z + size.z / 2;
+        //build the bottom front corners
+        var c1 = new EngineUtility_1.Vector3(x1, y1, z1);
+        var c2 = new EngineUtility_1.Vector3(x2, y1, z1);
+        //bottom back corners
+        var c3 = new EngineUtility_1.Vector3(x1, y1, z2);
+        var c4 = new EngineUtility_1.Vector3(x2, y1, z2);
+        //top front corners
+        var c5 = new EngineUtility_1.Vector3(x1, y2, z1);
+        var c6 = new EngineUtility_1.Vector3(x2, y2, z1);
+        //top back corners
+        var c7 = new EngineUtility_1.Vector3(x1, y2, z2);
+        var c8 = new EngineUtility_1.Vector3(x2, y2, z2);
+        //make quads representing each cube face
+        this.MakeQuad(buffer, c1, c2, c4, c3, color);
+        this.MakeQuad(buffer, c1, c2, c6, c5, color);
+        this.MakeQuad(buffer, c5, c6, c8, c7, color);
+        this.MakeQuad(buffer, c4, c3, c7, c8, color);
+        this.MakeQuad(buffer, c3, c1, c5, c7, color);
+        this.MakeQuad(buffer, c2, c4, c8, c6, color);
+    };
+    Triangulator.MakeCircle = function (buffer, position, radius, color) {
+        //decompose into points around the radius of the circle, making a triangle to represent each
+        var numSegments = 32;
+        for (var i = 0; i < numSegments; i++) {
+            var theta0 = i / numSegments * 2 * Math.PI;
+            var theta1 = (i + 1) / numSegments * 2 * Math.PI;
+            var pt1 = new EngineUtility_1.Vector3(Math.cos(theta0) * radius + position.x, Math.sin(theta0) * radius + position.y, position.z);
+            var pt2 = new EngineUtility_1.Vector3(Math.cos(theta1) * radius + position.x, Math.sin(theta1) * radius + position.y, position.z);
+            this.MakeTriangle(buffer, pt1, pt2, position, color);
+        }
+    };
+    Triangulator.MakeCylinder = function (buffer, position, radiusBottom, radiusTop, height, color) {
+        var numSegments = 32;
+        for (var i = 0; i < numSegments; i++) {
+            var theta0 = i / numSegments * 2 * Math.PI;
+            var theta1 = (i + 1) / numSegments * 2 * Math.PI;
+            var pt1 = new EngineUtility_1.Vector3(Math.cos(theta0) * radiusBottom + position.x, Math.sin(theta0) * radiusBottom + position.y, position.z);
+            var pt2 = new EngineUtility_1.Vector3(Math.cos(theta1) * radiusBottom + position.x, Math.sin(theta1) * radiusBottom + position.y, position.z);
+            var pt3 = new EngineUtility_1.Vector3(Math.cos(theta0) * radiusTop + position.x, Math.sin(theta0) * radiusTop + position.y, position.z + height);
+            var pt4 = new EngineUtility_1.Vector3(Math.cos(theta1) * radiusTop + position.x, Math.sin(theta1) * radiusTop + position.y, position.z + height);
+            this.MakeQuad(buffer, pt1, pt2, pt3, pt4, color);
+        }
+    };
+    //when making rings, make sure they are added in counter clockwise fashion
+    Triangulator.MakePolygon = function (buffer, position, rings, color) {
+        var points;
+        for (var i = 0; i < rings.length; i++) {
+            var convex = EngineUtility_1.polygonDecompose(rings[i]);
+            if (convex.length % 3 == 0) {
+                for (var j = 0; j < convex.length; j += 3) {
+                    this.MakeTriangle(buffer, convex[j], convex[j + 1], convex[j + 2], color);
+                }
+            }
+        }
+    };
+    Triangulator.MakeDome = function (buffer, position, radius, height, upsideDown, color) {
+        //make rings out of cylinders to build dome
+        var numSegments = 24;
+        var segmentHeight = height / numSegments;
+        var startAngle = upsideDown ? 3 / 4 * Math.PI : 0;
+        var endAngle = upsideDown ? 2 * Math.PI : Math.PI / 4;
+        var startPosZ = upsideDown ? position.z - height : position.z;
+        for (var i = 0; i < numSegments; i++) {
+            //build quarter of circle, if upsideDown 
+            var theta0 = startAngle + i / numSegments * endAngle;
+            var theta1 = startAngle + (i + 1) / numSegments * endAngle;
+            var radiusBottom = Math.cos(theta0) * radius;
+            var radiusTop = Math.cos(theta1) * radius;
+            var ringPosition = new EngineUtility_1.Vector3(position.x, position.y, startPosZ + segmentHeight * i);
+            this.MakeCylinder(buffer, ringPosition, radiusBottom, radiusTop, segmentHeight, color);
+        }
+    };
+    Triangulator.MakeSphere = function (buffer, position, radius, height, color) {
+        this.MakeDome(buffer, position, radius, height, false, color);
+        this.MakeDome(buffer, position, radius, height, true, color);
+    };
+    return Triangulator;
+}());
+exports.Triangulator = Triangulator;
+//this to consider
+//define angle vector as pitch, roll, yaw
+//should this transformation be applied after the shape is created?? yeah probably 
+
+},{"../EngineUtility":15}],12:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1508,7 +1813,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"../EngineUtility":13,"../Matrix":17,"./Component":5,"./Texture":9}],11:[function(require,module,exports){
+},{"../EngineUtility":15,"../Matrix":19,"./Component":6,"./Texture":10}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -1589,7 +1894,7 @@ var GameManager = /** @class */ (function () {
 }());
 exports.GameManager = GameManager;
 
-},{"./EngineUtility":13}],12:[function(require,module,exports){
+},{"./EngineUtility":15}],14:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1837,7 +2142,7 @@ var Square = /** @class */ (function (_super) {
 }(Shape));
 exports.Square = Square;
 
-},{"./EngineUtility":13,"./Matrix":17,"gl-matrix":23}],13:[function(require,module,exports){
+},{"./EngineUtility":15,"./Matrix":19,"gl-matrix":25}],15:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -2034,6 +2339,11 @@ var Vector3 = /** @class */ (function (_super) {
             return new Vector3(0, 0, 0);
         return new Vector3(this.x / mag, this.y / mag, this.z / mag);
     };
+    Vector3.prototype.dist = function (other) {
+        return Math.sqrt((this._x - other.x) * (this._x - other.x) +
+            (this._y - other.y) * (this._y - other.y) +
+            (this._z - other.z) * (this._z - other.z));
+    };
     Vector3.prototype.showEditorProperty = function () {
         var _this = this;
         _super.prototype.showEditorProperty.call(this);
@@ -2155,8 +2465,40 @@ function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
     zAxis.toArray()); // axis to rotate around (z)
 }
 exports.computeMatrix = computeMatrix;
+//utility function to find cost of triangle 
+//sum of lengths of all edges
+function cost(p1, p2, p3) {
+    return p1.dist(p2) + p2.dist(p3) + p3.dist(p1);
+}
+//finds min cost for convex polygon triangulation
+function polygonDecompose(points) {
+    var pts;
+    if (points.length < 3)
+        pts[0][0];
+    var table;
+    for (var gap = 0; gap < points.length; gap++) {
+        var j = gap;
+        for (var i = 0; j < points.length; i++, j++) {
+            if (j < i + 2)
+                table[i][j] = 0.0;
+            else {
+                table[i][j] = Infinity;
+                for (var k = i + 1; k < j; k++) {
+                    var val = table[i][k] + table[k][j] + cost(points[i], points[j], points[k]);
+                    if (table[i][j] > val) {
+                        table[i][j] = val;
+                        var sequence = pts[i][k].concat(pts[k][j]).concat([points[i], points[j], points[k]]);
+                        pts[i][j] = sequence;
+                    }
+                }
+            }
+        }
+    }
+    return pts[0][points.length - 1];
+}
+exports.polygonDecompose = polygonDecompose;
 
-},{"gl-matrix":23}],14:[function(require,module,exports){
+},{"gl-matrix":25}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
@@ -2298,7 +2640,7 @@ var GLUtility;
     GLUtility.nextPowerOfTwo = nextPowerOfTwo;
 })(GLUtility = exports.GLUtility || (exports.GLUtility = {}));
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -2406,7 +2748,7 @@ var GameObject = /** @class */ (function (_super) {
 }(Object2D));
 exports.GameObject = GameObject;
 
-},{"./Control":11,"./EngineUtility":13,"./Sprite":19}],16:[function(require,module,exports){
+},{"./Control":13,"./EngineUtility":15,"./Sprite":21}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2632,7 +2974,7 @@ var ObjectManager = /** @class */ (function () {
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./Components/Component":5,"./Components/Renderer3D":8,"./EngineUtility":13,"./GLUtility":14,"./Surface":20}],17:[function(require,module,exports){
+},{"./Components/Component":6,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Surface":22}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -2789,12 +3131,13 @@ var MatrixUtil = /** @class */ (function () {
 }());
 exports.MatrixUtil = MatrixUtil;
 
-},{"sylvester":24}],18:[function(require,module,exports){
+},{"sylvester":26}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Component_1 = require("./Components/Component");
 var Renderer3D_1 = require("./Components/Renderer3D");
+var _3DObjectRenderer_1 = require("./Components/3DObjectRenderer");
 var Managers_1 = require("./Managers");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
@@ -2821,7 +3164,8 @@ var Program = /** @class */ (function () {
         MouseData.offset = offset;
         //init surface manager
         Managers_1.SurfaceManager.SetCanvas(this.canvas);
-        this.createGameObjects();
+        //this.createGameObjects();
+        this.createTestGameObjects();
         this.positionDelta = new EngineUtility_1.Vector3(0, 0, 0);
         Managers_1.ObjectManager.populateInspector();
         this.drawScene();
@@ -2837,6 +3181,29 @@ var Program = /** @class */ (function () {
         this.uiCamera.init(this.gl);
         this.uiCamera.AddComponent(Component_1.GameObject);
         Managers_1.ObjectManager.editorCamera = this.worldCamera;
+    };
+    Program.prototype.createTestGameObjects = function () {
+        this.createCameras();
+        var testCube = new Component_1.GameObject();
+        var testCubeRenderer = testCube.AddComponent(_3DObjectRenderer_1.ObjectRenderer);
+        testCubeRenderer.createBuffers(_3DObjectRenderer_1.ObjectType.CUBE, EngineUtility_1.Vector3.zero(), 1);
+        testCubeRenderer.create();
+        testCube.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
+        testCube.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var worldSprite = new Component_1.GameObject();
+        var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
+        worldSprite_renderer.create();
+        worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
+        worldSprite.transform.position = new EngineUtility_1.Vector3(-6, 0, -6);
+        worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
+        this.storedObject = worldSprite;
+        var editorBox = new Component_1.GameObject();
+        var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
+        editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', Managers_1.SurfaceManager.GetUISurface(), 256, 256);
+        Managers_1.ObjectManager.gameObjects = [testCube, worldSprite];
+        Managers_1.EditorControl.clickables = [editorBox_draggableObject];
+        var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
+        var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
     };
     Program.prototype.createGameObjects = function () {
         this.createCameras();
@@ -2987,7 +3354,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/Renderer3D":8,"./EngineUtility":13,"./GLUtility":14,"./Managers":16}],19:[function(require,module,exports){
+},{"./Components/3DObjectRenderer":3,"./Components/CameraUtility":4,"./Components/Component":6,"./Components/EditorObject":7,"./Components/Lighting":8,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Managers":18}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -3117,7 +3484,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"./EngineUtility":13,"./GLUtility":14,"./Matrix":17}],20:[function(require,module,exports){
+},{"./EngineUtility":15,"./GLUtility":16,"./Matrix":19}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -3184,7 +3551,7 @@ var DrawSurface = /** @class */ (function () {
 }());
 exports.DrawSurface = DrawSurface;
 
-},{"./EngineUtility":13,"./GLUtility":14,"./Matrix":17}],21:[function(require,module,exports){
+},{"./EngineUtility":15,"./GLUtility":16,"./Matrix":19}],23:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
@@ -3206,9 +3573,9 @@ window.addGameObject = function () {
     gameProgram.addGameObject();
 };
 
-},{"./Components/Component":5,"./Program":18}],22:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17,"sylvester":24}],23:[function(require,module,exports){
+},{"./Components/Component":6,"./Program":20}],24:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19,"sylvester":26}],25:[function(require,module,exports){
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations
  * @author Brandon Jones
@@ -10097,7 +10464,7 @@ var forEach = exports.forEach = function () {
 /***/ })
 /******/ ]);
 });
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (global){
 // Copyright (c) 2011, Chris Umbel
 
@@ -10113,7 +10480,7 @@ exports.Line.Segment = require('./line.segment');
 exports.Sylvester = require('./sylvester');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./line":25,"./line.segment":26,"./matrix":27,"./plane":28,"./sylvester":29,"./vector":30}],25:[function(require,module,exports){
+},{"./line":27,"./line.segment":28,"./matrix":29,"./plane":30,"./sylvester":31,"./vector":32}],27:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 var Vector = require('./vector');
 var Matrix = require('./matrix');
@@ -10346,7 +10713,7 @@ Line.Z = Line.create(Vector.Zero(3), Vector.k);
 
 module.exports = Line;
 
-},{"./matrix":27,"./plane":28,"./sylvester":29,"./vector":30}],26:[function(require,module,exports){
+},{"./matrix":29,"./plane":30,"./sylvester":31,"./vector":32}],28:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Line.Segment class - depends on Line and its dependencies.
 
@@ -10474,7 +10841,7 @@ Line.Segment.create = function(v1, v2) {
 
 module.exports = Line.Segment;
 
-},{"./line":25,"./vector":30}],27:[function(require,module,exports){
+},{"./line":27,"./vector":32}],29:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Matrix class - depends on Vector.
 
@@ -11512,7 +11879,7 @@ Matrix.Ones = function(n, m) {
 
 module.exports = Matrix;
 
-},{"./sylvester":29,"./vector":30,"fs":31,"lapack":31}],28:[function(require,module,exports){
+},{"./sylvester":31,"./vector":32,"fs":33,"lapack":33}],30:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Plane class - depends on Vector. Some methods require Matrix and Line.
 var Vector = require('./vector');
@@ -11788,7 +12155,7 @@ Plane.fromPoints = function(points) {
 
 module.exports = Plane;
 
-},{"./line":25,"./matrix":27,"./sylvester":29,"./vector":30}],29:[function(require,module,exports){
+},{"./line":27,"./matrix":29,"./sylvester":31,"./vector":32}],31:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -11805,7 +12172,7 @@ var Sylvester = {
 
 module.exports = Sylvester;
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -12245,7 +12612,7 @@ Vector.log = function(v) {
 
 module.exports = Vector;
 
-},{"./matrix":27,"./sylvester":29}],31:[function(require,module,exports){
+},{"./matrix":29,"./sylvester":31}],33:[function(require,module,exports){
 
-},{}]},{},[1,2,11,12,13,14,15,16,17,18,19,20,21,22])(22)
+},{}]},{},[1,2,13,14,15,16,17,18,19,20,21,22,23,24])(24)
 });

@@ -194,6 +194,11 @@ var Vector3 = /** @class */ (function (_super) {
             return new Vector3(0, 0, 0);
         return new Vector3(this.x / mag, this.y / mag, this.z / mag);
     };
+    Vector3.prototype.dist = function (other) {
+        return Math.sqrt((this._x - other.x) * (this._x - other.x) +
+            (this._y - other.y) * (this._y - other.y) +
+            (this._z - other.z) * (this._z - other.z));
+    };
     Vector3.prototype.showEditorProperty = function () {
         var _this = this;
         _super.prototype.showEditorProperty.call(this);
@@ -315,3 +320,35 @@ function computeMatrix(relativeToMatrix, outputMatrix, position, rotation) {
     zAxis.toArray()); // axis to rotate around (z)
 }
 exports.computeMatrix = computeMatrix;
+//utility function to find cost of triangle 
+//sum of lengths of all edges
+function cost(p1, p2, p3) {
+    return p1.dist(p2) + p2.dist(p3) + p3.dist(p1);
+}
+//finds min cost for convex polygon triangulation
+function polygonDecompose(points) {
+    var pts;
+    if (points.length < 3)
+        pts[0][0];
+    var table;
+    for (var gap = 0; gap < points.length; gap++) {
+        var j = gap;
+        for (var i = 0; j < points.length; i++, j++) {
+            if (j < i + 2)
+                table[i][j] = 0.0;
+            else {
+                table[i][j] = Infinity;
+                for (var k = i + 1; k < j; k++) {
+                    var val = table[i][k] + table[k][j] + cost(points[i], points[j], points[k]);
+                    if (table[i][j] > val) {
+                        table[i][j] = val;
+                        var sequence = pts[i][k].concat(pts[k][j]).concat([points[i], points[j], points[k]]);
+                        pts[i][j] = sequence;
+                    }
+                }
+            }
+        }
+    }
+    return pts[0][points.length - 1];
+}
+exports.polygonDecompose = polygonDecompose;
