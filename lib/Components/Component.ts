@@ -176,8 +176,12 @@ export class GameObject extends Component{
 		this.gameObject = this;
 		this.transform = this.AddComponent(Transform);
 		this.assignGameObject(this);
-		this.name = new EditorString("Object Name", "GameObject");
+		this.name = new EditorString("Object Name", "Game Object");
 		//this.renderer = this.AddComponent(Renderer);
+	}
+
+	setName(name : string){
+		this.name = new EditorString("Object Name", name);
 	}
 
 	update(dt : number){
@@ -236,6 +240,7 @@ export class Renderer extends Component{
 
 export function testFunction(){
 	var gameObject = new GameObject();
+	gameObject.setName("Test Game Object");
 	var transform = gameObject.AddComponent(Transform);
 	var transform2 = gameObject.GetComponent(Transform);
 

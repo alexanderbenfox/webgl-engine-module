@@ -234,179 +234,6 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var Renderer3D_1 = require("../Components/Renderer3D");
-var Managers_1 = require("../Managers");
-var gl_matrix_1 = require("gl-matrix");
-var Triangulator_1 = require("../Components/Triangulator");
-var EngineUtility_1 = require("../EngineUtility");
-var ObjectType;
-(function (ObjectType) {
-    ObjectType[ObjectType["SPHERE"] = 0] = "SPHERE";
-    ObjectType[ObjectType["CYLINDER"] = 1] = "CYLINDER";
-    ObjectType[ObjectType["CUBE"] = 2] = "CUBE";
-    ObjectType[ObjectType["CONE"] = 3] = "CONE";
-    ObjectType[ObjectType["DOME"] = 4] = "DOME";
-})(ObjectType = exports.ObjectType || (exports.ObjectType = {}));
-var ObjectRenderer = /** @class */ (function (_super) {
-    __extends(ObjectRenderer, _super);
-    function ObjectRenderer() {
-        var _this = _super.call(this) || this;
-        _this.buffer = new Triangulator_1.buffers();
-        return _this;
-    }
-    ObjectRenderer.prototype.create = function () {
-        //call create buffers beforehand??
-        this.init_un(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
-    };
-    ObjectRenderer.prototype.createBuffers = function (type, offset, size) {
-        switch (type) {
-            case ObjectType.SPHERE:
-                Triangulator_1.Triangulator.MakeSphere(this.buffer, offset, size / 2, size, [1, 1, 1]);
-                break;
-            case ObjectType.CYLINDER:
-                Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, size / 2, size, [1, 1, 1]);
-                break;
-            case ObjectType.CONE:
-                Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, 0, size, [1, 1, 1]);
-                break;
-            case ObjectType.DOME:
-                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, false, [1, 1, 1]);
-                break;
-            case ObjectType.CUBE:
-            default:
-                Triangulator_1.Triangulator.MakeCube(this.buffer, new EngineUtility_1.Vector3(size, size, size), offset, [1, 1, 1]);
-        }
-        console.log("VERTS = " + this.buffer.verts.length);
-        console.log("INDICIES = " + this.buffer.indicies.length);
-    };
-    ObjectRenderer.prototype.initVertexBuffer = function (gl) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
-        this.positions = new Float32Array(this.buffer.verts);
-        console.log("POSITIONS:");
-        console.log(this.positions);
-        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
-    };
-    ObjectRenderer.prototype.initColorBuffer = function (gl) {
-        //colors each face white - for now
-        var alpha = 1;
-        var colors = [];
-        for (var i = 0; i < this.buffer.indicies.length; i++) {
-            var white = [1, 1, 1, 1];
-            colors = colors.concat(white, white, white, white);
-        }
-        /*for (let i = 0; i < this.buffer.colors.length; ++i){
-            const c = this.buffer.colors[i];
-            //face colors contains an array of 3 colors
-            colors = colors.concat(c);
-            colors.push(alpha);
-        }*/
-        this.colors = new Float32Array(colors);
-        console.log("COLORS:");
-        console.log(this.colors);
-        this._colorBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
-    };
-    ObjectRenderer.prototype.initIndexBuffer = function (gl) {
-        this._indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
-        this.indicies = new Uint16Array(this.buffer.indicies);
-        console.log("INDICIES:");
-        console.log(this.indicies);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
-    };
-    ObjectRenderer.prototype.initNormalBuffer = function (gl) {
-        this._normalBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
-        this.normals = new Float32Array(this.buffer.normals);
-        console.log("NORMALS:");
-        console.log(this.normals);
-        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
-    };
-    ObjectRenderer.prototype.init_un = function (surface, camera, url, width, height) {
-        _super.prototype.init_renderer.call(this, surface, camera);
-        var gl = this.surface.gl;
-        this.initVertexBuffer(gl);
-        this.initColorBuffer(gl);
-        this.initIndexBuffer(gl);
-        this.initNormalBuffer(gl);
-        //if(url && width && height)
-        //	this.texture = new Texture2D(surface, this, url, width,height);
-    };
-    ObjectRenderer.prototype.blit = function () {
-        var surface = this.surface;
-        var gl = this.surface.gl;
-        var program = this.surface.locations.program;
-        //drawing position
-        var modelViewMatrix = gl_matrix_1.mat4.create();
-        EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
-        this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
-        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.color, 4);
-        this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
-        this.bindIndexToVerts();
-        gl.useProgram(program);
-        if (this.texture != null)
-            this.texture.bindTexture();
-        else
-            gl.disableVertexAttribArray(this.surface.locations.attributes.texture);
-        gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
-        gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
-        var normalMatrix = gl_matrix_1.mat4.create();
-        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
-        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
-        gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
-        var vertexCount = this.indicies.length;
-        var type = gl.UNSIGNED_SHORT;
-        var offset = 0;
-        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-    };
-    ObjectRenderer.prototype.assignAttrib = function (buffer, attribLocation, components) {
-        var gl = this.surface.gl;
-        var numComponents = components;
-        var type = this.surface.gl.FLOAT;
-        var normalize = false;
-        var stride = 0;
-        var offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.vertexAttribPointer(attribLocation, numComponents, type, normalize, stride, offset);
-        gl.enableVertexAttribArray(attribLocation);
-    };
-    ObjectRenderer.prototype.bindIndexToVerts = function () {
-        var gl = this.surface.gl;
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
-    };
-    ObjectRenderer.prototype.update = function (dt) {
-    };
-    ObjectRenderer.prototype.cartesianToHomogeneous = function (point) {
-        var x = point.x;
-        var y = point.y;
-        var z = point.z;
-        return new EngineUtility_1.Vector4(x, y, z, 1);
-    };
-    ObjectRenderer.prototype.homogeneousToCartesian = function (point) {
-        var x = point.x;
-        var y = point.y;
-        var z = point.z;
-        var w = point.w;
-        return new EngineUtility_1.Vector3(x / w, y / w, z / w);
-    };
-    return ObjectRenderer;
-}(Renderer3D_1.Renderer3D));
-exports.ObjectRenderer = ObjectRenderer;
-
-},{"../Components/Renderer3D":9,"../Components/Triangulator":11,"../EngineUtility":15,"../Managers":18,"gl-matrix":25}],4:[function(require,module,exports){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
 require("sylvester");
 var EngineUtility_1 = require("../EngineUtility");
 var gl_matrix_1 = require("gl-matrix");
@@ -511,7 +338,7 @@ var Camera = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.Camera = Camera;
 
-},{"../EngineUtility":15,"./Component":6,"gl-matrix":25,"sylvester":26}],5:[function(require,module,exports){
+},{"../EngineUtility":15,"./Component":5,"gl-matrix":25,"sylvester":26}],4:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -690,7 +517,7 @@ var CircleCollider = /** @class */ (function (_super) {
 }(Collider2D));
 exports.CircleCollider = CircleCollider;
 
-},{"../EngineUtility":15,"./Component":6}],6:[function(require,module,exports){
+},{"../EngineUtility":15,"./Component":5}],5:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -857,10 +684,13 @@ var GameObject = /** @class */ (function (_super) {
         _this.gameObject = _this;
         _this.transform = _this.AddComponent(Transform);
         _this.assignGameObject(_this);
-        _this.name = new EngineUtility_1.EditorString("Object Name", "GameObject");
+        _this.name = new EngineUtility_1.EditorString("Object Name", "Game Object");
         return _this;
         //this.renderer = this.AddComponent(Renderer);
     }
+    GameObject.prototype.setName = function (name) {
+        this.name = new EngineUtility_1.EditorString("Object Name", name);
+    };
     GameObject.prototype.update = function (dt) {
         var components = this.getAttachedComponents();
         for (var i = 0; i < components.length; i++) {
@@ -907,6 +737,7 @@ var Renderer = /** @class */ (function (_super) {
 exports.Renderer = Renderer;
 function testFunction() {
     var gameObject = new GameObject();
+    gameObject.setName("Test Game Object");
     var transform = gameObject.AddComponent(Transform);
     var transform2 = gameObject.GetComponent(Transform);
     console.log(transform2.gameObject);
@@ -916,7 +747,7 @@ function testFunction() {
 }
 exports.testFunction = testFunction;
 
-},{"../EngineUtility":15}],7:[function(require,module,exports){
+},{"../EngineUtility":15}],6:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -985,7 +816,7 @@ var DraggableUI = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.DraggableUI = DraggableUI;
 
-},{"../EngineUtility":15,"./Collider":5,"./Component":6,"./UIImage":12}],8:[function(require,module,exports){
+},{"../EngineUtility":15,"./Collider":4,"./Component":5,"./UIImage":12}],7:[function(require,module,exports){
 "use strict";
 //references: Phong Shading
 var __extends = (this && this.__extends) || (function () {
@@ -1022,7 +853,181 @@ var DirectionalLight = /** @class */ (function (_super) {
 }(Light));
 exports.DirectionalLight = DirectionalLight;
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var Renderer3D_1 = require("../Components/Renderer3D");
+var Managers_1 = require("../Managers");
+var gl_matrix_1 = require("gl-matrix");
+var Triangulator_1 = require("../Components/Triangulator");
+var EngineUtility_1 = require("../EngineUtility");
+var Primitive;
+(function (Primitive) {
+    Primitive[Primitive["SPHERE"] = 0] = "SPHERE";
+    Primitive[Primitive["CYLINDER"] = 1] = "CYLINDER";
+    Primitive[Primitive["CUBE"] = 2] = "CUBE";
+    Primitive[Primitive["CONE"] = 3] = "CONE";
+    Primitive[Primitive["DOME"] = 4] = "DOME";
+})(Primitive = exports.Primitive || (exports.Primitive = {}));
+var PrimitiveRenderer = /** @class */ (function (_super) {
+    __extends(PrimitiveRenderer, _super);
+    function PrimitiveRenderer() {
+        var _this = _super.call(this) || this;
+        _this.buffer = new Triangulator_1.buffers();
+        return _this;
+    }
+    PrimitiveRenderer.prototype.create = function () {
+        //call create buffers beforehand??
+        this.init_un(Managers_1.SurfaceManager.GetBlankWorldSurface(), Managers_1.ObjectManager.editorCamera);
+    };
+    PrimitiveRenderer.prototype.createBuffers = function (type, offset, size) {
+        switch (type) {
+            case Primitive.SPHERE:
+                Triangulator_1.Triangulator.MakeSphere(this.buffer, offset, size / 2, size, [1, 0, 0]);
+                break;
+            case Primitive.CYLINDER:
+                Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, size / 2, size, [1, 1, 1]);
+                break;
+            case Primitive.CONE:
+                Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, 0, size, [1, 1, 1]);
+                break;
+            case Primitive.DOME:
+                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, false, [1, 1, 1]);
+                break;
+            case Primitive.CUBE:
+            default:
+                Triangulator_1.Triangulator.MakeCube(this.buffer, new EngineUtility_1.Vector3(size, size, size), offset, [1, 1, 1]);
+        }
+        console.log("VERTS = " + this.buffer.verts.length);
+        console.log("INDICIES = " + this.buffer.indicies.length);
+    };
+    PrimitiveRenderer.prototype.initVertexBuffer = function (gl) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
+        this.positions = new Float32Array(this.buffer.verts);
+        console.log("POSITIONS:");
+        console.log(this.positions);
+        gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+    };
+    PrimitiveRenderer.prototype.initColorBuffer = function (gl) {
+        //colors each face white - for now
+        var alpha = 1;
+        var colors = [];
+        for (var i = 0; i < this.buffer.indicies.length; i++) {
+            var color = [this.buffer.colors[i], this.buffer.colors[i + 1], this.buffer.colors[i + 2], alpha];
+            //let white = [1,1,1,1];
+            colors = colors.concat(color, color, color, color);
+        }
+        /*for (let i = 0; i < this.buffer.colors.length; ++i){
+            const c = this.buffer.colors[i];
+            //face colors contains an array of 3 colors
+            colors = colors.concat(c);
+            colors.push(alpha);
+        }*/
+        this.colors = new Float32Array(colors);
+        console.log("COLORS:");
+        console.log(this.colors);
+        this._colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
+    };
+    PrimitiveRenderer.prototype.initIndexBuffer = function (gl) {
+        this._indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+        this.indicies = new Uint16Array(this.buffer.indicies);
+        console.log("INDICIES:");
+        console.log(this.indicies);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicies, gl.STATIC_DRAW);
+    };
+    PrimitiveRenderer.prototype.initNormalBuffer = function (gl) {
+        this._normalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this._normalBuffer);
+        this.normals = new Float32Array(this.buffer.normals);
+        console.log("NORMALS:");
+        console.log(this.normals);
+        gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+    };
+    PrimitiveRenderer.prototype.init_un = function (surface, camera, url, width, height) {
+        _super.prototype.init_renderer.call(this, surface, camera);
+        var gl = this.surface.gl;
+        this.initVertexBuffer(gl);
+        this.initColorBuffer(gl);
+        this.initIndexBuffer(gl);
+        this.initNormalBuffer(gl);
+        //if(url && width && height)
+        //	this.texture = new Texture2D(surface, this, url, width,height);
+    };
+    PrimitiveRenderer.prototype.blit = function () {
+        var surface = this.surface;
+        var gl = this.surface.gl;
+        var program = this.surface.locations.program;
+        //drawing position
+        var modelViewMatrix = gl_matrix_1.mat4.create();
+        EngineUtility_1.computeMatrix(modelViewMatrix, modelViewMatrix, this.gameObject.transform.position, this.gameObject.transform.rotation);
+        this.assignAttrib(this._vertexBuffer, this.surface.locations.attributes.position, 3);
+        this.assignAttrib(this._colorBuffer, this.surface.locations.attributes.color, 4);
+        this.assignAttrib(this._normalBuffer, this.surface.locations.attributes.normal, 3);
+        this.bindIndexToVerts();
+        gl.useProgram(program);
+        if (this.texture != null)
+            this.texture.bindTexture();
+        else
+            gl.disableVertexAttribArray(this.surface.locations.attributes.texture);
+        gl.uniformMatrix4fv(surface.locations.uniforms.projection, false, this.camera.viewProjectionMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.matrix, false, modelViewMatrix);
+        var normalMatrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.invert(normalMatrix, modelViewMatrix);
+        gl_matrix_1.mat4.transpose(normalMatrix, normalMatrix);
+        gl.uniformMatrix4fv(surface.locations.uniforms.normal, false, normalMatrix);
+        var vertexCount = this.indicies.length;
+        var type = gl.UNSIGNED_SHORT;
+        var offset = 0;
+        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    };
+    PrimitiveRenderer.prototype.assignAttrib = function (buffer, attribLocation, components) {
+        var gl = this.surface.gl;
+        var numComponents = components;
+        var type = this.surface.gl.FLOAT;
+        var normalize = false;
+        var stride = 0;
+        var offset = 0;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.vertexAttribPointer(attribLocation, numComponents, type, normalize, stride, offset);
+        gl.enableVertexAttribArray(attribLocation);
+    };
+    PrimitiveRenderer.prototype.bindIndexToVerts = function () {
+        var gl = this.surface.gl;
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+    };
+    PrimitiveRenderer.prototype.update = function (dt) {
+    };
+    PrimitiveRenderer.prototype.cartesianToHomogeneous = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        return new EngineUtility_1.Vector4(x, y, z, 1);
+    };
+    PrimitiveRenderer.prototype.homogeneousToCartesian = function (point) {
+        var x = point.x;
+        var y = point.y;
+        var z = point.z;
+        var w = point.w;
+        return new EngineUtility_1.Vector3(x / w, y / w, z / w);
+    };
+    return PrimitiveRenderer;
+}(Renderer3D_1.Renderer3D));
+exports.PrimitiveRenderer = PrimitiveRenderer;
+
+},{"../Components/Renderer3D":9,"../Components/Triangulator":11,"../EngineUtility":15,"../Managers":18,"gl-matrix":25}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1378,7 +1383,7 @@ var CubeRenderer = /** @class */ (function (_super) {
 }(Renderer3D));
 exports.CubeRenderer = CubeRenderer;
 
-},{"../EngineUtility":15,"../Managers":18,"./Component":6,"./Texture":10,"gl-matrix":25}],10:[function(require,module,exports){
+},{"../EngineUtility":15,"../Managers":18,"./Component":5,"./Texture":10,"gl-matrix":25}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1673,7 +1678,7 @@ var Triangulator = /** @class */ (function () {
             var pt2 = new EngineUtility_1.Vector3(Math.cos(theta1) * radiusBottom + position.x, Math.sin(theta1) * radiusBottom + position.y, position.z);
             var pt3 = new EngineUtility_1.Vector3(Math.cos(theta0) * radiusTop + position.x, Math.sin(theta0) * radiusTop + position.y, position.z + height);
             var pt4 = new EngineUtility_1.Vector3(Math.cos(theta1) * radiusTop + position.x, Math.sin(theta1) * radiusTop + position.y, position.z + height);
-            this.MakeQuad(buffer, pt1, pt2, pt3, pt4, color);
+            this.MakeQuad(buffer, pt1, pt3, pt4, pt2, color);
         }
     };
     //when making rings, make sure they are added in counter clockwise fashion
@@ -1690,24 +1695,22 @@ var Triangulator = /** @class */ (function () {
     };
     Triangulator.MakeDome = function (buffer, position, radius, height, upsideDown, color) {
         //make rings out of cylinders to build dome
-        var numSegments = 24;
-        var segmentHeight = height / numSegments;
-        var startAngle = upsideDown ? 3 / 4 * Math.PI : 0;
-        var endAngle = upsideDown ? 2 * Math.PI : Math.PI / 4;
-        var startPosZ = upsideDown ? position.z - height : position.z;
+        var numSegments = 24 / 2;
+        var endAngle = upsideDown ? -Math.PI / 2 : Math.PI / 2;
         for (var i = 0; i < numSegments; i++) {
             //build quarter of circle, if upsideDown 
-            var theta0 = startAngle + i / numSegments * endAngle;
-            var theta1 = startAngle + (i + 1) / numSegments * endAngle;
+            var theta0 = i / numSegments * endAngle;
+            var theta1 = (i + 1) / numSegments * endAngle;
             var radiusBottom = Math.cos(theta0) * radius;
             var radiusTop = Math.cos(theta1) * radius;
-            var ringPosition = new EngineUtility_1.Vector3(position.x, position.y, startPosZ + segmentHeight * i);
+            var segmentHeight = (Math.sin(theta1) - Math.sin(theta0)) * height;
+            var ringPosition = new EngineUtility_1.Vector3(position.x, position.y, position.z + Math.sin(theta0) * height);
             this.MakeCylinder(buffer, ringPosition, radiusBottom, radiusTop, segmentHeight, color);
         }
     };
     Triangulator.MakeSphere = function (buffer, position, radius, height, color) {
-        this.MakeDome(buffer, position, radius, height, false, color);
-        this.MakeDome(buffer, position, radius, height, true, color);
+        this.MakeDome(buffer, position, radius, height / 2, false, color);
+        this.MakeDome(buffer, position, radius, height / 2, true, color);
     };
     return Triangulator;
 }());
@@ -1813,7 +1816,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"../EngineUtility":15,"../Matrix":19,"./Component":6,"./Texture":10}],13:[function(require,module,exports){
+},{"../EngineUtility":15,"../Matrix":19,"./Component":5,"./Texture":10}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2974,7 +2977,7 @@ var ObjectManager = /** @class */ (function () {
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./Components/Component":6,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Surface":22}],19:[function(require,module,exports){
+},{"./Components/Component":5,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Surface":22}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -3137,7 +3140,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Component_1 = require("./Components/Component");
 var Renderer3D_1 = require("./Components/Renderer3D");
-var _3DObjectRenderer_1 = require("./Components/3DObjectRenderer");
+var PrimitiveRenderer_1 = require("./Components/PrimitiveRenderer");
 var Managers_1 = require("./Managers");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
@@ -3172,11 +3175,13 @@ var Program = /** @class */ (function () {
     }
     Program.prototype.createCameras = function () {
         var worldCamera_gameObject = new Component_1.GameObject();
+        worldCamera_gameObject.setName("World Camera");
         this.worldCamera = worldCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.worldCamera.init(this.gl);
         this.worldCamera.AddComponent(Component_1.GameObject);
         worldCamera_gameObject.transform.position = new EngineUtility_1.Vector3(0, 0, 5);
         var uiCamera_gameObject = new Component_1.GameObject();
+        uiCamera_gameObject.setName("UI Camera");
         this.uiCamera = uiCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.uiCamera.init(this.gl);
         this.uiCamera.AddComponent(Component_1.GameObject);
@@ -3185,12 +3190,35 @@ var Program = /** @class */ (function () {
     Program.prototype.createTestGameObjects = function () {
         this.createCameras();
         var testCube = new Component_1.GameObject();
-        var testCubeRenderer = testCube.AddComponent(_3DObjectRenderer_1.ObjectRenderer);
-        testCubeRenderer.createBuffers(_3DObjectRenderer_1.ObjectType.CUBE, EngineUtility_1.Vector3.zero(), 1);
+        testCube.setName("cube");
+        var testCubeRenderer = testCube.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testCubeRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CUBE, EngineUtility_1.Vector3.zero(), 1);
         testCubeRenderer.create();
         testCube.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         testCube.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var testSphere = new Component_1.GameObject();
+        testSphere.setName("sphere");
+        var testSphereRenderer = testSphere.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testSphereRenderer.createBuffers(PrimitiveRenderer_1.Primitive.SPHERE, EngineUtility_1.Vector3.zero(), 1);
+        testSphereRenderer.create();
+        testSphere.transform.position = new EngineUtility_1.Vector3(-1, 0, -4);
+        testSphere.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var testCone = new Component_1.GameObject();
+        testCone.setName("cone");
+        var testConeRenderer = testCone.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testConeRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CONE, EngineUtility_1.Vector3.zero(), 1);
+        testConeRenderer.create();
+        testCone.transform.position = new EngineUtility_1.Vector3(3, 0, -6);
+        testCone.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var testCylinder = new Component_1.GameObject();
+        testCylinder.setName("cylinder");
+        var testCylinderRenderer = testCylinder.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testCylinderRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CYLINDER, EngineUtility_1.Vector3.zero(), 1);
+        testCylinderRenderer.create();
+        testCylinder.transform.position = new EngineUtility_1.Vector3(1, 0, -6);
+        testCylinder.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
         var worldSprite = new Component_1.GameObject();
+        worldSprite.setName("world sprite");
         var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
         worldSprite_renderer.create();
         worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
@@ -3198,9 +3226,10 @@ var Program = /** @class */ (function () {
         worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
         this.storedObject = worldSprite;
         var editorBox = new Component_1.GameObject();
+        editorBox.setName("editor box");
         var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
         editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', Managers_1.SurfaceManager.GetUISurface(), 256, 256);
-        Managers_1.ObjectManager.gameObjects = [testCube, worldSprite];
+        Managers_1.ObjectManager.gameObjects = [testCube, testSphere, testCone, testCylinder, worldSprite];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
         var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
         var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
@@ -3217,11 +3246,13 @@ var Program = /** @class */ (function () {
         uiBox2_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
         uiBox1.transform.position = new Vector3(256,0,0);*/
         var worldCube1 = new Component_1.GameObject();
+        worldCube1.setName("cube");
         var worldCube1_renderer = worldCube1.AddComponent(Renderer3D_1.CubeRenderer);
         worldCube1_renderer.create();
         worldCube1.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         worldCube1.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
         var worldCube2 = new Component_1.GameObject();
+        worldCube2.setName("cube 2");
         var worldCube2_renderer = worldCube2.AddComponent(Renderer3D_1.CubeRenderer);
         worldCube2_renderer.create();
         worldCube2.transform.position = new EngineUtility_1.Vector3(3, 0, -12);
@@ -3354,7 +3385,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Components/3DObjectRenderer":3,"./Components/CameraUtility":4,"./Components/Component":6,"./Components/EditorObject":7,"./Components/Lighting":8,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Managers":18}],21:[function(require,module,exports){
+},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/PrimitiveRenderer":8,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Managers":18}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -3573,7 +3604,7 @@ window.addGameObject = function () {
     gameProgram.addGameObject();
 };
 
-},{"./Components/Component":6,"./Program":20}],24:[function(require,module,exports){
+},{"./Components/Component":5,"./Program":20}],24:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
 },{"dup":19,"sylvester":26}],25:[function(require,module,exports){
 /**

@@ -164,10 +164,13 @@ var GameObject = /** @class */ (function (_super) {
         _this.gameObject = _this;
         _this.transform = _this.AddComponent(Transform);
         _this.assignGameObject(_this);
-        _this.name = new EngineUtility_1.EditorString("Object Name", "GameObject");
+        _this.name = new EngineUtility_1.EditorString("Object Name", "Game Object");
         return _this;
         //this.renderer = this.AddComponent(Renderer);
     }
+    GameObject.prototype.setName = function (name) {
+        this.name = new EngineUtility_1.EditorString("Object Name", name);
+    };
     GameObject.prototype.update = function (dt) {
         var components = this.getAttachedComponents();
         for (var i = 0; i < components.length; i++) {
@@ -214,6 +217,7 @@ var Renderer = /** @class */ (function (_super) {
 exports.Renderer = Renderer;
 function testFunction() {
     var gameObject = new GameObject();
+    gameObject.setName("Test Game Object");
     var transform = gameObject.AddComponent(Transform);
     var transform2 = gameObject.GetComponent(Transform);
     console.log(transform2.gameObject);

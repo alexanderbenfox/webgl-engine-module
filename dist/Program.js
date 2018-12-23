@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
 var Component_1 = require("./Components/Component");
 var Renderer3D_1 = require("./Components/Renderer3D");
-var _3DObjectRenderer_1 = require("./Components/3DObjectRenderer");
+var PrimitiveRenderer_1 = require("./Components/PrimitiveRenderer");
 var Managers_1 = require("./Managers");
 var CameraUtility_1 = require("./Components/CameraUtility");
 var EditorObject_1 = require("./Components/EditorObject");
@@ -38,11 +38,13 @@ var Program = /** @class */ (function () {
     }
     Program.prototype.createCameras = function () {
         var worldCamera_gameObject = new Component_1.GameObject();
+        worldCamera_gameObject.setName("World Camera");
         this.worldCamera = worldCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.worldCamera.init(this.gl);
         this.worldCamera.AddComponent(Component_1.GameObject);
         worldCamera_gameObject.transform.position = new EngineUtility_1.Vector3(0, 0, 5);
         var uiCamera_gameObject = new Component_1.GameObject();
+        uiCamera_gameObject.setName("UI Camera");
         this.uiCamera = uiCamera_gameObject.AddComponent(CameraUtility_1.Camera);
         this.uiCamera.init(this.gl);
         this.uiCamera.AddComponent(Component_1.GameObject);
@@ -51,12 +53,35 @@ var Program = /** @class */ (function () {
     Program.prototype.createTestGameObjects = function () {
         this.createCameras();
         var testCube = new Component_1.GameObject();
-        var testCubeRenderer = testCube.AddComponent(_3DObjectRenderer_1.ObjectRenderer);
-        testCubeRenderer.createBuffers(_3DObjectRenderer_1.ObjectType.CUBE, EngineUtility_1.Vector3.zero(), 1);
+        testCube.setName("cube");
+        var testCubeRenderer = testCube.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testCubeRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CUBE, EngineUtility_1.Vector3.zero(), 1);
         testCubeRenderer.create();
         testCube.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         testCube.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var testSphere = new Component_1.GameObject();
+        testSphere.setName("sphere");
+        var testSphereRenderer = testSphere.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testSphereRenderer.createBuffers(PrimitiveRenderer_1.Primitive.SPHERE, EngineUtility_1.Vector3.zero(), 1);
+        testSphereRenderer.create();
+        testSphere.transform.position = new EngineUtility_1.Vector3(-1, 0, -4);
+        testSphere.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var testCone = new Component_1.GameObject();
+        testCone.setName("cone");
+        var testConeRenderer = testCone.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testConeRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CONE, EngineUtility_1.Vector3.zero(), 1);
+        testConeRenderer.create();
+        testCone.transform.position = new EngineUtility_1.Vector3(3, 0, -6);
+        testCone.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
+        var testCylinder = new Component_1.GameObject();
+        testCylinder.setName("cylinder");
+        var testCylinderRenderer = testCylinder.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        testCylinderRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CYLINDER, EngineUtility_1.Vector3.zero(), 1);
+        testCylinderRenderer.create();
+        testCylinder.transform.position = new EngineUtility_1.Vector3(1, 0, -6);
+        testCylinder.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
         var worldSprite = new Component_1.GameObject();
+        worldSprite.setName("world sprite");
         var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
         worldSprite_renderer.create();
         worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
@@ -64,9 +89,10 @@ var Program = /** @class */ (function () {
         worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
         this.storedObject = worldSprite;
         var editorBox = new Component_1.GameObject();
+        editorBox.setName("editor box");
         var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
         editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', Managers_1.SurfaceManager.GetUISurface(), 256, 256);
-        Managers_1.ObjectManager.gameObjects = [testCube, worldSprite];
+        Managers_1.ObjectManager.gameObjects = [testCube, testSphere, testCone, testCylinder, worldSprite];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
         var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
         var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
@@ -83,11 +109,13 @@ var Program = /** @class */ (function () {
         uiBox2_sprite.init_renderer(this.uiCamera, this.surface_ui, 'box.png', 256, 256);
         uiBox1.transform.position = new Vector3(256,0,0);*/
         var worldCube1 = new Component_1.GameObject();
+        worldCube1.setName("cube");
         var worldCube1_renderer = worldCube1.AddComponent(Renderer3D_1.CubeRenderer);
         worldCube1_renderer.create();
         worldCube1.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         worldCube1.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
         var worldCube2 = new Component_1.GameObject();
+        worldCube2.setName("cube 2");
         var worldCube2_renderer = worldCube2.AddComponent(Renderer3D_1.CubeRenderer);
         worldCube2_renderer.create();
         worldCube2.transform.position = new EngineUtility_1.Vector3(3, 0, -12);

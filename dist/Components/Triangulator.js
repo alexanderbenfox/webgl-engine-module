@@ -86,7 +86,7 @@ var Triangulator = /** @class */ (function () {
             var pt2 = new EngineUtility_1.Vector3(Math.cos(theta1) * radiusBottom + position.x, Math.sin(theta1) * radiusBottom + position.y, position.z);
             var pt3 = new EngineUtility_1.Vector3(Math.cos(theta0) * radiusTop + position.x, Math.sin(theta0) * radiusTop + position.y, position.z + height);
             var pt4 = new EngineUtility_1.Vector3(Math.cos(theta1) * radiusTop + position.x, Math.sin(theta1) * radiusTop + position.y, position.z + height);
-            this.MakeQuad(buffer, pt1, pt2, pt3, pt4, color);
+            this.MakeQuad(buffer, pt1, pt3, pt4, pt2, color);
         }
     };
     //when making rings, make sure they are added in counter clockwise fashion
@@ -103,24 +103,22 @@ var Triangulator = /** @class */ (function () {
     };
     Triangulator.MakeDome = function (buffer, position, radius, height, upsideDown, color) {
         //make rings out of cylinders to build dome
-        var numSegments = 24;
-        var segmentHeight = height / numSegments;
-        var startAngle = upsideDown ? 3 / 4 * Math.PI : 0;
-        var endAngle = upsideDown ? 2 * Math.PI : Math.PI / 4;
-        var startPosZ = upsideDown ? position.z - height : position.z;
+        var numSegments = 24 / 2;
+        var endAngle = upsideDown ? -Math.PI / 2 : Math.PI / 2;
         for (var i = 0; i < numSegments; i++) {
             //build quarter of circle, if upsideDown 
-            var theta0 = startAngle + i / numSegments * endAngle;
-            var theta1 = startAngle + (i + 1) / numSegments * endAngle;
+            var theta0 = i / numSegments * endAngle;
+            var theta1 = (i + 1) / numSegments * endAngle;
             var radiusBottom = Math.cos(theta0) * radius;
             var radiusTop = Math.cos(theta1) * radius;
-            var ringPosition = new EngineUtility_1.Vector3(position.x, position.y, startPosZ + segmentHeight * i);
+            var segmentHeight = (Math.sin(theta1) - Math.sin(theta0)) * height;
+            var ringPosition = new EngineUtility_1.Vector3(position.x, position.y, position.z + Math.sin(theta0) * height);
             this.MakeCylinder(buffer, ringPosition, radiusBottom, radiusTop, segmentHeight, color);
         }
     };
     Triangulator.MakeSphere = function (buffer, position, radius, height, color) {
-        this.MakeDome(buffer, position, radius, height, false, color);
-        this.MakeDome(buffer, position, radius, height, true, color);
+        this.MakeDome(buffer, position, radius, height / 2, false, color);
+        this.MakeDome(buffer, position, radius, height / 2, true, color);
     };
     return Triangulator;
 }());

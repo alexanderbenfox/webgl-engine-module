@@ -7,11 +7,11 @@ import {Triangulator, buffers} from "../Components/Triangulator"
 import {Vector3, Vector4, computeMatrix} from "../EngineUtility"
 import {Color} from "../../node_modules/color-ts"
 
-export enum ObjectType{
+export enum Primitive{
     SPHERE, CYLINDER, CUBE, CONE, DOME
 }
 
-export class ObjectRenderer extends Renderer3D{
+export class PrimitiveRenderer extends Renderer3D{
     public buffer : buffers;
 
 	constructor(){
@@ -24,21 +24,21 @@ export class ObjectRenderer extends Renderer3D{
 		this.init_un(SurfaceManager.GetBlankWorldSurface(), ObjectManager.editorCamera);
     }
     
-    createBuffers(type : ObjectType, offset : Vector3, size : number){
+    createBuffers(type : Primitive, offset : Vector3, size : number){
         switch(type){
-            case ObjectType.SPHERE:
-                Triangulator.MakeSphere(this.buffer, offset, size/2, size, [1, 1, 1]);
+            case Primitive.SPHERE:
+                Triangulator.MakeSphere(this.buffer, offset, size/2, size, [1, 0, 0]);
                 break;
-            case ObjectType.CYLINDER:
+            case Primitive.CYLINDER:
                 Triangulator.MakeCylinder(this.buffer, offset, size/2, size/2, size, [1, 1, 1]);
                 break;
-            case ObjectType.CONE:
+            case Primitive.CONE:
                 Triangulator.MakeCylinder(this.buffer, offset, size/2, 0, size, [1,1,1]);
                 break;
-            case ObjectType.DOME:
+            case Primitive.DOME:
                 Triangulator.MakeDome(this.buffer, offset, size/2, size, false, [1, 1, 1]);
                 break;
-            case ObjectType.CUBE:
+            case Primitive.CUBE:
             default:
                 Triangulator.MakeCube(this.buffer, new Vector3(size, size, size), offset, [1, 1, 1]);
 
@@ -60,11 +60,12 @@ export class ObjectRenderer extends Renderer3D{
 	initColorBuffer(gl : WebGLRenderingContext){
 		//colors each face white - for now
 		let alpha = 1;
-        let colors = [];
+		let colors = [];
 
         for(let i = 0; i < this.buffer.indicies.length; i++){
-            let white = [1,1,1,1];
-            colors = colors.concat(white, white, white, white);
+			const color = [this.buffer.colors[i], this.buffer.colors[i + 1], this.buffer.colors[i + 2], alpha];
+            //let white = [1,1,1,1];
+            colors = colors.concat(color, color, color, color);
         }
         
 		/*for (let i = 0; i < this.buffer.colors.length; ++i){

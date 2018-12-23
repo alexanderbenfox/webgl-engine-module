@@ -121,7 +121,7 @@ export class Triangulator {
                                     Math.sin(theta1) * radiusTop + position.y,
                                     position.z + height);
 
-            this.MakeQuad(buffer, pt1, pt2, pt3, pt4, color);
+            this.MakeQuad(buffer, pt1, pt3, pt4, pt2, color);
         }
     }
 
@@ -141,29 +141,27 @@ export class Triangulator {
 
     static MakeDome(buffer : buffers, position : Vector3, radius : number, height : number, upsideDown : boolean, color : Color){
         //make rings out of cylinders to build dome
-        const numSegments = 24;
-        const segmentHeight = height/numSegments;
-        const startAngle = upsideDown ? 3/4 * Math.PI : 0;
-        const endAngle = upsideDown ? 2 * Math.PI : Math.PI / 4;
-        const startPosZ = upsideDown ? position.z - height : position.z;
+        const numSegments = 24/2;
+        const endAngle = upsideDown ? -Math.PI/2 : Math.PI/2;
 
         for(let i = 0; i < numSegments; i++){
             //build quarter of circle, if upsideDown 
-            const theta0 = startAngle + i/numSegments * endAngle;
-            const theta1 = startAngle + (i + 1)/numSegments * endAngle;
+            const theta0 = i/numSegments * endAngle;
+            const theta1 = (i + 1)/numSegments * endAngle;
 
             const radiusBottom = Math.cos(theta0) * radius;
             const radiusTop = Math.cos(theta1) * radius;
 
-            const ringPosition = new Vector3(position.x, position.y, startPosZ + segmentHeight * i);
+            const segmentHeight = (Math.sin(theta1) - Math.sin(theta0))*height;
+            const ringPosition = new Vector3(position.x, position.y, position.z + Math.sin(theta0)*height);
 
             this.MakeCylinder(buffer, ringPosition, radiusBottom, radiusTop, segmentHeight, color); 
         }
     }
 
     static MakeSphere(buffer : buffers, position : Vector3, radius : number, height : number, color : Color){
-        this.MakeDome(buffer, position, radius, height, false, color);
-        this.MakeDome(buffer, position, radius, height, true, color);
+        this.MakeDome(buffer, position, radius, height/2, false, color);
+        this.MakeDome(buffer, position, radius, height/2, true, color);
     }
 
 }

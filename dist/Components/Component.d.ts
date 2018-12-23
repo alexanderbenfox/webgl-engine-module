@@ -59,6 +59,7 @@ export declare class GameObject extends Component {
     renderer: Renderer;
     collider: Collider;
     constructor();
+    setName(name: string): void;
     update(dt: number): void;
     render(): void;
 }
