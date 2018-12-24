@@ -17,4 +17,5 @@ export declare class Triangulator {
     static MakePolygon(buffer: buffers, position: Vector3, rings: Vector3[][], color: Color): void;
     static MakeDome(buffer: buffers, position: Vector3, radius: number, height: number, upsideDown: boolean, color: Color): void;
     static MakeSphere(buffer: buffers, position: Vector3, radius: number, height: number, color: Color): void;
+    static MakePyramid(buffer: buffers, position: Vector3, rings: Vector3[][], height: number, color: Color): void;
 }

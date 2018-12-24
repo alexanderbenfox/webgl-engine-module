@@ -81,54 +81,28 @@ export class Program{
 	createTestGameObjects() : void{
 		this.createCameras();
 
-		let testCube = new GameObject();
-		testCube.setName("cube");
-		let testCubeRenderer : PrimitiveRenderer = <PrimitiveRenderer>testCube.AddComponent(PrimitiveRenderer);
-		testCubeRenderer.createBuffers(Primitive.CUBE, Vector3.zero(), 1);
-		testCubeRenderer.create();
+		let testCube = ObjectManager.fromPrimitive("cube", Primitive.CUBE);
 		testCube.transform.position = new Vector3(-1, 0, -6);
 		testCube.transform.rotation = new Vector3(60,20,0);
 
-		let testSphere = new GameObject();
-		testSphere.setName("sphere");
-		let testSphereRenderer : PrimitiveRenderer = <PrimitiveRenderer>testSphere.AddComponent(PrimitiveRenderer);
-		testSphereRenderer.createBuffers(Primitive.SPHERE, Vector3.zero(), 1);
-		testSphereRenderer.create();
+		let testSphere = ObjectManager.fromPrimitive("sphere", Primitive.SPHERE);
 		testSphere.transform.position = new Vector3(-1, 0, -4);
 		testSphere.transform.rotation = new Vector3(60,20,0);
 
-		let testCone = new GameObject();
-		testCone.setName("cone");
-		let testConeRenderer : PrimitiveRenderer = <PrimitiveRenderer>testCone.AddComponent(PrimitiveRenderer);
-		testConeRenderer.createBuffers(Primitive.CONE, Vector3.zero(), 1);
-		testConeRenderer.create();
+		let testCone = ObjectManager.fromPrimitive("cone", Primitive.CONE);
 		testCone.transform.position = new Vector3(3, 0, -6);
 		testCone.transform.rotation = new Vector3(60,20,0);
 
-		let testCylinder = new GameObject();
-		testCylinder.setName("cylinder");
-		let testCylinderRenderer : PrimitiveRenderer = <PrimitiveRenderer>testCylinder.AddComponent(PrimitiveRenderer);
-		testCylinderRenderer.createBuffers(Primitive.CYLINDER, Vector3.zero(), 1);
-		testCylinderRenderer.create();
-		testCylinder.transform.position = new Vector3(1, 0, -6);
-		testCylinder.transform.rotation = new Vector3(60,20,0);
+		let testCylinder = ObjectManager.fromPrimitive("cylinder", Primitive.CYLINDER);
+		testCylinder.setPosition(1, 0, -6);
+		testCylinder.setRotation(60,20,0);
 
-		let worldSprite = new GameObject();
-		worldSprite.setName("world sprite");
-		let worldSprite_renderer : SpriteRenderer = <SpriteRenderer>worldSprite.AddComponent(SpriteRenderer);
-		worldSprite_renderer.create();
-		worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
-		worldSprite.transform.position = new Vector3(-6,0, -6);
-		worldSprite.transform.rotation = new Vector3(0,0,0);
-
-		this.storedObject = worldSprite;
+		this.storedObject = testCylinder;
 
 		let editorBox = new GameObject();
 		editorBox.setName("editor box");
 		let editorBox_draggableObject : DraggableUI = <DraggableUI>editorBox.AddComponent(DraggableUI);
 		editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', SurfaceManager.GetUISurface(), 256, 256);
-
-		ObjectManager.gameObjects = [testCube, testSphere, testCone, testCylinder, worldSprite];
 		EditorControl.clickables = [editorBox_draggableObject];
 		let dirLight = new DirectionalLight(SurfaceManager.GetWorldSurface(), new Vector3(100,20,30));
 		let dirLight2 = new DirectionalLight(SurfaceManager.GetBlankWorldSurface(), new Vector3(100,20,30));

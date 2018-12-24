@@ -3,6 +3,7 @@ import {Collider} from "./Collider"
 import {Camera} from "./CameraUtility"
 import {Texture2D} from "./Texture"
 import {DrawSurface} from "../Surface"
+import {PrimitiveRenderer, Primitive} from "./PrimitiveRenderer"
 
 export class ComponentFactory{
 	static CreateComponent<IComponent extends Component>(type:{new():Component;}) : Component{
@@ -182,6 +183,14 @@ export class GameObject extends Component{
 
 	setName(name : string){
 		this.name = new EditorString("Object Name", name);
+	}
+
+	setPosition(x : number, y : number, z : number) : void {
+		this.transform.position = new Vector3(x, y, z);
+	}
+
+	setRotation(x : number, y : number, z : number) : void{
+		this.transform.rotation = new Vector3(x, y, z);
 	}
 
 	update(dt : number){

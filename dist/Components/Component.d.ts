@@ -60,6 +60,8 @@ export declare class GameObject extends Component {
     collider: Collider;
     constructor();
     setName(name: string): void;
+    setPosition(x: number, y: number, z: number): void;
+    setRotation(x: number, y: number, z: number): void;
     update(dt: number): void;
     render(): void;
 }

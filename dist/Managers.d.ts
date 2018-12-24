@@ -3,6 +3,7 @@ import { DraggableUI, Draggable } from "./Components/EditorObject";
 import { GameObject, Component } from "./Components/Component";
 import { DrawSurface } from "./Surface";
 import { Camera } from "./Components/CameraUtility";
+import { Primitive } from "./Components/PrimitiveRenderer";
 export declare class SurfaceManager {
     private static surface_ui;
     private static surface_world;
@@ -47,4 +48,5 @@ export declare class ObjectManager {
     static assignAllComponentOptions(select: HTMLSelectElement): void;
     static showSelectedObject(component: Component, property: any, componentDiv: HTMLElement): void;
     static hideSelectedObject(): void;
+    static fromPrimitive(name: string, type: Primitive): GameObject;
 }

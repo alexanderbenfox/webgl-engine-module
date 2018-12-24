@@ -38,13 +38,11 @@ export class Triangulator {
         buffer.colors = buffer.colors.concat(color);
 
         buffer.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-
-        console.log("Making triangle");
     }
 
     static MakeQuad(buffer : buffers, a : Vector3, b : Vector3, c : Vector3, d : Vector3, color : Color){
-        this.MakeTriangle(buffer, a, b, c, color);
-        this.MakeTriangle(buffer, c, d, a, color);
+        this.MakeTriangle(buffer, c, b, a, color);
+        this.MakeTriangle(buffer, a, d, c, color);
     }
 
     static MakeCube(buffer : buffers, size : Vector3, position : Vector3, color : Color){
@@ -142,12 +140,13 @@ export class Triangulator {
     static MakeDome(buffer : buffers, position : Vector3, radius : number, height : number, upsideDown : boolean, color : Color){
         //make rings out of cylinders to build dome
         const numSegments = 24/2;
-        const endAngle = upsideDown ? -Math.PI/2 : Math.PI/2;
+        const startAngle = upsideDown ?  3/2 * Math.PI : 0;
+        const endAngle = upsideDown ? 2 * Math.PI : Math.PI/2;
 
         for(let i = 0; i < numSegments; i++){
             //build quarter of circle, if upsideDown 
-            const theta0 = i/numSegments * endAngle;
-            const theta1 = (i + 1)/numSegments * endAngle;
+            const theta0 = startAngle + i/numSegments * (endAngle - startAngle);
+            const theta1 = startAngle + (i + 1)/numSegments * (endAngle - startAngle);
 
             const radiusBottom = Math.cos(theta0) * radius;
             const radiusTop = Math.cos(theta1) * radius;
@@ -164,6 +163,16 @@ export class Triangulator {
         this.MakeDome(buffer, position, radius, height/2, true, color);
     }
 
+    static MakePyramid(buffer : buffers, position : Vector3, rings : Vector3[][], height: number, color : Color){
+        rings.forEach((polygon) => {
+            for(let i = 0; i < polygon.length - 1; i++){
+                const point1 = new Vector3(position.x + polygon[i].x, position.y + polygon[i].y, position.z + polygon[i].z);
+                const point2 = new Vector3(position.x + polygon[i + 1].x, position.y + polygon[i + 1].y, position.z + polygon[i + 1].z)
+                const point3 = new Vector3(position.x, position.y, position.z + height);
+                this.MakeTriangle(buffer, point1, point2, point3, color);
+            }
+        });
+    }
 }
 
 //this to consider

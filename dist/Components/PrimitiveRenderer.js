@@ -46,7 +46,7 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
                 Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, 0, size, [1, 1, 1]);
                 break;
             case Primitive.DOME:
-                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, false, [1, 1, 1]);
+                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, true, [1, 1, 1]);
                 break;
             case Primitive.CUBE:
             default:
@@ -67,7 +67,7 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
         var alpha = 1;
         var colors = [];
         for (var i = 0; i < this.buffer.indicies.length; i++) {
-            var color = [this.buffer.colors[i], this.buffer.colors[i + 1], this.buffer.colors[i + 2], alpha];
+            var color = [this.buffer.colors[i * 3], this.buffer.colors[i * 3 + 1], this.buffer.colors[i * 3 + 2], alpha];
             //let white = [1,1,1,1];
             colors = colors.concat(color, color, color, color);
         }
@@ -78,8 +78,6 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
             colors.push(alpha);
         }*/
         this.colors = new Float32Array(colors);
-        console.log("COLORS:");
-        console.log(this.colors);
         this._colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);

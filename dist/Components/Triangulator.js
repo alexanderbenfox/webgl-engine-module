@@ -30,11 +30,10 @@ var Triangulator = /** @class */ (function () {
         buffer.normals = buffer.normals.concat(normal.toArray(), normal.toArray(), normal.toArray());
         buffer.colors = buffer.colors.concat(color);
         buffer.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-        console.log("Making triangle");
     };
     Triangulator.MakeQuad = function (buffer, a, b, c, d, color) {
-        this.MakeTriangle(buffer, a, b, c, color);
-        this.MakeTriangle(buffer, c, d, a, color);
+        this.MakeTriangle(buffer, c, b, a, color);
+        this.MakeTriangle(buffer, a, d, c, color);
     };
     Triangulator.MakeCube = function (buffer, size, position, color) {
         //cube position is defined by the center of the cube
@@ -104,11 +103,12 @@ var Triangulator = /** @class */ (function () {
     Triangulator.MakeDome = function (buffer, position, radius, height, upsideDown, color) {
         //make rings out of cylinders to build dome
         var numSegments = 24 / 2;
-        var endAngle = upsideDown ? -Math.PI / 2 : Math.PI / 2;
+        var startAngle = upsideDown ? 3 / 2 * Math.PI : 0;
+        var endAngle = upsideDown ? 2 * Math.PI : Math.PI / 2;
         for (var i = 0; i < numSegments; i++) {
             //build quarter of circle, if upsideDown 
-            var theta0 = i / numSegments * endAngle;
-            var theta1 = (i + 1) / numSegments * endAngle;
+            var theta0 = startAngle + i / numSegments * (endAngle - startAngle);
+            var theta1 = startAngle + (i + 1) / numSegments * (endAngle - startAngle);
             var radiusBottom = Math.cos(theta0) * radius;
             var radiusTop = Math.cos(theta1) * radius;
             var segmentHeight = (Math.sin(theta1) - Math.sin(theta0)) * height;
@@ -119,6 +119,17 @@ var Triangulator = /** @class */ (function () {
     Triangulator.MakeSphere = function (buffer, position, radius, height, color) {
         this.MakeDome(buffer, position, radius, height / 2, false, color);
         this.MakeDome(buffer, position, radius, height / 2, true, color);
+    };
+    Triangulator.MakePyramid = function (buffer, position, rings, height, color) {
+        var _this = this;
+        rings.forEach(function (polygon) {
+            for (var i = 0; i < polygon.length - 1; i++) {
+                var point1 = new EngineUtility_1.Vector3(position.x + polygon[i].x, position.y + polygon[i].y, position.z + polygon[i].z);
+                var point2 = new EngineUtility_1.Vector3(position.x + polygon[i + 1].x, position.y + polygon[i + 1].y, position.z + polygon[i + 1].z);
+                var point3 = new EngineUtility_1.Vector3(position.x, position.y, position.z + height);
+                _this.MakeTriangle(buffer, point1, point2, point3, color);
+            }
+        });
     };
     return Triangulator;
 }());

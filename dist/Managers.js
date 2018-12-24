@@ -5,6 +5,8 @@ var Component_1 = require("./Components/Component");
 var Renderer3D_1 = require("./Components/Renderer3D");
 var Surface_1 = require("./Surface");
 var GLUtility_1 = require("./GLUtility");
+var EngineUtility_2 = require("./EngineUtility");
+var PrimitiveRenderer_1 = require("./Components/PrimitiveRenderer");
 var SurfaceManager = /** @class */ (function () {
     function SurfaceManager() {
     }
@@ -214,6 +216,15 @@ var ObjectManager = /** @class */ (function () {
             }
             ObjectManager.inspectorItems = [];
         }
+    };
+    ObjectManager.fromPrimitive = function (name, type) {
+        var gameObj = new Component_1.GameObject();
+        gameObj.setName(name);
+        var primitiveRenderer = gameObj.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        primitiveRenderer.createBuffers(type, EngineUtility_2.Vector3.zero(), 1);
+        primitiveRenderer.create();
+        this.gameObjects.push(gameObj);
+        return gameObj;
     };
     ObjectManager.gameObjects = [];
     ObjectManager.gameObjectHierarchy = [];

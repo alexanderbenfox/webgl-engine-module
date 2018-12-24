@@ -99,7 +99,7 @@ var Camera = /** @class */ (function () {
 }());
 exports.Camera = Camera;
 
-},{"./EngineUtility":15,"gl-matrix":25,"sylvester":26}],2:[function(require,module,exports){
+},{"./EngineUtility":15,"gl-matrix":26,"sylvester":27}],2:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -338,7 +338,7 @@ var Camera = /** @class */ (function (_super) {
 }(Component_1.Component));
 exports.Camera = Camera;
 
-},{"../EngineUtility":15,"./Component":5,"gl-matrix":25,"sylvester":26}],4:[function(require,module,exports){
+},{"../EngineUtility":15,"./Component":5,"gl-matrix":26,"sylvester":27}],4:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -691,6 +691,12 @@ var GameObject = /** @class */ (function (_super) {
     GameObject.prototype.setName = function (name) {
         this.name = new EngineUtility_1.EditorString("Object Name", name);
     };
+    GameObject.prototype.setPosition = function (x, y, z) {
+        this.transform.position = new EngineUtility_1.Vector3(x, y, z);
+    };
+    GameObject.prototype.setRotation = function (x, y, z) {
+        this.transform.rotation = new EngineUtility_1.Vector3(x, y, z);
+    };
     GameObject.prototype.update = function (dt) {
         var components = this.getAttachedComponents();
         for (var i = 0; i < components.length; i++) {
@@ -902,7 +908,7 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
                 Triangulator_1.Triangulator.MakeCylinder(this.buffer, offset, size / 2, 0, size, [1, 1, 1]);
                 break;
             case Primitive.DOME:
-                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, false, [1, 1, 1]);
+                Triangulator_1.Triangulator.MakeDome(this.buffer, offset, size / 2, size, true, [1, 1, 1]);
                 break;
             case Primitive.CUBE:
             default:
@@ -923,7 +929,7 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
         var alpha = 1;
         var colors = [];
         for (var i = 0; i < this.buffer.indicies.length; i++) {
-            var color = [this.buffer.colors[i], this.buffer.colors[i + 1], this.buffer.colors[i + 2], alpha];
+            var color = [this.buffer.colors[i * 3], this.buffer.colors[i * 3 + 1], this.buffer.colors[i * 3 + 2], alpha];
             //let white = [1,1,1,1];
             colors = colors.concat(color, color, color, color);
         }
@@ -934,8 +940,6 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
             colors.push(alpha);
         }*/
         this.colors = new Float32Array(colors);
-        console.log("COLORS:");
-        console.log(this.colors);
         this._colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
@@ -1027,7 +1031,7 @@ var PrimitiveRenderer = /** @class */ (function (_super) {
 }(Renderer3D_1.Renderer3D));
 exports.PrimitiveRenderer = PrimitiveRenderer;
 
-},{"../Components/Renderer3D":9,"../Components/Triangulator":11,"../EngineUtility":15,"../Managers":18,"gl-matrix":25}],9:[function(require,module,exports){
+},{"../Components/Renderer3D":9,"../Components/Triangulator":11,"../EngineUtility":15,"../Managers":19,"gl-matrix":26}],9:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1383,7 +1387,7 @@ var CubeRenderer = /** @class */ (function (_super) {
 }(Renderer3D));
 exports.CubeRenderer = CubeRenderer;
 
-},{"../EngineUtility":15,"../Managers":18,"./Component":5,"./Texture":10,"gl-matrix":25}],10:[function(require,module,exports){
+},{"../EngineUtility":15,"../Managers":19,"./Component":5,"./Texture":10,"gl-matrix":26}],10:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -1589,7 +1593,7 @@ var AnimatedTexture2D = /** @class */ (function (_super) {
 }(Texture2D));
 exports.AnimatedTexture2D = AnimatedTexture2D;
 
-},{"../EngineUtility":15,"../GLUtility":16,"../Managers":18}],11:[function(require,module,exports){
+},{"../EngineUtility":15,"../GLUtility":16,"../Managers":19}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //class for building out vertex, normal, and color buffers for generic primitives
@@ -1622,11 +1626,10 @@ var Triangulator = /** @class */ (function () {
         buffer.normals = buffer.normals.concat(normal.toArray(), normal.toArray(), normal.toArray());
         buffer.colors = buffer.colors.concat(color);
         buffer.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-        console.log("Making triangle");
     };
     Triangulator.MakeQuad = function (buffer, a, b, c, d, color) {
-        this.MakeTriangle(buffer, a, b, c, color);
-        this.MakeTriangle(buffer, c, d, a, color);
+        this.MakeTriangle(buffer, c, b, a, color);
+        this.MakeTriangle(buffer, a, d, c, color);
     };
     Triangulator.MakeCube = function (buffer, size, position, color) {
         //cube position is defined by the center of the cube
@@ -1696,11 +1699,12 @@ var Triangulator = /** @class */ (function () {
     Triangulator.MakeDome = function (buffer, position, radius, height, upsideDown, color) {
         //make rings out of cylinders to build dome
         var numSegments = 24 / 2;
-        var endAngle = upsideDown ? -Math.PI / 2 : Math.PI / 2;
+        var startAngle = upsideDown ? 3 / 2 * Math.PI : 0;
+        var endAngle = upsideDown ? 2 * Math.PI : Math.PI / 2;
         for (var i = 0; i < numSegments; i++) {
             //build quarter of circle, if upsideDown 
-            var theta0 = i / numSegments * endAngle;
-            var theta1 = (i + 1) / numSegments * endAngle;
+            var theta0 = startAngle + i / numSegments * (endAngle - startAngle);
+            var theta1 = startAngle + (i + 1) / numSegments * (endAngle - startAngle);
             var radiusBottom = Math.cos(theta0) * radius;
             var radiusTop = Math.cos(theta1) * radius;
             var segmentHeight = (Math.sin(theta1) - Math.sin(theta0)) * height;
@@ -1711,6 +1715,17 @@ var Triangulator = /** @class */ (function () {
     Triangulator.MakeSphere = function (buffer, position, radius, height, color) {
         this.MakeDome(buffer, position, radius, height / 2, false, color);
         this.MakeDome(buffer, position, radius, height / 2, true, color);
+    };
+    Triangulator.MakePyramid = function (buffer, position, rings, height, color) {
+        var _this = this;
+        rings.forEach(function (polygon) {
+            for (var i = 0; i < polygon.length - 1; i++) {
+                var point1 = new EngineUtility_1.Vector3(position.x + polygon[i].x, position.y + polygon[i].y, position.z + polygon[i].z);
+                var point2 = new EngineUtility_1.Vector3(position.x + polygon[i + 1].x, position.y + polygon[i + 1].y, position.z + polygon[i + 1].z);
+                var point3 = new EngineUtility_1.Vector3(position.x, position.y, position.z + height);
+                _this.MakeTriangle(buffer, point1, point2, point3, color);
+            }
+        });
     };
     return Triangulator;
 }());
@@ -1816,7 +1831,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"../EngineUtility":15,"../Matrix":19,"./Component":5,"./Texture":10}],13:[function(require,module,exports){
+},{"../EngineUtility":15,"../Matrix":20,"./Component":5,"./Texture":10}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2145,7 +2160,7 @@ var Square = /** @class */ (function (_super) {
 }(Shape));
 exports.Square = Square;
 
-},{"./EngineUtility":15,"./Matrix":19,"gl-matrix":25}],15:[function(require,module,exports){
+},{"./EngineUtility":15,"./Matrix":20,"gl-matrix":26}],15:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -2501,7 +2516,7 @@ function polygonDecompose(points) {
 }
 exports.polygonDecompose = polygonDecompose;
 
-},{"gl-matrix":25}],16:[function(require,module,exports){
+},{"gl-matrix":26}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 ///<reference path="EngineUtility.ts"/>
@@ -2527,9 +2542,10 @@ var GLUtility;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.depthFunc(gl.LEQUAL);
         gl.disable(gl.DEPTH_TEST);
-        gl.disable(gl.CULL_FACE);
+        //gl.disable(gl.CULL_FACE);
+        gl.enable(gl.CULL_FACE);
         gl.enable(gl.BLEND);
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         var fs_name = '';
         var vs_name = '';
@@ -2751,7 +2767,29 @@ var GameObject = /** @class */ (function (_super) {
 }(Object2D));
 exports.GameObject = GameObject;
 
-},{"./Control":13,"./EngineUtility":15,"./Sprite":21}],18:[function(require,module,exports){
+},{"./Control":13,"./EngineUtility":15,"./Sprite":22}],18:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var EngineUtility_1 = require("./EngineUtility");
+var Component_1 = require("./Components/Component");
+var PrimitiveRenderer_1 = require("./Components/PrimitiveRenderer");
+var GameObjectFactory = /** @class */ (function () {
+    function GameObjectFactory() {
+    }
+    //static factory methods
+    GameObjectFactory.fromPrimitive = function (name, type) {
+        var gameObj = new Component_1.GameObject();
+        gameObj.setName(name);
+        var primitiveRenderer = gameObj.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        primitiveRenderer.createBuffers(type, EngineUtility_1.Vector3.zero(), 1);
+        primitiveRenderer.create();
+        return gameObj;
+    };
+    return GameObjectFactory;
+}());
+exports.GameObjectFactory = GameObjectFactory;
+
+},{"./Components/Component":5,"./Components/PrimitiveRenderer":8,"./EngineUtility":15}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -2759,6 +2797,8 @@ var Component_1 = require("./Components/Component");
 var Renderer3D_1 = require("./Components/Renderer3D");
 var Surface_1 = require("./Surface");
 var GLUtility_1 = require("./GLUtility");
+var EngineUtility_2 = require("./EngineUtility");
+var PrimitiveRenderer_1 = require("./Components/PrimitiveRenderer");
 var SurfaceManager = /** @class */ (function () {
     function SurfaceManager() {
     }
@@ -2969,6 +3009,15 @@ var ObjectManager = /** @class */ (function () {
             ObjectManager.inspectorItems = [];
         }
     };
+    ObjectManager.fromPrimitive = function (name, type) {
+        var gameObj = new Component_1.GameObject();
+        gameObj.setName(name);
+        var primitiveRenderer = gameObj.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
+        primitiveRenderer.createBuffers(type, EngineUtility_2.Vector3.zero(), 1);
+        primitiveRenderer.create();
+        this.gameObjects.push(gameObj);
+        return gameObj;
+    };
     ObjectManager.gameObjects = [];
     ObjectManager.gameObjectHierarchy = [];
     ObjectManager.inspectorItems = [];
@@ -2977,7 +3026,7 @@ var ObjectManager = /** @class */ (function () {
 }());
 exports.ObjectManager = ObjectManager;
 
-},{"./Components/Component":5,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Surface":22}],19:[function(require,module,exports){
+},{"./Components/Component":5,"./Components/PrimitiveRenderer":8,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Surface":23}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 //
@@ -3134,7 +3183,7 @@ var MatrixUtil = /** @class */ (function () {
 }());
 exports.MatrixUtil = MatrixUtil;
 
-},{"sylvester":26}],20:[function(require,module,exports){
+},{"sylvester":27}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -3189,47 +3238,23 @@ var Program = /** @class */ (function () {
     };
     Program.prototype.createTestGameObjects = function () {
         this.createCameras();
-        var testCube = new Component_1.GameObject();
-        testCube.setName("cube");
-        var testCubeRenderer = testCube.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
-        testCubeRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CUBE, EngineUtility_1.Vector3.zero(), 1);
-        testCubeRenderer.create();
+        var testCube = Managers_1.ObjectManager.fromPrimitive("cube", PrimitiveRenderer_1.Primitive.CUBE);
         testCube.transform.position = new EngineUtility_1.Vector3(-1, 0, -6);
         testCube.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
-        var testSphere = new Component_1.GameObject();
-        testSphere.setName("sphere");
-        var testSphereRenderer = testSphere.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
-        testSphereRenderer.createBuffers(PrimitiveRenderer_1.Primitive.SPHERE, EngineUtility_1.Vector3.zero(), 1);
-        testSphereRenderer.create();
+        var testSphere = Managers_1.ObjectManager.fromPrimitive("sphere", PrimitiveRenderer_1.Primitive.SPHERE);
         testSphere.transform.position = new EngineUtility_1.Vector3(-1, 0, -4);
         testSphere.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
-        var testCone = new Component_1.GameObject();
-        testCone.setName("cone");
-        var testConeRenderer = testCone.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
-        testConeRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CONE, EngineUtility_1.Vector3.zero(), 1);
-        testConeRenderer.create();
+        var testCone = Managers_1.ObjectManager.fromPrimitive("cone", PrimitiveRenderer_1.Primitive.CONE);
         testCone.transform.position = new EngineUtility_1.Vector3(3, 0, -6);
         testCone.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
-        var testCylinder = new Component_1.GameObject();
-        testCylinder.setName("cylinder");
-        var testCylinderRenderer = testCylinder.AddComponent(PrimitiveRenderer_1.PrimitiveRenderer);
-        testCylinderRenderer.createBuffers(PrimitiveRenderer_1.Primitive.CYLINDER, EngineUtility_1.Vector3.zero(), 1);
-        testCylinderRenderer.create();
-        testCylinder.transform.position = new EngineUtility_1.Vector3(1, 0, -6);
-        testCylinder.transform.rotation = new EngineUtility_1.Vector3(60, 20, 0);
-        var worldSprite = new Component_1.GameObject();
-        worldSprite.setName("world sprite");
-        var worldSprite_renderer = worldSprite.AddComponent(Renderer3D_1.SpriteRenderer);
-        worldSprite_renderer.create();
-        worldSprite_renderer.changeSprite('../img/tile.png', 256, 256);
-        worldSprite.transform.position = new EngineUtility_1.Vector3(-6, 0, -6);
-        worldSprite.transform.rotation = new EngineUtility_1.Vector3(0, 0, 0);
-        this.storedObject = worldSprite;
+        var testCylinder = Managers_1.ObjectManager.fromPrimitive("cylinder", PrimitiveRenderer_1.Primitive.CYLINDER);
+        testCylinder.setPosition(1, 0, -6);
+        testCylinder.setRotation(60, 20, 0);
+        this.storedObject = testCylinder;
         var editorBox = new Component_1.GameObject();
         editorBox.setName("editor box");
         var editorBox_draggableObject = editorBox.AddComponent(EditorObject_1.DraggableUI);
         editorBox_draggableObject.init(this.uiCamera, '../img/tile.png', Managers_1.SurfaceManager.GetUISurface(), 256, 256);
-        Managers_1.ObjectManager.gameObjects = [testCube, testSphere, testCone, testCylinder, worldSprite];
         Managers_1.EditorControl.clickables = [editorBox_draggableObject];
         var dirLight = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
         var dirLight2 = new Lighting_1.DirectionalLight(Managers_1.SurfaceManager.GetBlankWorldSurface(), new EngineUtility_1.Vector3(100, 20, 30));
@@ -3385,7 +3410,7 @@ ScriptableEvent.prototype.execute = function(eventType, object){
     }
 };*/
 
-},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/PrimitiveRenderer":8,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Managers":18}],21:[function(require,module,exports){
+},{"./Components/CameraUtility":3,"./Components/Component":5,"./Components/EditorObject":6,"./Components/Lighting":7,"./Components/PrimitiveRenderer":8,"./Components/Renderer3D":9,"./EngineUtility":15,"./GLUtility":16,"./Managers":19}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -3515,7 +3540,7 @@ function setMatrixUniforms(gl, shaderProgram, perspectiveMatrix, mvMatrixStack) 
     gl.uniformMatrix4fv(mvUniform, false, new Float32Array(Matrix_1.MatrixUtil.matrix_flatten(mvMatrixStack)));
 }
 
-},{"./EngineUtility":15,"./GLUtility":16,"./Matrix":19}],22:[function(require,module,exports){
+},{"./EngineUtility":15,"./GLUtility":16,"./Matrix":20}],23:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EngineUtility_1 = require("./EngineUtility");
@@ -3582,7 +3607,7 @@ var DrawSurface = /** @class */ (function () {
 }());
 exports.DrawSurface = DrawSurface;
 
-},{"./EngineUtility":15,"./GLUtility":16,"./Matrix":19}],23:[function(require,module,exports){
+},{"./EngineUtility":15,"./GLUtility":16,"./Matrix":20}],24:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var Prog = require("./Program");
@@ -3604,9 +3629,9 @@ window.addGameObject = function () {
     gameProgram.addGameObject();
 };
 
-},{"./Components/Component":5,"./Program":20}],24:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19,"sylvester":26}],25:[function(require,module,exports){
+},{"./Components/Component":5,"./Program":21}],25:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20,"sylvester":27}],26:[function(require,module,exports){
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations
  * @author Brandon Jones
@@ -10495,7 +10520,7 @@ var forEach = exports.forEach = function () {
 /***/ })
 /******/ ]);
 });
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (global){
 // Copyright (c) 2011, Chris Umbel
 
@@ -10511,7 +10536,7 @@ exports.Line.Segment = require('./line.segment');
 exports.Sylvester = require('./sylvester');
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./line":27,"./line.segment":28,"./matrix":29,"./plane":30,"./sylvester":31,"./vector":32}],27:[function(require,module,exports){
+},{"./line":28,"./line.segment":29,"./matrix":30,"./plane":31,"./sylvester":32,"./vector":33}],28:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 var Vector = require('./vector');
 var Matrix = require('./matrix');
@@ -10744,7 +10769,7 @@ Line.Z = Line.create(Vector.Zero(3), Vector.k);
 
 module.exports = Line;
 
-},{"./matrix":29,"./plane":30,"./sylvester":31,"./vector":32}],28:[function(require,module,exports){
+},{"./matrix":30,"./plane":31,"./sylvester":32,"./vector":33}],29:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Line.Segment class - depends on Line and its dependencies.
 
@@ -10872,7 +10897,7 @@ Line.Segment.create = function(v1, v2) {
 
 module.exports = Line.Segment;
 
-},{"./line":27,"./vector":32}],29:[function(require,module,exports){
+},{"./line":28,"./vector":33}],30:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Matrix class - depends on Vector.
 
@@ -11910,7 +11935,7 @@ Matrix.Ones = function(n, m) {
 
 module.exports = Matrix;
 
-},{"./sylvester":31,"./vector":32,"fs":33,"lapack":33}],30:[function(require,module,exports){
+},{"./sylvester":32,"./vector":33,"fs":34,"lapack":34}],31:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // Plane class - depends on Vector. Some methods require Matrix and Line.
 var Vector = require('./vector');
@@ -12186,7 +12211,7 @@ Plane.fromPoints = function(points) {
 
 module.exports = Plane;
 
-},{"./line":27,"./matrix":29,"./sylvester":31,"./vector":32}],31:[function(require,module,exports){
+},{"./line":28,"./matrix":30,"./sylvester":32,"./vector":33}],32:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -12203,7 +12228,7 @@ var Sylvester = {
 
 module.exports = Sylvester;
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 // Copyright (c) 2011, Chris Umbel, James Coglan
 // This file is required in order for any other classes to work. Some Vector methods work with the
 // other Sylvester classes and are useless unless they are included. Other classes such as Line and
@@ -12643,7 +12668,7 @@ Vector.log = function(v) {
 
 module.exports = Vector;
 
-},{"./matrix":29,"./sylvester":31}],33:[function(require,module,exports){
+},{"./matrix":30,"./sylvester":32}],34:[function(require,module,exports){
 
-},{}]},{},[1,2,13,14,15,16,17,18,19,20,21,22,23,24])(24)
+},{}]},{},[1,2,13,14,15,16,17,18,19,20,21,22,23,24,25])(25)
 });

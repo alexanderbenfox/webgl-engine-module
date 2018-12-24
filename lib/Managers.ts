@@ -8,6 +8,8 @@ import {UIImage} from "./Components/UIImage";
 import {DrawSurface} from "./Surface"
 import {ShaderType} from "./GLUtility"
 import {Camera} from "./Components/CameraUtility"
+import {Vector3} from "./EngineUtility"
+import {PrimitiveRenderer, Primitive} from "./Components/PrimitiveRenderer"
 
 export class SurfaceManager{
 	private static surface_ui : DrawSurface;
@@ -256,5 +258,15 @@ export class ObjectManager{
 			}
 			ObjectManager.inspectorItems = [];
 		}
+	}
+
+	static fromPrimitive(name : string, type : Primitive) : GameObject {
+		let gameObj = new GameObject();
+		gameObj.setName(name);
+		let primitiveRenderer : PrimitiveRenderer = <PrimitiveRenderer>gameObj.AddComponent(PrimitiveRenderer);
+		primitiveRenderer.createBuffers(type, Vector3.zero(), 1);
+		primitiveRenderer.create();
+		this.gameObjects.push(gameObj);
+		return gameObj;
 	}
 }

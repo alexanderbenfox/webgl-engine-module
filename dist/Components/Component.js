@@ -171,6 +171,12 @@ var GameObject = /** @class */ (function (_super) {
     GameObject.prototype.setName = function (name) {
         this.name = new EngineUtility_1.EditorString("Object Name", name);
     };
+    GameObject.prototype.setPosition = function (x, y, z) {
+        this.transform.position = new EngineUtility_1.Vector3(x, y, z);
+    };
+    GameObject.prototype.setRotation = function (x, y, z) {
+        this.transform.rotation = new EngineUtility_1.Vector3(x, y, z);
+    };
     GameObject.prototype.update = function (dt) {
         var components = this.getAttachedComponents();
         for (var i = 0; i < components.length; i++) {
